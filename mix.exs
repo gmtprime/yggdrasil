@@ -11,6 +11,8 @@ defmodule Yggdrasil.Mixfile do
      deps_path: "./deps",
      lockfile: "./mix.lock",
      elixir: "~> 1.2",
+     package: package,
+     description: description,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -24,6 +26,14 @@ defmodule Yggdrasil.Mixfile do
   defp deps do
     [{:exredis, ">= 0.2.3"},
      {:amqp, "0.1.4"}]
+  end
+
+  defp description do
+    """
+    Yggdrasil is an app to manage subscriptions to several brokers. It has
+    simple implementations for Redis and RabbitMQ, but they can easily be
+    extended. Also provides a `behaviour` to define custom brokers. 
+    """
   end
 
   defp package do
