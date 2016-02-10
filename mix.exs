@@ -1,9 +1,11 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
+  @version "1.0.0"
+
   def project do
     [app: :yggdrasil,
-     version: "1.0.0",
+     version: @version,
      build_path: "./_build",
      config_path: "./config/config.exs",
      deps_path: "./deps",
@@ -14,29 +16,20 @@ defmodule Yggdrasil.Mixfile do
      deps: deps]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger, :amqp],
      mod: {Yggdrasil, []}]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # To depend on another app inside the umbrella:
-  #
-  #   {:myapp, in_umbrella: true}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [{:exredis, ">= 0.2.3"},
      {:amqp, "0.1.4"}]
+  end
+
+  defp package do
+    [files: ["lib", "test", "mix.exs", "README.md", "mix.lock", "LICENSE"],
+     maintainers: ["Alexander de Sousa"],
+     licenses: ["MIT"],
+     links: %{"Github" => "https://github.com/gmtprime/yggdrasil"}]
   end
 end
