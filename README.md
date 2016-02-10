@@ -28,11 +28,11 @@ iex(2)>
 And from `redis-cli`:
 
 ```
-127.0.0.1:6379> publish "trees" "Yggdrasil"                                                              
+127.0.0.1:6379> publish "trees" "Yggdrasil"
 (integer) 1
-127.0.0.1:6379> publish "trees" "Yggdrasil"                                                              
+127.0.0.1:6379> publish "trees" "Yggdrasil"
 (integer) 1
-127.0.0.1:6379> publish "trees" "Yggdrasil"                                                              
+127.0.0.1:6379> publish "trees" "Yggdrasil"
 (integer) 1
 ```
 
@@ -50,8 +50,7 @@ iex(2)>
 
 The `Yggdrasil.Subscriber.Base` behaviour, defines the following callbacks:
 
-```
-#!Elixir
+```elixir
 @doc """
 Initializes the subscriber state.
 """
@@ -76,8 +75,7 @@ Handles the termination of the subscriber server.
 
 And by default it generates the following functions:
 
-```
-#!Elixir
+```elixir
 
 @doc """
 Starts a subscriber.
@@ -135,8 +133,7 @@ Args:
 
 Messages from a broker come always as the `defstruct Yggdrasil.Proxy.Data`:
 
-```
-#!Elixir
+```elixir
 defmodule Yggdrasil.Proxy.Data do
   defstruct data: nil, channel: nil, broker: nil
   @type t :: %__MODULE__{data: term, channel: term, broker: atom}
@@ -146,8 +143,7 @@ end
 To use this behaviour it's necessary to give a broker as argument. For example,
 a subscriber that prints messages received from a Redis channel:
 
-```
-#!Elixir
+```elixir
 defmodule Subscriber do
   use Yggdrasil.Subscriber.Base, broker: Yggdrasil.Broker.Redis
   alias Yggdrasil.Proxy.Data, as: Data
@@ -203,8 +199,7 @@ This behaviour is for implementation of new brokers. You need to implement
 three functions: `subscribe/2`, `unsubscribe/1` and `handle_message/2`.
 For example, a broker made out of a `GenServer`:
 
-```
-#!Elixir
+```elixir
 defmodule Broker do
   use GenServer
   use Yggdrasil.Broker
@@ -281,8 +276,7 @@ Let's say we now want to assure we will have string messages coming
 from our `Broker` and only receive messages from the broker every second
 because we don't need all the published messages, we would do:
 
-```
-#!Elixir
+```elixir
 defmodule GenericBroker do
   use Yggdrasil.Broker.GenericBroker,
       broker: Broker,
@@ -301,8 +295,7 @@ our `Subscriber`.
 For the two brokers provided, you can use the following configuration file
 (`config/config.exs`):
 
-```
-#!Elixir
+```elixir
 use Mix.Config
 
 # For Redis
@@ -326,8 +319,7 @@ config :amqp,
 
 Ensure yggdrasil is started before your application:
 
-```
-#!Elixir
+```elixir
 def application do
   [applications: [:yggdrasil]]
 end
