@@ -59,13 +59,16 @@ Initializes the subscriber state.
 @doc """
 Updates the subscriber state.
 """
-@callback update_state(old_state :: term, new_state :: term) :: state :: term
+@callback update_state(old_state :: term, new_state :: term) ::
+  {:ok, state :: term} |
+  {:stop, reason :: term, state :: term}
 
 @doc """
-Handles the messages received from the broker. This function is called in a
-separated process.
+Handles the messages received from the broker.
 """
-@callback handle_message(message :: term, state :: term) :: :ok | :error
+@callback handle_message(message :: term, state :: term) ::
+  {:ok, state :: term} |
+  {:stop, reason :: term, state :: term}
 
 @doc """
 Handles the termination of the subscriber server.
@@ -101,7 +104,8 @@ Args:
 `server` - Subscriber pid.
 `state` - New state.
 """
-@spec register(server :: pid | atom | {atom, node}, state :: term) :: :ok
+@spec register(server :: pid | atom | {atom, node}, state :: term) ::
+    :ok | :stopping
 
 @doc """
 Subscribes to a channel.
@@ -148,9 +152,11 @@ defmodule Subscriber do
   use Yggdrasil.Subscriber.Base, broker: Yggdrasil.Broker.Redis
   alias Yggdrasil.Proxy.Data, as: Data
 
-  def handle_message(%Data{channel: channel, data: message}, _state) do
-    IO.puts "Received: #{inspect message} from #{inspect channel}"
-    :ok
+  def handle_message(%Data{channel: channel, data: message}, state) do
+    spawn fn ->
+      IO.puts "Received: #{inspect message} from #{inspect channel}"
+    end
+    {:ok, state}
   end
 end
 ```

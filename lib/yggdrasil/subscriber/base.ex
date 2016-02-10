@@ -12,13 +12,16 @@ defmodule Yggdrasil.Subscriber.Base do
   @doc """
   Updates the subscriber state.
   """
-  @callback update_state(old_state :: term, new_state :: term) :: state :: term
+  @callback update_state(old_state :: term, new_state :: term) ::
+    {:ok, state :: term} |
+    {:stop, reason :: term, state :: term}
 
   @doc """
-  Handles the messages received from the broker. This functions is called in a
-  separated process.
+  Handles the messages received from the broker.
   """
-  @callback handle_message(message :: term, state :: term) :: :ok | :error
+  @callback handle_message(message :: term, state :: term) ::
+    {:ok, state :: term} |
+    {:stop, reason :: term, state :: term}
 
   @doc """
   Handles the termination of the subscriber server.
@@ -64,7 +67,7 @@ defmodule Yggdrasil.Subscriber.Base do
         `state` - New state.
       """
       @spec register(server :: pid | atom | {atom, node}, state :: term) ::
-        term
+        :ok | :stopping
       def register(server, state), do:
         GenServer.call server, {:update, state}
 
@@ -107,10 +110,10 @@ defmodule Yggdrasil.Subscriber.Base do
         {:ok, state}
 
       def update_state(_old_state, new_state), do:
-        new_state
+        {:ok, new_state}
 
       def handle_message(_message, state), do:
-        :ok
+        {:ok, state}
 
       def terminate(_reason, _state), do:
         :ok 
@@ -141,9 +144,12 @@ defmodule Yggdrasil.Subscriber.Base do
     {:stop, reason, :ok, state}
 
   def handle_call({:update, internal_state}, _from, state) do
-    internal_state = state.module.update_state(state.internal_state,
-                                               internal_state)
-    {:reply, :ok, %{state | internal_state: internal_state}}
+    case state.module.update_state(state.internal_state, internal_state) do
+      {:ok, internal_state} ->
+        {:reply, :ok, %{state | internal_state: internal_state}}
+      {:stop, reason, internal_state} ->
+        {:stop, reason, :stopping, %{state | internal_state: internal_state}}
+    end
   end
 
   def handle_call({:subscribe, channel}, _from, state) do
@@ -178,10 +184,12 @@ defmodule Yggdrasil.Subscriber.Base do
     {:stop, reason, state}
 
   def handle_info(message, state) do
-    spawn fn ->
-      state.module.handle_message(message, state.internal_state)
+    case state.module.handle_message(message, state.internal_state) do
+      {:ok, internal_state} ->
+        {:noreply, %{state | internal_state: internal_state}}
+      {:stop, reason, internal_state} ->
+        {:stop, reason, %{state | internal_state: internal_state}}
     end
-    {:noreply, state}
   end
 
 

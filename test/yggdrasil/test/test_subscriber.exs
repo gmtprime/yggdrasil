@@ -11,7 +11,7 @@ defmodule Yggdrasil.Test.TestSubscriber do
 
   def handle_message(message, forwarder) do
     Forwarder.notify forwarder, {:received, message}
-    :ok
+    {:ok, forwarder}
   end
 
   def terminate(reason, forwarder), do:
