@@ -1,0 +1,32 @@
+language: elixir
+elixir: 1.2.1
+otp_release:
+    - 18.0
+sudo: false
+services:
+    - rabbitmq
+    - redis-server
+before_script:
+    - mkdir config
+    - >
+        echo '
+        use Mix.Config
+
+        config :amqp,
+          host: "localhost",
+          port: 5672,
+          username: "guest",
+          password: "guest",
+          virtual_host: "/"
+
+        config :exredis,
+          host: "localhost",
+          port: 6379,
+          password: "",
+          db: 1,
+          reconnect: :no_reconnect,
+          max_queue: :infinity
+        ' > config/config.exs
+    - mix deps.get
+script:
+    - mix test
