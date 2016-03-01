@@ -96,7 +96,8 @@ defmodule Yggdrasil.Messenger do
   def handle_info(message, %{interval: :none} = state) do
     # No interval set
     pid = self()
-    real_message = state.module.handle_message state.conn, message
+    real_message = state.module.handle_message(state.conn, state.channel,
+                                               message)
     spawn fn -> reroute_message pid, real_message end
     {:noreply, state}
   end
@@ -104,7 +105,8 @@ defmodule Yggdrasil.Messenger do
   def handle_info(message, %{cache: :new} = state) do
     # Cache is new. First message should be sent ASAP.
     pid = self()
-    real_message = state.module.handle_message state.conn, message
+    real_message = state.module.handle_message(state.conn, state.channel,
+                                               message)
     spawn fn -> reroute_message pid, real_message end
     if real_message == :subscribed do
       {:noreply, state}
@@ -115,7 +117,8 @@ defmodule Yggdrasil.Messenger do
   end
 
   def handle_info(message, state) do
-    real_message = state.module.handle_message state.conn, message
+    real_message = state.module.handle_message(state.conn, state.channel,
+                                               message)
     if is_valid?(real_message) do
       {:noreply, %{state | cache: real_message}}
     else
@@ -125,8 +128,8 @@ defmodule Yggdrasil.Messenger do
 
 
   def terminate(_, state) do
-    state.module.unsubscribe state.conn
-    unsubscribed state.forwarder, state.module, state.channel
+    state.module.unsubscribe(state.conn, state.channel)
+    unsubscribed(state.forwarder, state.module, state.channel)
   end
 
   #############

@@ -28,6 +28,7 @@ defmodule Yggdrasil.Broker.GenericBrokerTest do
     assert_receive %Data{broker: @generic_broker,
                          data: "yggdrasil",
                          channel: ^channel}  # From Proxy rerouted by Broker
+    assert [channel: "yggdrasil"] == :ets.lookup :test_cache, channel
     Broker.stop broker
     assert_receive {:unsubscribed, @generic_broker, ^channel}  # From Broker
     Proxy.unsubscribe proxy, handle
@@ -45,12 +46,14 @@ defmodule Yggdrasil.Broker.GenericBrokerTest do
     assert_receive %Data{broker: @generic_broker,
                          data: "yggdrasil",
                          channel: ^channel}  # From Proxy rerouted by Broker
+    assert [channel: "yggdrasil"] == :ets.lookup :test_cache, channel
     
     Yggdrasil.Test.TestBroker.publish conn, channel, message
     assert_receive %Data{broker: @generic_broker,
                          data: "yggdrasil",
                          channel: ^channel},
                    300# From Proxy rerouted by Broker
+    assert [channel: "yggdrasil"] == :ets.lookup :test_cache, channel
     
     Broker.stop broker
     assert_receive {:unsubscribed, @generic_broker, ^channel}  # From Broker

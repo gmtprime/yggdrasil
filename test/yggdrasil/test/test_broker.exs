@@ -33,16 +33,16 @@ defmodule Yggdrasil.Test.TestBroker do
   end
 
 
-  def unsubscribe(conn) do
+  def unsubscribe(conn, _channel) do
     __MODULE__.stop conn
   end
 
 
-  def handle_message(_conn, :subscribed), do:
+  def handle_message(_conn, _, :subscribed), do:
     :subscribed
-  def handle_message(_conn, {:message, message}), do:
+  def handle_message(_conn, _, {:message, message}), do:
     {:message, message}
-  def handle_message(_conn, _ignored), do:
+  def handle_message(_conn, _, _ignored), do:
     :whatever
 
   ###################

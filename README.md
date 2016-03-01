@@ -220,15 +220,15 @@ defmodule Broker do
   end
 
 
-  def unsubscribe(conn), do:
+  def unsubscribe(conn, _channel), do:
     __MODULE__.stop conn
 
 
-  def handle_message(_conn, :subscribed), do:
+  def handle_message(_conn, _channel, :subscribed), do:
     :subscribed
-  def handle_message(_conn, {:message, message}), do:
+  def handle_message(_conn, _channel, {:message, message}), do:
     {:message, message}
-  def handle_message(_conn, _ignored), do:
+  def handle_message(_conn, _channel, _ignored), do:
     :whatever
 
   ###################
@@ -280,15 +280,17 @@ broker.
 
 Let's say we now want to assure we will have string messages coming
 from our `Broker` and only receive messages from the broker every second
-because we don't need all the published messages, we would do:
+because we don't need all the published messages and we want an `:ets` called
+`:test_cache` to store the last value produced, we would do:
 
 ```elixir
 defmodule GenericBroker do
   use Yggdrasil.Broker.GenericBroker,
       broker: Broker,
-      interval: 1000 
+      interval: 1000,
+      cache: :test_cache
 
-  def decode(message) do:
+  def decode(channel, message) do:
     {:message, inspect(message)}
 end
 ```
@@ -328,5 +330,13 @@ Ensure yggdrasil is started before your application:
 ```elixir
 def application do
   [applications: [:yggdrasil]]
+end
+```
+
+And this to install the last version from *Hex*:
+
+```elixir
+def deps do
+  [{:yggdrasil, "~> 1.1.1"}]
 end
 ```

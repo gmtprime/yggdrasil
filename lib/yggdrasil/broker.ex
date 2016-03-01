@@ -10,16 +10,16 @@ defmodule Yggdrasil.Broker do
       end
 
       @doc false
-      def unsubscribe(_conn) do
+      def unsubscribe(_conn, _channel) do
         :ok
       end
 
       @doc false
-      def handle_message(_conn, _message) do
+      def handle_message(_conn, _channel, _message) do
         {:message, nil}
       end
       
-      defoverridable [ subscribe: 2, unsubscribe: 1, handle_message: 2]
+      defoverridable [ subscribe: 2, unsubscribe: 2, handle_message: 3]
     end
   end
 
@@ -32,9 +32,9 @@ defmodule Yggdrasil.Broker do
     {:error, reason :: term}
 
   @doc """
-  Unsubscribes from using a `handle` to the channel.
+  Unsubscribes from using a `handle` to the `channel`.
   """
-  @callback unsubscribe(handle :: any) :: :ok | :error
+  @callback unsubscribe(handle :: any, channel :: any) :: :ok | :error
 
   @doc """
   Handle messages from the broker. Accepted outputs:
@@ -43,7 +43,7 @@ defmodule Yggdrasil.Broker do
   > `{:message, message}` When the process receives a message from the broker.
   > `{:stop, reason}` When the process should be shutdown.
   """
-  @callback handle_message(conn :: any, message :: any) ::
+  @callback handle_message(conn :: any, channel :: any, message :: any) ::
     :subscribed |
     {:message, message :: term} |
     {:stop, reason :: term} |

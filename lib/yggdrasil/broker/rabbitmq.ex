@@ -15,16 +15,16 @@ defmodule Yggdrasil.Broker.RabbitMQ do
     {:ok, %{connection: conn, channel: chan}}
   end
 
-  def unsubscribe(%{connection: conn, channel: chan}) do
+  def unsubscribe(%{connection: conn, channel: chan}, _channel) do
     AMQP.Channel.close chan
     AMQP.Connection.close conn
   end
 
-  def handle_message(_conn, {:basic_consume_ok, %{consumer_tag: _tag}}), do:
+  def handle_message(_conn, _, {:basic_consume_ok, %{consumer_tag: _tag}}), do:
     :subscribed
-  def handle_message(_conn, {:basic_cancel, _}), do:
+  def handle_message(_conn, _, {:basic_cancel, _}), do:
     {:stop, :shutdown}
-  def handle_message(%{channel: chan},
+  def handle_message(%{channel: chan}, _,
                      {:basic_deliver, message,
                       %{delivery_tag: tag, redelivered: redelivered}}) do
     try do
@@ -36,6 +36,6 @@ defmodule Yggdrasil.Broker.RabbitMQ do
         {:stop, :shutdown}
     end
   end
-  def handle_message(_conn, _ignored), do:
+  def handle_message(_conn, _channel, _ignored), do:
     :whatever
 end
