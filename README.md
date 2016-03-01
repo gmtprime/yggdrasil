@@ -3,6 +3,8 @@
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
+[![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil)
+
 Yggdrasil manages subscriptions to channels/queues in some broker. Simple
 Redis and RabbitMQ interfaces are implemented. By default the messages are
 sent to the process calling the function to subscribe to the channel.
