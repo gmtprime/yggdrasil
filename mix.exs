@@ -24,7 +24,7 @@ defmodule Yggdrasil.Mixfile do
   end
 
   defp deps do
-    [{:exredis, ">= 0.2.3"},
+    [{:exredis, ">= 0.2.4"},
      {:amqp, "0.1.4"},
      {:postgrex, ">= 0.11.0"}]
   end
