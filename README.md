@@ -10,7 +10,7 @@ Redis, RabbitMQ and Postgres interfaces are implemented. By default the
 messages are sent to the process calling the function to subscribe to the
 channel.
 
-### Starting the feed.
+### Starting the feed
 
 ```
 $ iex -S mix
@@ -196,7 +196,7 @@ iex(3)> Subscriber.unsubscribe(conn, "trees")
 :ok
 ```        
 
-## New brokers.
+## New brokers
 
 You can code new brokers better suited for your needs.
 
@@ -311,19 +311,19 @@ use Mix.Config
 
 # For Redis
 config :exredis,
-       host: "localhost",
-       port: 6379,
-       password: "MyPassword",
-       reconnect: :no_reconnect,
-       max_queue: :infinity
+  host: "localhost",
+  port: 6379,
+  password: "MyPassword",
+  reconnect: :no_reconnect,
+  max_queue: :infinity
 
 # For RabbitMQ
 config :amqp,
-       host: "localhost",
-       port: 5672, 
-       username: "guest",
-       password: "guest",
-       virtual_host: "/"
+  host: "localhost",
+  port: 5672, 
+  username: "guest",
+  password: "guest",
+  virtual_host: "/"
 
 # For Postgres
 # For more information check the options for Postgrex library.
@@ -348,6 +348,6 @@ And this to install the last version from *Hex*:
 
 ```elixir
 def deps do
-  [{:yggdrasil, "~> 1.1.2"}]
+  [{:yggdrasil, "~> 1.2.1"}]
 end
 ```
