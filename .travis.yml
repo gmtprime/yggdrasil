@@ -5,7 +5,9 @@ otp_release:
 services:
     - rabbitmq
     - redis-server
+    - postgres
 before_script:
+    - psql -c 'create database travis_ci_test;' -U postgres
     - mkdir config
     - >
         echo '
@@ -25,6 +27,12 @@ before_script:
           db: 1,
           reconnect: :no_reconnect,
           max_queue: :infinity
+
+        config :postgrex, Yggdrasil.Repo,
+          hostname: "localhost",
+          username: "postgres",
+          password: "postgres",
+          database: "travis_ci_test"
         ' > config/config.exs
     - mix deps.get
 script:

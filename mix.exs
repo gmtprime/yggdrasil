@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "1.1.1"
+  @version "1.1.2"
 
   def project do
     [app: :yggdrasil,
@@ -19,13 +19,14 @@ defmodule Yggdrasil.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :amqp],
+    [applications: [:logger, :amqp, :postgrex],
      mod: {Yggdrasil, []}]
   end
 
   defp deps do
     [{:exredis, ">= 0.2.3"},
-     {:amqp, "0.1.4"}]
+     {:amqp, "0.1.4"},
+     {:postgrex, ">= 0.11.0"}]
   end
 
   defp description do
