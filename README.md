@@ -6,8 +6,9 @@
 [![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil)
 
 Yggdrasil manages subscriptions to channels/queues in some broker. Simple
-Redis and RabbitMQ interfaces are implemented. By default the messages are
-sent to the process calling the function to subscribe to the channel.
+Redis, RabbitMQ and Postgres interfaces are implemented. By default the
+messages are sent to the process calling the function to subscribe to the
+channel.
 
 ### Starting the feed.
 
@@ -323,6 +324,14 @@ config :amqp,
        username: "guest",
        password: "guest",
        virtual_host: "/"
+
+# For Postgres
+# For more information check the options for Postgrex library.
+config :postgrex, Yggdrasil.Repo,
+  hostname: "localhost",
+  username: "postgres",
+  password: "postgres",
+  database: "postgres"
 ```
 
 ## Installation
@@ -339,6 +348,6 @@ And this to install the last version from *Hex*:
 
 ```elixir
 def deps do
-  [{:yggdrasil, "~> 1.1.1"}]
+  [{:yggdrasil, "~> 1.1.2"}]
 end
 ```
