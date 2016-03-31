@@ -32,8 +32,9 @@ defmodule Yggdrasil.Mixfile do
   defp description do
     """
     Yggdrasil is an app to manage subscriptions to several brokers. It has
-    simple implementations for Redis and RabbitMQ, but they can easily be
-    extended. Also provides a `behaviour` to define custom brokers. 
+    simple implementations for Redis, RabbitMQ and Postgres brokers, but they
+    can easily be extended. Also provides a `behaviour` to define custom
+    brokers. 
     """
   end
 
