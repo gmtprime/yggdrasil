@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "1.1.2"
+  @version "1.2.1"
 
   def project do
     [app: :yggdrasil,
