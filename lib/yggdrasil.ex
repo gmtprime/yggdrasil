@@ -24,13 +24,6 @@ defmodule Yggdrasil do
               nil, [name: @feed_name]])
     ]
     opts = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]
-    case Mix.env do
-      :prod ->
-        Supervisor.start_link children, opts
-      _ ->
-        test_children = [worker(@forwarder_name, [[name: @forwarder_name]]) |
-                         children]
-        Supervisor.start_link test_children, opts
-    end
+    Supervisor.start_link children, opts
   end
 end
