@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Broker.Redis do
   use Yggdrasil.Broker
 
+  require Logger
+
   def subscribe(channel, callback) do
     {:ok, conn} = Exredis.Sub.start_link
     conn |> Exredis.Sub.psubscribe(channel, callback)
@@ -17,9 +19,7 @@ defmodule Yggdrasil.Broker.Redis do
     {:message, message}
   def handle_message(_conn, _, {:message, _id, message, _pid}), do:
     {:message, message}
-  def handle_message(_conn, _, {:eredis_disconnect, _pid}), do:
-    {:stop, :shutdown}
-  def handle_message(_conn, _, {:eredis_reconnect_attempt, _pid}), do:
+  def handle_message(_conn, _, {:eredis_connected, _pid}), do:
     {:stop, :shutdown}
   def handle_message(_conn, _, _ignored), do:
     :whatever

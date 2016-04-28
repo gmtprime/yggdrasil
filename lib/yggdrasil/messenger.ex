@@ -137,6 +137,8 @@ defmodule Yggdrasil.Messenger do
 
   ##
   # Reroute `message` to `pid`.
+  defp reroute_message(pid, {:stop, reason}), do:
+    GenServer.stop(pid, :stop, reason)
   defp reroute_message(pid, message) do
     if is_valid?(message) do
       GenServer.cast pid, message
