@@ -16,16 +16,15 @@ defmodule Yggdrasil.Mixfile do
   end
 
   def application do
-    [applications: [:redix_pubsub, :amqp, :postgrex],
+    [applications: [:phoenix_pubsub, :redix_pubsub, :amqp, :postgrex],
      mod: {Yggdrasil, []}]
   end
 
   defp deps do
-    [{:y_process, "~> 0.1.4"},
+    [{:y_process, "~> 0.1.5"},
      {:exreg, "~> 0.0.3"},
      {:redix_pubsub, ">= 0.0.0"},
-     {:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git",
-      override: true},
+     {:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
      {:amqp, "~> 0.1.4"},
      {:postgrex, "~> 0.11.2"},
      {:connection, "~> 1.0.4"},

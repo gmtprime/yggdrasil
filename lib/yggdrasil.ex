@@ -1,6 +1,7 @@
 defmodule Yggdrasil do
   use Application
 
+  @backend YProcess.Backend.PG2
   @generator Yggdrasil.Publisher.Generator
   @broker Yggdrasil.Broker
 
@@ -40,7 +41,13 @@ defmodule Yggdrasil do
     children = [
       supervisor(@generator, [[name: @generator]]),
       worker(@broker, [@generator, monitors, [name: @broker]])
-    ]
+    ] 
+
+    children = case Application.get_env(:y_process, :backend, @backend) do
+      YProcess.Backend.PG2 -> children
+      YProcess.Backend.PhoenixPubSub ->
+        [supervisor(YProcess.PhoenixPubSub, []) | children]
+    end
 
     opts = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]
     Supervisor.start_link(children, opts)

@@ -20,15 +20,10 @@ defmodule Yggdrasil.Backend do
   @backend YProcess.Backend.PhoenixPubSub
 
   ##
-  # Gets the broker name.
-  defp get_broker_name do
-    Application.get_env(:yggdrasil, :broker_name, @broker_name)
-  end
-
-  ##
   # Gets the backend module.
   defp get_backend do
-    Application.get_env(:yggdrasil, :backend, @backend)
+    backend = Application.get_env(:y_process, :backend, @backend)
+    Application.get_env(:yggdrasil, :backend, backend)
   end
 
   @doc """
@@ -58,8 +53,7 @@ defmodule Yggdrasil.Backend do
   configuration.
   """
   def join(%Channel{channel: channel} = info, pid) do
-    broker = get_broker_name()
-    case Broker.subscribe(broker, info, pid) do
+    case Broker.subscribe(@broker_name, info, pid) do
       :ok -> join(channel, pid)
       error -> error
     end
@@ -74,8 +68,7 @@ defmodule Yggdrasil.Backend do
   configuration.
   """
   def leave(%Channel{channel: channel} = info, pid) do
-    broker = get_broker_name()
-    case Broker.unsubscribe(broker, info, pid) do
+    case Broker.unsubscribe(@broker_name, info, pid) do
       :ok -> leave(channel, pid)
       error -> error
     end

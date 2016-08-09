@@ -35,10 +35,14 @@ defmodule Yggdrasil.Publisher.Supervisor do
   termination.
   """
   def stop(supervisor, reason) when is_pid(supervisor) do
-    for {module, child, _, _} <- Supervisor.which_children(supervisor) do
-      apply(module, :stop, [child, reason])
+    try do
+      for {module, child, _, _} <- Supervisor.which_children(supervisor) do
+        apply(module, :stop, [child, reason])
+      end
+      Supervisor.stop(supervisor, reason)
+    rescue
+      _ -> :ok
     end
-    Supervisor.stop(supervisor, reason)
   end
   def stop(name, reason) do
     registry = Generator.get_registry()
