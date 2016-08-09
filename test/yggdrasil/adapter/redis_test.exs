@@ -7,7 +7,7 @@ defmodule Yggdrasil.Adapter.RedisTest do
     channel = %Channel{decoder: Yggdrasil.Decoder.Default.Redis,
                        channel: "redis_channel"}
     {:ok, client} = TestClient.start_link(self(), channel)
-    assert_receive :ready, 200
+    assert_receive :ready, 600
 
     options = Application.get_env(:yggdrasil, :redis, [host: "localhost"])
     {:ok, conn} = Redix.start_link(options)

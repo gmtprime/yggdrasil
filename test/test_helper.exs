@@ -1,24 +1,27 @@
 defmodule TestClient do
   use YProcess, backend: Yggdrasil.Backend
 
-  defstruct [:parent, :channel]
+  defstruct [:parent, :channel, :timeout]
   alias __MODULE__, as: State
 
-  def start_link(parent, channels) when is_list(channels) do
-    state = %State{parent: parent, channel: channels}
+  def start_link(parent, channels) do
+    start_link(parent, channels, 500)
+  end
+
+  def start_link(parent, channels, timeout) when is_list(channels) do
+    state = %State{parent: parent, channel: channels, timeout: timeout}
     YProcess.start_link(__MODULE__, state)
   end
-  def start_link(parent, channel) do
-    state = %State{parent: parent, channel: [channel]}
-    YProcess.start_link(__MODULE__, state)
+  def start_link(parent, channel, timeout) do
+    start_link(parent, [channel], timeout)
   end
 
   def stop(client) do
     YProcess.stop(client)
   end
 
-  def init(%State{channel: channels} = state) do
-    {:join, channels, state, 100}
+  def init(%State{channel: channels, timeout: timeout} = state) do
+    {:join, channels, state, timeout}
   end
 
   def handle_info(:timeout, %State{parent: parent} = state) do

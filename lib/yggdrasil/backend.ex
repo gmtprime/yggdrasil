@@ -59,8 +59,10 @@ defmodule Yggdrasil.Backend do
   """
   def join(%Channel{channel: channel} = info, pid) do
     broker = get_broker_name()
-    Broker.subscribe(broker, info, pid)
-    join(channel, pid)
+    case Broker.subscribe(broker, info, pid) do
+      :ok -> join(channel, pid)
+      error -> error
+    end
   end
   def join(channel, pid) do
     module = get_backend()
@@ -73,8 +75,10 @@ defmodule Yggdrasil.Backend do
   """
   def leave(%Channel{channel: channel} = info, pid) do
     broker = get_broker_name()
-    Broker.unsubscribe(broker, info, pid)
-    leave(channel, pid)
+    case Broker.unsubscribe(broker, info, pid) do
+      :ok -> leave(channel, pid)
+      error -> error
+    end
   end
   def leave(channel, pid) do
     module = get_backend()

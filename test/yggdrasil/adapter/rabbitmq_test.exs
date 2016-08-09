@@ -14,7 +14,7 @@ defmodule Yggdrasil.Adapter.RabbitMQTest do
     channel = %Channel{decoder: Yggdrasil.Decoder.Default.RabbitMQ,
                        channel: {exchange, channel_name}}
     {:ok, client} = TestClient.start_link(self(), channel)
-    assert_receive :ready, 200
+    assert_receive :ready, 600
 
     AMQP.Basic.publish(chan, exchange, channel_name, "message")
 
