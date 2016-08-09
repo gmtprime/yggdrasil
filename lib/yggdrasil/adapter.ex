@@ -13,17 +13,19 @@ defmodule Yggdrasil.Adapter do
     module = Keyword.get(opts, :module, GenServer) 
     quote do
       @doc """
-      Starts the adapter. Receives a `decoder`
+      Starts the adapter. Receives an `Yggdrasil.Channel` that contains the
+      `decoder` module and the name of the `channel`; the `publisher` PID, and
+      a list of `options`.
       """
       def start_link(
         %Yggdrasil.Channel{decoder: decoder, channel: channel},
         publisher,
-        opts \\ []
+        options \\ []
       ) do
         adapter = decoder.get_adapter()
         args = %Yggdrasil.Adapter{publisher: publisher, channel: channel}
         module = unquote(module)
-        module.start_link(adapter, args, opts)
+        module.start_link(adapter, args, options)
       end
 
       @doc """

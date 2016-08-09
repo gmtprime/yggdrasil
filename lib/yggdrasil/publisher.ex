@@ -11,11 +11,13 @@ defmodule Yggdrasil.Publisher do
   # Client functions.
 
   @doc """
-  Starts a publisher with a `decoder` module and a `channel` where it'll write
-  the decoded messages and a list of GenServer `options`.
+  Starts a publisher with a `channel` (`Yggdrasil.Channel`). This `channel`
+  contains the decoder module, the channel where it'll write
+  the decoded messages. Also it is possible to provide a list of GenServer
+  `options`.
   """
-  def start_link(%Channel{} = state, options \\ []) do
-    YProcess.start_link(__MODULE__, state, options)
+  def start_link(%Channel{} = channel, options \\ []) do
+    YProcess.start_link(__MODULE__, channel, options)
   end
 
   @doc """

@@ -7,16 +7,18 @@ defmodule Yggdrasil.Adapter.RabbitMQTest do
     options = Application.get_env(:yggdrasil, :rabbitmq, [])
     {:ok, conn} = AMQP.Connection.open(options)
     {:ok, chan} = AMQP.Channel.open(conn)
-    :ok = AMQP.Exchange.topic(chan, "rabbit_exchange") 
+    exchange = UUID.uuid4()
+    channel_name = UUID.uuid4()
+    :ok = AMQP.Exchange.topic(chan, exchange) 
 
     channel = %Channel{decoder: Yggdrasil.Decoder.Default.RabbitMQ,
-                       channel: {"rabbit_exchange", "rabbit_channel"}}
+                       channel: {exchange, channel_name}}
     {:ok, client} = TestClient.start_link(self(), channel)
     assert_receive :ready, 200
 
-    AMQP.Basic.publish(chan, "rabbit_exchange", "rabbit_channel", "message")
+    AMQP.Basic.publish(chan, exchange, channel_name, "message")
 
-    assert_receive {:event, {"rabbit_exchange", "rabbit_channel"}, "message"}
+    assert_receive {:event, {^exchange, ^channel_name}, "message"}
     TestClient.stop(client)
 
     AMQP.Connection.close(conn)

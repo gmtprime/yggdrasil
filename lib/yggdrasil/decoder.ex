@@ -22,6 +22,10 @@ defmodule Yggdrasil.Decoder do
       """
       def get_adapter, do: unquote(adapter)
 
+      @doc """
+      Default decoder. It does not change the `message` and ignores the
+      `channel`.
+      """
       def decode(_channel, message), do: message
 
       defoverridable [decode: 2] 

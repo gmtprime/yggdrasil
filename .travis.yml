@@ -1,0 +1,42 @@
+language: elixir
+elixir:
+  - 1.2.6
+  - 1.3.1
+otp_release:
+  - 18.0
+  - 18.1
+  - 18.2
+  - 19.0
+services:
+  - rabbitmq
+  - redis-server
+  - postgresql
+before_script:
+  - psql -c 'CREATE DATABASE travis_ci_test;' -U postgres
+  - mkdir config
+  - >
+      echo '
+      use Mix.Config
+
+      config :yggdrasil,
+        backend: YProcess.Backend.PG2,
+        redis: [host: "localhost",
+                port: 6379],
+        rabbitmq: [host: "localhost",
+                   port: 5672,
+                   username: "guest",
+                   password: "guest",
+                   virtual_host: "/"],
+        postgres: [hostname: "localhost",
+                   username: "postgres",
+                   password: "postgres",
+                   database: "travis_ci_test"]
+      ' > config/config.exs
+  - MIX_ENV=test mix deps.get
+  - MIX_ENV=test mix deps.compile
+  - MIX_ENV=test mix compile
+script:
+  - MIX_ENV=test mix test
+after_script:
+  - MIX_ENV=docs mix deps.get
+  - MIX_ENV=docs mix inch.report

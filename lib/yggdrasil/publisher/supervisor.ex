@@ -31,7 +31,8 @@ defmodule Yggdrasil.Publisher.Supervisor do
   end
 
   @doc """
-  Stops the supervisor and using its `name` or its `pid`the `channel`.
+  Stops the `supervisor` and using its `name` or its PID and a `reason` for
+  termination.
   """
   def stop(supervisor, reason) when is_pid(supervisor) do
     for {module, child, _, _} <- Supervisor.which_children(supervisor) do
