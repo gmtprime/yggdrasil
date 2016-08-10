@@ -19,7 +19,7 @@ before_script:
       use Mix.Config
 
       config :logger,
-        level: info
+        level: :info
 
       config :yggdrasil,
         backend: YProcess.Backend.PG2,
