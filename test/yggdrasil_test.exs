@@ -1,6 +1,5 @@
 defmodule YggdrasilTest do
   use ExUnit.Case
-  doctest Yggdrasil
 
   alias Yggdrasil.Channel
 
