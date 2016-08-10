@@ -35,10 +35,10 @@ defmodule Yggdrasil.AdapterTest do
     channel_name = Adapter.get_channel_name(ref)
     
     {:ok, client} = TestClient.start_link(self(), ref)
-    assert_receive :ready, 600
     {:ok, publisher} = Publisher.start_link(channel)
     {:ok, adapter} = Adapter.start_link(channel, publisher)
     {:ok, producer} = TestProducer.start_link(channel_name)
+    assert_receive :ready, 600
 
     assert :ok = TestProducer.send_event(producer, :message)
     assert_receive {:event, ^ref, :message}

@@ -9,10 +9,11 @@ defmodule YggdrasilTest do
   end
 
   test "subscribe, publish and unsubscribe" do
-    channel = %Channel{channel: make_ref(), decoder: Yggdrasil.Decoder.Default}
+    ref = make_ref()
+    channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
     assert :ok = Yggdrasil.subscribe(channel)
     assert :ok = Yggdrasil.publish(channel, :message)
-    assert_receive :message
+    assert_receive {:Y_CAST_EVENT, ^ref, :message}
     assert :ok = Yggdrasil.unsubscribe(channel)
   end
 end

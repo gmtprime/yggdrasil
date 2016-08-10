@@ -1,5 +1,7 @@
 # Yggdrasil
 
+[![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![Deps Status](https://beta.hexfaktor.org/badge/all/github/gmtprime/yggdrasil.svg)](https://beta.hexfaktor.org/github/gmtprime/yggdrasil) [![Inline docs](http://inch-ci.org/github/gmtprime/yggdrasil.svg?branch=master)](http://inch-ci.org/github/gmtprime/yggdrasil)
+
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
@@ -9,7 +11,7 @@ are implemented. Message passing is done through
 [`YProcess`](https://github.com/gmtprime/y_process). `YProcess` allows to use
 `Phoenix.PubPub` as a pub/sub to distribute messages between processes.
 
-## Redis example
+## Example using Redis
 
 ```elixir
 iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
@@ -35,13 +37,15 @@ iex(3> flush()
 Things to note:
 
   * Every message coming from a broker (Redis, RabbitMQ, Postgres) will be like:
+
   ```elixir
   {:Y_CAST_EVENT, channel, message}
   ```
+
   * The process calling `Yggdrasil.subscribe/1` will be the one that subscribes
   to the channel
 
-## Example using `GenServer
+## Example using `GenServer`
 
 The previous example can be wrapped inside a `GenServer`
 

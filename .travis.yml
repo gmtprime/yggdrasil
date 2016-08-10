@@ -18,6 +18,9 @@ before_script:
       echo '
       use Mix.Config
 
+      config :logger,
+        level: info
+
       config :yggdrasil,
         backend: YProcess.Backend.PG2,
         redis: [host: "localhost",

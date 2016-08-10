@@ -7,6 +7,8 @@ defmodule Yggdrasil.Publisher do
 
   alias Yggdrasil.Channel
 
+  require Logger
+
   ###################
   # Client functions.
 
@@ -46,6 +48,7 @@ defmodule Yggdrasil.Publisher do
 
   @doc false
   def init(%Channel{channel: channel} = state) do
+    Logger.debug("Started publisher for #{inspect state}.")
     {:create, [channel], state}
   end
 

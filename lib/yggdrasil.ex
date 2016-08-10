@@ -1,6 +1,8 @@
 defmodule Yggdrasil do
   use Application
 
+  alias Yggdrasil.Channel
+
   @backend YProcess.Backend.PG2
   @generator Yggdrasil.Publisher.Generator
   @broker Yggdrasil.Broker
@@ -20,8 +22,13 @@ defmodule Yggdrasil do
   end
 
   @doc """
-  Emits a `message` in a `channel`.
+  Emits a `message` in a `channel`. Bypasses the adapter.
   """
+  def publish(%Channel{channel: channel, decoder: decoder}, message) do
+    registry = apply(@generator, :get_registry, [])
+    publisher = {:via, registry, {Yggdrasil.Publisher, channel, decoder}}
+    Yggdrasil.Publisher.sync_notify(publisher, channel, message)
+  end
   def publish(channel, message) do
     Yggdrasil.Backend.emit(channel, message)
   end

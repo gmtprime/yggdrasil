@@ -5,6 +5,8 @@ defmodule Yggdrasil.Broker do
   use GenServer
   alias Yggdrasil.Publisher.Generator
 
+  require Logger
+
   ##
   # Broker state
   #
@@ -195,9 +197,12 @@ defmodule Yggdrasil.Broker do
   defp do_subscribe(channel, pid, %Broker{} = state) do
     case start_publisher(channel, state) do
       {:ok, _} ->
+        Logger.debug("#{inspect pid} subscribed to #{inspect channel}.")
         add_subscriber(channel, pid, state)
         :ok
-      error -> error
+      error ->
+        Logger.error("#{inspect pid} couldn't subscribed to #{inspect channel}.")
+        error
     end
   end
 
@@ -220,8 +225,12 @@ defmodule Yggdrasil.Broker do
   # Unsubscribes a process `pid` to a `channel`.
   defp do_unsubscribe(channel, pid, %Broker{} = state) do
     case remove_subscriber(channel, pid, state) do
-      counter when counter > 0 -> :ok
-      _ -> stop_publisher(channel)
+      counter when counter > 0 ->
+        Logger.debug("#{inspect pid} unsubscribed to #{inspect channel}.")
+        :ok
+      _ ->
+        Logger.debug("Stopping publisher for #{inspect channel}.")
+        stop_publisher(channel)
     end
   end
 

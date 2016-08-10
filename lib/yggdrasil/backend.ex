@@ -22,8 +22,7 @@ defmodule Yggdrasil.Backend do
   ##
   # Gets the backend module.
   defp get_backend do
-    backend = Application.get_env(:y_process, :backend, @backend)
-    Application.get_env(:yggdrasil, :backend, backend)
+    Application.get_env(:y_process, :backend, @backend)
   end
 
   @doc """

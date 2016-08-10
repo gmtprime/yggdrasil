@@ -23,8 +23,7 @@ defmodule Yggdrasil.Decoder do
       def get_adapter, do: unquote(adapter)
 
       @doc """
-      Default decoder. It does not change the `message` and ignores the
-      `channel`.
+      Default decoder. Ignores the `channel` and returns the `message` as is.
       """
       def decode(_channel, message), do: message
 

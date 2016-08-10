@@ -16,7 +16,7 @@ defmodule Yggdrasil.Mixfile do
   end
 
   def application do
-    [applications: [:phoenix_pubsub, :redix_pubsub, :amqp, :postgrex],
+    [applications: [:logger, :phoenix_pubsub, :redix_pubsub, :amqp, :postgrex],
      mod: {Yggdrasil, []}]
   end
 
