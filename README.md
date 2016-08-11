@@ -1,342 +1,249 @@
 # Yggdrasil
 
+[![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![Deps Status](https://beta.hexfaktor.org/badge/all/github/gmtprime/yggdrasil.svg)](https://beta.hexfaktor.org/github/gmtprime/yggdrasil) [![Inline docs](http://inch-ci.org/github/gmtprime/yggdrasil.svg?branch=master)](http://inch-ci.org/github/gmtprime/yggdrasil)
+
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
-[![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil)
+`Yggdrasil` manages subscriptions to channels/queues in several brokers with
+the possibility to add more. Simple Redis, RabbitMQ and Postgres adapters
+are implemented. Message passing is done through
+[`YProcess`](https://github.com/gmtprime/y_process). `YProcess` allows to use
+`Phoenix.PubPub` as a pub/sub to distribute messages between processes.
 
-Yggdrasil manages subscriptions to channels/queues in some broker. Simple
-Redis, RabbitMQ and Postgres interfaces are implemented. By default the
-messages are sent to the process calling the function to subscribe to the
-channel.
-
-### Starting the feed
-
-```
-$ iex -S mix
-Erlang/OTP 18 [erts-7.0] [source] [64-bit] [smp:8:8] [async-threads:10]
-[kernel-poll:false]
-
-Interactive Elixir (1.2.0) - press Ctrl+C to exit (type h() ENTER for help)
-iex(1)> Yggdrasil.Feed.subscribe Yggdrasil.Feed,
-...(1)>                          Yggdrasil.Broker.Redis,
-...(1)>                          "trees",
-...(1)>                          &(IO.puts "#{inspect &1}")
-{:ok,
- %{broker: Yggdrasil.Broker.Redis, channel: "trees",
-    ref: #Reference<0.0.4.895>}}
-iex(2)>
-```
-
-And from `redis-cli`:
-
-```
-127.0.0.1:6379> publish "trees" "Yggdrasil"
-(integer) 1
-127.0.0.1:6379> publish "trees" "Yggdrasil"
-(integer) 1
-127.0.0.1:6379> publish "trees" "Yggdrasil"
-(integer) 1
-```
-
-You'll receive in `iex`:
-
-```
-iex(2)>
-%Yggdrasil.Proxy.Data{broker: Yggdrasil.Broker.Redis, data: \"Yggdrasil\", channel: \"trees\"}
-%Yggdrasil.Proxy.Data{broker: Yggdrasil.Broker.Redis, data: \"Yggdrasil\", channel: \"trees\"}
-%Yggdrasil.Proxy.Data{broker: Yggdrasil.Broker.Redis, data: \"Yggdrasil\", channel: \"trees\"}
-iex(2)>
-```
-
-### Using the `Yggdrasil.Subscriber.Base` behaviour
-
-The `Yggdrasil.Subscriber.Base` behaviour, defines the following callbacks:
+## Example using Redis
 
 ```elixir
-@doc """
-Initializes the subscriber state.
-"""
-@callback init(args :: term) :: {:ok, state :: term} | {:error, reason :: term}
-
-@doc """
-Updates the subscriber state.
-"""
-@callback update_state(old_state :: term, new_state :: term) ::
-  {:ok, state :: term} |
-  {:stop, reason :: term, state :: term}
-
-@doc """
-Handles the messages received from the broker.
-"""
-@callback handle_message(message :: term, state :: term) ::
-  {:ok, state :: term} |
-  {:stop, reason :: term, state :: term}
-
-@doc """
-Handles the termination of the subscriber server.
-"""
-@callback terminate(reason :: term, state :: term) :: term
+iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
+iex(2)> Yggdrasil.subscribe(channel)
 ```
 
-And by default it generates the following functions:
+Then in redis:
+
+```
+127.0.0.1:6379> PUBLISH "redis_channel" "hello"
+(integer) (1)
+```
+
+And finally if you flush in your `iex` you'll see the message received
+by the Elixir shell:
 
 ```elixir
-
-@doc """
-Starts a subscriber.
-
-Args:
-`feed` - Feed from where it'll receive the messages.
-`args` - Internal state. State of the subscriber.
-`options` - Options (GenServer options).
-
-Returns:
-GenServer output.
-"""
-@spec start_link(feed :: pid | atom | {atom, node}, args :: term,
-                 options :: term) ::
-    {:ok, pid} |
-    :ignore |
-    {:error, {:already_started, pid} | term}
-
-@doc """
-Updates the state of the subscriber.
-
-Args:
-`server` - Subscriber pid.
-`state` - New state.
-"""
-@spec register(server :: pid | atom | {atom, node}, state :: term) ::
-    :ok | :stopping
-
-@doc """
-Subscribes to a channel.
-
-Args:
-`server` - Subscriber pid.
-`channel` - Channel name
-"""
-@spec subscribe(server :: pid | atom | {atom, node}, channel :: term) :: :ok
-
-@doc """
-Unsubscribes from a channel.
-
-Args:
-`server` - Subscriber pid.
-`channel` - Channel name.
-"""
-@spec unsubscribe(server :: pid | atom | {atom, node}, channel :: term) :: :ok
-
-@doc """
-Stops the subscriber.
-
-Args:
-`server` - Subscriber pid.
-`reason` - Reason to stop (default = `:normal`)
-"""
-@spec stop(server :: pid | atom | {atom, node}, reason :: term) :: term
+iex(3> flush()
+{:Y_CAST_EVENT, "redis_channel", "hello"}
+:ok
 ```
 
-Messages from a broker come always as the `defstruct Yggdrasil.Proxy.Data`:
+Things to note:
 
-```elixir
-defmodule Yggdrasil.Proxy.Data do
-  defstruct data: nil, channel: nil, broker: nil
-  @type t :: %__MODULE__{data: term, channel: term, broker: atom}
-end
-```
+  * Every message coming from a broker (Redis, RabbitMQ, Postgres) will be like:
 
-To use this behaviour it's necessary to give a broker as argument. For example,
-a subscriber that prints messages received from a Redis channel:
+  ```elixir
+  {:Y_CAST_EVENT, channel, message}
+  ```
+
+  * The process calling `Yggdrasil.subscribe/1` will be the one that subscribes
+  to the channel
+
+## Example using `GenServer`
+
+The previous example can be wrapped inside a `GenServer`
 
 ```elixir
 defmodule Subscriber do
-  use Yggdrasil.Subscriber.Base, broker: Yggdrasil.Broker.Redis
-  alias Yggdrasil.Proxy.Data, as: Data
-
-  def handle_message(%Data{channel: channel, data: message}, state) do
-    spawn fn ->
-      IO.puts "Received: #{inspect message} from #{inspect channel}"
-    end
-    {:ok, state}
-  end
-end
-```
-
-To execute it:
-
-```
-iex(1)> {:ok, conn} = Subscriber.start_link(Yggdrasil.Feed)
-{:ok, #PID<0.350.0>}
-iex(2)> Subscriber.subscribe(conn, "trees")
-:ok
-iex(3)>
-```
-      
-If you execute the following command in Redis:
-
-```
-127.0.0.1:6379> PUBLISH "trees" "Yggdrasil!"
-```
-
-You'll get:
-
-```
-Received: "Yggdrasil!" from "trees"
-:ok
-iex(3)>
-```        
-
-And if you unsubscribe to channel `"trees"`, `Subscriber` no longer will
-receive messages from that channel:
-
-```
-iex(3)> Subscriber.unsubscribe(conn, "trees")
-:ok
-```        
-
-## New brokers
-
-You can code new brokers better suited for your needs.
-
-There are two ways of accomplish this.
-
-### Using the `Yggdrasil.Broker`
-
-This behaviour is for implementation of new brokers. You need to implement
-three functions: `subscribe/2`, `unsubscribe/1` and `handle_message/2`.
-For example, a broker made out of a `GenServer`:
-
-```elixir
-defmodule Broker do
   use GenServer
-  use Yggdrasil.Broker
-
-  ###################
-  # Client callbacks.
- 
-  def subscribe(channel, callback) do
-    {:ok, conn} = __MODULE__.start_link
-    conn |> GenServer.cast({:subscribe, channel, callback})
-    {:ok, conn}
-  end
-
-
-  def unsubscribe(conn, _channel), do:
-    __MODULE__.stop conn
-
-
-  def handle_message(_conn, _channel, :subscribed), do:
-    :subscribed
-  def handle_message(_conn, _channel, {:message, message}), do:
-    {:message, message}
-  def handle_message(_conn, _channel, _ignored), do:
-    :whatever
 
   ###################
   # Client functions.
 
-  def start_link() do
-    GenServer.start_link __MODULE__, nil, []
+  def start_link(channel, opts \\ []) do
+    GenServer.start_link(__MODULE__, channel, opts)
   end
 
-  def publish(broker, channel, message), do:
-    GenServer.cast broker, {:publish, channel, message}
-
-  def stop(broker), do:
-    GenServer.cast broker, :stop
-
-  ###################
-  # Server callbacks.
-
-  def init(_) do
-    {:ok, %{}}
+  def stop(subscriber, reason \\ :normal) do
+    GenServer.stop(subscriber, reason)
   end
 
-  def handle_cast(:stop, state), do:
-    {:stop, :normal, state}
-  def handle_cast({:subscribe, channel, callback}, state) do
-    new_state = Map.put state, channel, callback
-    callback.(:subscribed)
-    {:noreply, new_state}
+  ######################
+  # GenServer callbacks.
+
+  def init(channel) do
+    Yggdrasil.subscribe(channel)
+    {:ok, channel}
   end
-  def handle_cast({:publish, channel, message}, state) do
-    case Map.fetch state, channel do
-      :error ->
-        :ok
-      {:ok, callback} ->
-        callback.({:message, message})
-    end
+
+  def handle_info({:Y_CAST_EVENT, channel, message}, state) do
+    IO.inspect %{channel: channel, message: message}
     {:noreply, state}
   end
-  def handle_cast(_any, state), do:
-    {:noreply, state}
-```
 
-You can now use the `Broker` with the `Subscriber`.
+  def terminate(_reason, channel) do
+    Yggdrasil.unsubscribe(channel)
+    :ok
+  end
+end
+````
 
-### Using the `Yggdrasil.Broker.GenericBroker`
-
-This behaviour is used to modify the decoding of messages in an existent
-broker.
-
-Let's say we now want to assure we will have string messages coming
-from our `Broker` and only receive messages from the broker every second
-because we don't need all the published messages and we want an `:ets` called
-`:test_cache` to store the last value produced, we would do:
+So in `iex`:
 
 ```elixir
-defmodule GenericBroker do
-  use Yggdrasil.Broker.GenericBroker,
-      broker: Broker,
-      interval: 1000,
-      cache: :test_cache
+iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
+iex(2)> {:ok, subscriber} = Subscriber.start_link(channel)
+iex(3)>
+```
 
-  def decode(channel, message) do:
-    {:message, inspect(message)}
+Again in Redis:
+
+```
+127.0.0.1:6379> PUBLISH "redis_channel" "hello"
+(integer) (1)
+```
+
+And finally you'll see in your `iex` the following:
+
+```elixir
+%{channel: "redis_channel", message: "hello"}
+iex(3)>
+```
+
+## Example using `YProcess`
+
+`YProcess` is a `GenServer` wrapper with pubsub capabilities and it has
+great sinergy with `Yggdrasil`. The previous example implemented with
+`YProcess` would be:
+
+```elixir
+defmodule YSubscriber do
+  use YProcess, backend: Yggdrasil.Backend
+
+  ###################
+  # Client functions.
+
+  def start_link(channel, opts \\ []) do
+    YProcess.start_link(__MODULE__, channel, opts)
+  end
+
+  def stop(subscriber, reason \\ :normal) do
+    YProcess.stop(subscriber, reason)
+  end
+
+   #####################
+   # YProcess callbacks.
+
+   def init(channel) do
+     {:join, [channel], channel}
+   end
+
+  def handle_event(channel, message, state) do
+    IO.inspect %{channel: channel, message: message}
+    {:noreply, state}
+  end
 end
 ```
 
-Now instead of using our `Broker`, we would use `GenericBroker` with
-our `Subscriber`.
-
-## Configuration
-
-For the two brokers provided, you can use the following configuration file
-(`config/config.exs`):
+So in `iex`:
 
 ```elixir
-use Mix.Config
-
-# For Redis
-config :exredis,
-  host: "localhost",
-  port: 6379,
-  password: "MyPassword",
-  reconnect: :no_reconnect,
-  max_queue: :infinity
-
-# For RabbitMQ
-config :amqp,
-  host: "localhost",
-  port: 5672, 
-  username: "guest",
-  password: "guest",
-  virtual_host: "/"
-
-# For Postgres
-# For more information check the options for Postgrex library.
-config :postgrex, Yggdrasil.Repo,
-  hostname: "localhost",
-  username: "postgres",
-  password: "postgres",
-  database: "postgres"
+iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
+iex(2)> {:ok, y_subscriber} = YSubscriber.start_link(channel)
+iex(3)>
 ```
+
+Again in Redis:
+
+```
+127.0.0.1:6379> PUBLISH "redis_channel" "hello"
+(integer) (1)
+```
+
+And finally you'll see in your `iex` the following:
+
+```elixir
+%{channel: "redis_channel", message: "hello"}
+iex(3)>
+```
+
+## Yggdrasil Channels
+
+`Yggdrasil` channels have the name of the channel in the broker and the
+name of the module of the message decoder. A decoder module also defines
+which adapter should be used to connect to the channel.
+
+```elixir
+%Yggdrasil.Channel{channel: "channel", decoder: Yggdrasil.Decoder.Default.Redis}
+```
+The previous example will tell Yggdrasil to subscribe to the channel `"channel"`.
+The decoder module `Yggdrasil.Decoder.Default.Redis` defined Redis as the broker
+and does not change the message coming from Redis before sending it to the
+subscribers.
+
+### Decoders
+
+The current `Yggdrasil` version has the following decoder modules:
+
+  * `Yggdrasil.Decoder.Default`: Does nothing to the message and uses the
+  `Yggdrasil.Adapter.Elixir`.
+  * `Yggdrasil.Decoder.Default.Redis`: Does nothing to the message and uses the
+  `Yggdrasil.Adapter.Redis`.
+  * `Yggdrasil.Decoder.Default.RebbitMQ`: Does nothing to the message and uses the
+  `Yggdrasil.Adapter.RabbitMQ`.
+  * `Yggdrasil.Decoder.Default.Postgres`: Does nothing to the message and uses the
+  `Yggdrasil.Adapter.Postgres`.
+
+> For more information about adapters, see the Adapters section.
+
+To implement a decoder is necessary to implement the `decode/2` callback for
+`Yggdrasil.Decoder` behaviour, i.e. subscribe to a Redis channel `"test"` that
+publishes JSON. The subscribers must receive a map instead of a string with the
+JSON.
+
+```elixir
+defmodule CustomDecoder do
+  use Yggdrasil.Decoder, adapter: Yggdrasil.Adapter.Redis
+
+  def decode(_channel, message) do
+    Poison.decode!(message)
+  end
+end
+```
+
+To subscribe to this channel, clients must use the following `Yggdrasil` channel:
+
+```elixir
+%Yggdrasil.Channel{channel: "test", decoder: CustomDecoder}
+```
+
+### Adapters
+
+The current `Yggdrasil` version has the following adapters:
+
+  * `Yggdrasil.Adapter.Elixir`: Message distribution using Elixir messages.
+  * `Yggdrasil.Adapter.Redis`: Messages come from a Redis channel.
+  * `Yggdrasil.Adapter.RabbitMQ`: Messages come from a RabbitMQ queue. A
+  `channel` is a tuple that contains the exchange and the routing key:
+  `{exchange, routing_key}`.
+  * `Yggdrasil.Adapter.Postgres`: Messages come from the notifies of a
+  PostgreSQL database.
+
+Also the function `Yggdrasil.publish/2` is used to simulate published messages
+by any of the brokers.
+
+To implement a new adapter is necessary to use a `GenServer` or any wrapper over
+`GenServer`. For more information, see the source code of any of the implemented
+adapters.
 
 ## Installation
 
-Ensure yggdrasil is started before your application:
+`Yggdrasil` is available as a Hex package. To install, add it to your
+dependencies in your `mix.exs` file:
+
+```elixir
+def deps do
+  [{:yggdrasil, "~> 2.0.0"}]
+end
+```
+
+and ensure `Yggdrasil` is started before your application:
 
 ```elixir
 def application do
@@ -344,10 +251,96 @@ def application do
 end
 ```
 
-And this to install the last version from *Hex*:
+## Configuration
+
+`Yggdrasil` uses `YProcess` as a means to distribute the messages. So it is
+necessary to provide a configuration for `YProcess` if you want to use, for
+example, `Phoenix.PubSub` as your pubsub, i.e:
 
 ```elixir
-def deps do
-  [{:yggdrasil, "~> 1.2.1"}]
-end
+use Mix.Config
+
+config :y_process,
+  backend: YProcess.Backend.PhoenixPubSub,
+  name: Yggdrasil.PubSub,
+  adapter: Phoenix.PubSub.PG2,
+  options: [pool_size: 10]
 ```
+by default, `YProcess` will use `YProcess.Backend.PG2` as default backend.
+
+For `Yggdrasil`, there's only one general configuration parameter which is
+the process name registry. By default, it uses `ExReg`, which is a simple but
+rich process name registry. It is possible to use another one like `:gproc`.
+
+```elixir
+use Mix.Config
+
+config :yggdrasil,
+  registry: :gproc
+```
+
+Specific configuration parameters are as follows:
+
+  * To configure `Yggdrasil` with the provided Redis adapter
+  (`Yggdrasil.Adapter.Redis`):
+
+  ```elixir
+  use Mix.Config
+
+  config :yggdrasil,
+    redis: [host: "localhost",
+            port: 6379,
+            password: "my password"]
+  ```
+  The default Redis adapter uses `Redix`, so the configuration parameters have
+  the same name as the ones in `Redix`. By default connects to `redis://localhost`.
+
+  * To configure `Yggdrasil` with the provided RabbitMQ adapter
+  (`Yggdrasil.Adapter.RabbitMQ`):
+
+  ```elixir
+  use Mix.Config
+
+  config :yggdrasil,
+    rabbitmq: [host: "localhost",
+               port: 5672,
+               username: "guest",
+               password: "guest",
+               virtual_host: "/"]
+  ```
+  The default RabbitMQ adapter uses `AMQP`, so the configuration parameters have
+  the same name as the ones in `AMQP`. By default connects to
+  `amqp://guest:guest@localhost/`
+
+  * To configure `Yggdrasil` with the provided PostgreSQL adapter
+  (`Yggdrasil.Adapter.Postgres`):
+
+  ```elixir
+  use Mix.Config
+    postgres: [hostname: "localhost",
+               port: 5432,
+               username: "postgres",
+               password: "postgres",
+               database: "yggdrasil"]
+  ```
+  The default PostgreSQL adapter uses `Postgrex`, so the configuration parameters
+  have the same name as the ones in `Postgrex`.
+
+## Relevant projects used
+
+  * [`ExReg`](https://github.com/gmtprime/exreg): rich process name registry.
+  * [`YProcess`](https://github.com/gmtprime/y_process): wrapper over `GenServer` with pubsub capabilities.
+  * [`Redix.PubSub`](https://github.com/whatyouhide/redix_pubsub): Redis pubsub.
+  * [`AMQP`](https://github.com/pma/amqp): RabbitMQ pubsub.
+  * [`Postgrex`](https://github.com/elixir-ecto/postgrex): Postgres pubsub.
+  * [`Connection`](https://github.com/fishcakez/connection): wrapper over `GenServer` to handle connections.
+  * [`Credo`](https://github.com/rrrene/credo): static code analysis tool for the Elixir language.
+  * [`InchEx`](https://github.com/rrrene/inch_ex): Mix task that gives you hints where to improve your inline docs.
+
+## Author
+
+Alexander de Sousa.
+
+## License
+
+`Yggdrasil` is released under the MIT License. See the LICENSE file for further details.

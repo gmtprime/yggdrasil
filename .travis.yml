@@ -1,39 +1,56 @@
 language: elixir
-elixir: 1.2.1
+elixir:
+  - 1.2.6
+  - 1.3.1
 otp_release:
-    - 18.0
+  - 18.0
+  - 18.1
+  - 18.2
+  - 19.0
 services:
-    - rabbitmq
-    - redis-server
-    - postgresql
+  - rabbitmq
+  - redis-server
+  - postgresql
 before_script:
-    - psql -c 'create database travis_ci_test;' -U postgres
-    - mkdir config
-    - >
-        echo '
-        use Mix.Config
+  - psql -c 'CREATE DATABASE travis_ci_test;' -U postgres
+  - mkdir config
+  - >
+      echo '
+      use Mix.Config
 
-        config :amqp,
-          host: "localhost",
-          port: 5672,
-          username: "guest",
-          password: "guest",
-          virtual_host: "/"
+      import_config "#{Mix.env}.exs"
+      ' > config/config.exs
+  - >
+      echo '
+      use Mix.Config
 
-        config :exredis,
-          host: "localhost",
-          port: 6379,
-          password: "",
-          db: 1,
-          reconnect: :no_reconnect,
-          max_queue: :infinity
+      config :logger,
+        level: :info
 
-        config :postgrex, Yggdrasil.Repo,
-          hostname: "localhost",
-          username: "postgres",
-          password: "postgres",
-          database: "travis_ci_test"
-        ' > config/config.exs
-    - mix deps.get
+      config :yggdrasil,
+        redis: [host: "localhost",
+                port: 6379],
+        rabbitmq: [host: "localhost",
+                   port: 5672,
+                   username: "guest",
+                   password: "guest",
+                   virtual_host: "/"],
+        postgres: [hostname: "localhost",
+                   username: "postgres",
+                   password: "postgres",
+                   database: "travis_ci_test"]
+
+      config :y_process,
+        backend: YProcess.Backend.PhoenixPubSub,
+        name: Yggdrasil.PubSub,
+        adapter: Phoenix.PubSub.PG2,
+        options: [pool_size: 1]
+      ' > config/test.exs
+  - MIX_ENV=test mix deps.get
+  - MIX_ENV=test mix deps.compile
+  - MIX_ENV=test mix compile
 script:
-    - mix test
+  - MIX_ENV=test mix test
+after_script:
+  - MIX_ENV=docs mix deps.get
+  - MIX_ENV=docs mix inch.report

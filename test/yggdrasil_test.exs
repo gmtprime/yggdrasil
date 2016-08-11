@@ -1,18 +1,18 @@
 defmodule YggdrasilTest do
   use ExUnit.Case
-  doctest Yggdrasil
 
-  @proxy Yggdrasil.Proxy
-  @broker_sup Yggdrasil.MessengerSupervisor
-  @feed Yggdrasil.Feed
-  @forwarder Yggdrasil.Util.Forwarder
+  alias Yggdrasil.Channel
 
-  test "All servers are up" do
-    assert Process.whereis(@proxy) != nil
-    assert Process.whereis(@broker_sup) != nil
-    assert Process.whereis(@feed) != nil
-    if Mix.env != :prod do
-      assert Process.whereis(@forwarder) != nil
-    end
+  setup do
+    Application.ensure_started(:yggdrasil)
+  end
+
+  test "subscribe, publish and unsubscribe" do
+    ref = make_ref()
+    channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
+    assert :ok = Yggdrasil.subscribe(channel)
+    assert :ok = Yggdrasil.publish(channel, :message)
+    assert_receive {:Y_CAST_EVENT, ^ref, :message}
+    assert :ok = Yggdrasil.unsubscribe(channel)
   end
 end
