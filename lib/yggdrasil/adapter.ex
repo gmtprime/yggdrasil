@@ -9,9 +9,26 @@ defmodule Yggdrasil.Adapter do
   #   * `:channel` - Channel name.
   defstruct [:publisher, :channel]
 
+  @doc """
+  Whether the `adapter` is connected or not.
+  """
+  @callback is_connected?(pid) :: true | false
+
+  @doc """
+  Checks whether the adapter is connected or not.
+  """
+  def is_connected?(%Yggdrasil.Channel{decoder: decoder} = channel) do
+    name = Yggdrasil.Publisher.Supervisor.gen_adapter_name(channel)
+    adapter = decoder.get_adapter()
+    registry = Yggdrasil.Publisher.Generator.get_registry()
+    adapter.is_connected?({:via, registry, name})
+  end
+
   defmacro __using__(opts \\ []) do
     module = Keyword.get(opts, :module, GenServer) 
     quote do
+      @behaviour Yggdrasil.Adapter
+
       @doc """
       Starts the adapter. Receives an `Yggdrasil.Channel` that contains the
       `decoder` module and the name of the `channel`; the `publisher` PID, and
@@ -43,7 +60,13 @@ defmodule Yggdrasil.Adapter do
         end
       end
 
-      defoverridable [start_link: 2, start_link: 3, stop: 1, stop: 2]
+      @doc """
+      Whether the `_adapter` is connected or not.
+      """
+      def is_connected?(_adapter), do: true
+
+      defoverridable [start_link: 2, start_link: 3, stop: 1, stop: 2,
+                      is_connected?: 1]
     end
   end
 end

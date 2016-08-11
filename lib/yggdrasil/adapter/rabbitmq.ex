@@ -20,6 +20,11 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   end
 
   @doc false
+  def is_connected?(adapter) do
+    Connection.call(adapter, :connected?)
+  end
+
+  @doc false
   def init(%Adapter{publisher: publisher, channel: {exchange, channel}}) do
     state = %State{publisher: publisher,
                    routing_key: channel,
@@ -38,7 +43,7 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
         Process.monitor(conn.pid)
         {:ok, chan} = AMQP.Channel.open(conn)
         {:ok, %{queue: queue}} = AMQP.Queue.declare(chan, "", exclusive: true)
-        AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
+        :ok = AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
         {:ok, _consumer_tag} = AMQP.Basic.consume(chan, queue)
         new_state = %State{state | conn: conn, chan: chan}
         {:ok, new_state}
@@ -52,6 +57,14 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
     AMQP.Connection.close(conn)
     new_state = %State{state | chan: nil, conn: nil}
     {:connect, :reconnect, new_state}
+  end
+
+  @doc false
+  def handle_call(:connected?, _from, %State{conn: nil} = state) do
+    {:reply, false, state}
+  end
+  def handle_call(:connected?, _from, %State{} = state) do
+    {:reply, true, state}
   end
 
   @doc false
@@ -87,6 +100,9 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   end
 
   @doc false
+  def terminate(_reason, %State{conn: nil}) do
+    :ok
+  end
   def terminate(_reason, %State{conn: conn}) do
     AMQP.Connection.close(conn)
     :ok

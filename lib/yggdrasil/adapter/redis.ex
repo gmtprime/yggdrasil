@@ -20,12 +20,22 @@ defmodule Yggdrasil.Adapter.Redis do
   end
 
   @doc false
+  def is_connected?(adapter) do
+    GenServer.call(adapter, :connected?)
+  end
+
+  @doc false
   def init(%Adapter{publisher: publisher, channel: channel}) do
     options = redis_options()
     {:ok, conn} = Redix.PubSub.start_link(options)
     state = %State{publisher: publisher, conn: conn}
     :ok = Redix.PubSub.psubscribe(conn, channel, self())
     {:ok, state}
+  end
+
+  @doc false
+  def handle_call(:connected?, _from, %State{} = state) do
+    {:reply, true, state}
   end
 
   @doc false

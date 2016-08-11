@@ -20,6 +20,11 @@ defmodule Yggdrasil.Adapter.Postgres do
   end
 
   @doc false
+  def is_connected?(adapter) do
+    GenServer.call(adapter, :connected?)
+  end
+
+  @doc false
   def init(%Adapter{publisher: publisher, channel: channel}) do
     options = postgres_options()
     {:ok, conn} = Postgrex.Notifications.start_link(options)
@@ -29,6 +34,11 @@ defmodule Yggdrasil.Adapter.Postgres do
                    conn: conn,
                    ref: ref}
     {:ok, state}
+  end
+
+  @doc false
+  def handle_call(:connected?, _from, %State{} = state) do
+    {:reply, true, state}
   end
 
   @doc false

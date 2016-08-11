@@ -10,7 +10,7 @@ defmodule Yggdrasil.Adapter.Elixir do
 
   ##
   # State for the Elixir adapter. 
-  defstruct [:channel, :publisher]
+  defstruct [:channel, :publisher, :connected?, :pid]
   alias __MODULE__, as: State
 
   ##
@@ -21,10 +21,48 @@ defmodule Yggdrasil.Adapter.Elixir do
   end
 
   @doc false
+  def is_connected?(adapter) do
+    task = Task.async(fn ->
+      case YProcess.call(adapter, {:connected?, self()}) do
+        true -> true
+        false ->
+          receive do
+            :connected? -> true
+            _ -> false
+          after
+            5000 -> false
+          end
+      end
+    end)
+    Task.await(task)
+  end
+
+  @doc false
   def init(%Adapter{publisher: publisher, channel: channel}) do
     adapter_channel = get_channel_name(channel)
-    state = %State{channel: adapter_channel, publisher: publisher}
+    state = %State{channel: adapter_channel, publisher: publisher,
+                   connected?: false, pid: nil}
     {:join, [adapter_channel], state}
+  end
+
+  @doc false
+  def ready(:joined, _channels, %State{pid: pid} = state) when is_pid(pid) do
+    send pid, :connected?
+    new_state = %State{state | connected?: true, pid: nil}
+    {:noreply, new_state}
+  end
+  def ready(:joined, _channels, %State{} = state) do
+    new_state = %State{state | connected?: true, pid: nil}
+    {:noreply, new_state}
+  end
+
+  @doc false
+  def handle_call({:connected?, _}, _, %State{connected?: true} = state) do
+    {:reply, true, state} 
+  end
+  def handle_call({:connected?, pid}, _, %State{connected?: false} = state) do
+    new_state = %State{state | pid: pid}
+    {:reply, false, new_state}
   end
 
   @doc false

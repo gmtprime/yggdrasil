@@ -17,4 +17,4 @@
   "redix": {:hex, :redix, "0.4.0", "c8cfad755252e5441c4119437ba3a8989518af7aa90dbd6f4ff7207b72e4a967", [:mix], [{:connection, "~> 1.0.0", [hex: :connection, optional: false]}]},
   "redix_pubsub": {:hex, :redix_pubsub, "0.1.1", "7b6a7d4f5c148798ac268aa17083dbcd1cad2bce10dbadf5ec1cbedc2b91a15f", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:redix, "~> 0.4.0", [hex: :redix, optional: false]}]},
   "uuid": {:hex, :uuid, "1.1.4", "36c7734e4c8e357f2f67ba57fb61799d60c20a7f817b104896cca64b857e3686", [:mix], []},
-  "y_process": {:hex, :y_process, "0.1.5", "45438c1ed1e16441a1dc02f52bc53d59c116db33b5071cf98c62a823cd1e4f86", [:mix], [{:phoenix_pubsub, "~> 1.0", [hex: :phoenix_pubsub, optional: false]}]}}
+  "y_process": {:hex, :y_process, "0.2.0", "8b960a95f2040367f51c5888e937213867e65327f7d2e6411e05279f8c155639", [:mix], [{:phoenix_pubsub, "~> 1.0", [hex: :phoenix_pubsub, optional: false]}]}}

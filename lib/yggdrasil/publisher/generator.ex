@@ -37,13 +37,15 @@ defmodule Yggdrasil.Publisher.Generator do
   def start_publisher(generator, %Channel{} = channel) do
     registry = get_registry()
     name = gen_supervisor_name(channel)
-    case apply(registry, :whereis_name, [name]) do
+    {:ok, pid} = case apply(registry, :whereis_name, [name]) do
       :undefined ->
         via_tuple = {:via, registry, name}
         Supervisor.start_child(generator, [channel, [name: via_tuple]])
       pid ->
         {:ok, pid}
     end
+    true = Yggdrasil.Adapter.is_connected?(channel)
+    {:ok, pid}
   end
 
   @doc """

@@ -71,7 +71,8 @@ defmodule Yggdrasil.Publisher.Supervisor do
 
   ##
   # Generates the adapter name from a `channel`.
-  defp gen_adapter_name(%Channel{} = channel) do
+  @doc false
+  def gen_adapter_name(%Channel{} = channel) do
     gen_name(@adapter, channel)
   end
 

@@ -20,11 +20,11 @@ defmodule Yggdrasil.PublisherTest do
     channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
     
     {:ok, client} = TestClient.start_link(self(), ref)
-    assert_receive :ready, 600
+    assert_receive :ready, 500
     {:ok, publisher} = Publisher.start_link(channel)
     
     assert :ok = Publisher.sync_notify(publisher, ref, :message)
-    assert_receive {:event, ^ref, :message}
+    assert_receive {:event, ^ref, :message}, 500
     
     Publisher.stop(publisher)
     TestClient.stop(client)
@@ -35,11 +35,11 @@ defmodule Yggdrasil.PublisherTest do
     channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
     
     {:ok, client} = TestClient.start_link(self(), ref)
-    assert_receive :ready, 600
+    assert_receive :ready, 500
     {:ok, publisher} = Publisher.start_link(channel)
     
     assert :ok = Publisher.async_notify(publisher, ref, :message)
-    assert_receive {:event, ^ref, :message}
+    assert_receive {:event, ^ref, :message}, 500
     
     Publisher.stop(publisher)
     TestClient.stop(client)
