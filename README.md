@@ -239,9 +239,12 @@ dependencies in your `mix.exs` file:
 
 ```elixir
 def deps do
-  [{:yggdrasil, "~> 2.0.0"}]
+  [{:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
+   {:yggdrasil, "~> 2.0.0"}]
 end
 ```
+
+> Overriding `:amqp_client` dependency is necessary in order to use `Yggdrasil` with Erlang 19.
 
 and ensure `Yggdrasil` is started before your application:
 
