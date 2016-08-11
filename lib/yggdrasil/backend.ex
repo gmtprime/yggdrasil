@@ -17,7 +17,7 @@ defmodule Yggdrasil.Backend do
   alias Yggdrasil.Broker
 
   @broker_name Yggdrasil.Broker
-  @backend YProcess.Backend.PhoenixPubSub
+  @backend YProcess.Backend.PG2
 
   ##
   # Gets the backend module.
