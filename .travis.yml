@@ -22,7 +22,6 @@ before_script:
         level: :info
 
       config :yggdrasil,
-        backend: YProcess.Backend.PG2,
         redis: [host: "localhost",
                 port: 6379],
         rabbitmq: [host: "localhost",
@@ -34,7 +33,13 @@ before_script:
                    username: "postgres",
                    password: "postgres",
                    database: "travis_ci_test"]
-      ' > config/config.exs
+
+      config :y_process,
+        backend: YProcess.Backend.PhoenixPubSub,
+        name: Yggdrasil.PubSub,
+        adapter: Phoenix.PubSub.PG2,
+        options: [pool_size: 1]
+      ' > config/test.exs
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
   - MIX_ENV=test mix compile
