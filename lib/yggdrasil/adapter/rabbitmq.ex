@@ -72,28 +72,28 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
     {:noreply, state}
   end
   def handle_info(
-    {:basic_deliver, message, %{consumer_tag: tag, redelivered: redelivered}},
+    {:basic_deliver, message, info},
     %State{
       publisher: publisher,
       exchange: exchange,
-      routing_key: routing_key,
       chan: chan
     } = state
   ) do
+    %{delivery_tag: tag, redelivered: redelivered, routing_key: real} = info
     try do
-      AMQP.Basic.ack(chan, tag)
-      Publisher.sync_notify(publisher, {exchange, routing_key}, message)
-      {:noreply, state}
+      :ok = AMQP.Basic.ack(chan, tag)
+      Publisher.sync_notify(publisher, {exchange, real}, message)
     rescue
       _ ->
-        AMQP.Basic.reject(chan, tag, requeue: not redelivered)
+        :ok = AMQP.Basic.reject(chan, tag, requeue: not redelivered)
     end
+    {:noreply, state}
   end
   def handle_info({:basic_cancel, _}, %State{} = state) do
-    {:disconnect, :cancel, :cancel, state}
+    {:disconnect, :cancel, state}
   end
   def handle_info({:DOWN, _, :process, _pid, _reason}, %State{} = state) do
-    {:disconnect, :down, :down, state}
+    {:disconnect, :down, state}
   end
   def handle_info(_, %State{} = state) do
     {:noreply, state}
