@@ -45,7 +45,7 @@ defmodule Yggdrasil do
     to the channel
 
 
-  ## Example using `RabbitMQ`
+  ## Example using RabbitMQ
 
   First you must have the RabbitMQ exchange created. Otherwise the client won't
   connect. Channels for the RabbitMQ adapter use a tupple instead of a string:
@@ -89,7 +89,7 @@ defmodule Yggdrasil do
   :ok
   ```
 
-  ## Example using `GenServer`
+  ## Example using GenServer
 
   The previous example can be wrapped inside a `GenServer`
 
@@ -151,7 +151,7 @@ defmodule Yggdrasil do
   iex(3)>
   ```
 
-  ## Example using `YProcess`
+  ## Example using YProcess
 
   `YProcess` is a `GenServer` wrapper with pubsub capabilities and it has
   great sinergy with `Yggdrasil`. The previous example implemented with
