@@ -1,6 +1,5 @@
 defmodule Yggdrasil do
   @moduledoc """
-
   > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
   > Norse cosmology.
 
@@ -44,6 +43,51 @@ defmodule Yggdrasil do
 
     * The process calling `Yggdrasil.subscribe/1` will be the one that subscribes
     to the channel
+
+
+  ## Example using `RabbitMQ`
+
+  First you must have the RabbitMQ exchange created. Otherwise the client won't
+  connect. Channels for the RabbitMQ adapter use a tupple instead of a string:
+
+  ```elixir
+  {"exchange_name", "routing_key"}
+  ```
+
+  where the exchange should be of type `:topic`. This would allow you to connect
+  to a channel using a routing key like `"*.error"` where messages with routing
+  keys like `"miami.error"` and `"barcelona.error"` would match the routing key
+  of the `Yggdrasil` channel.
+
+  Let's say you want to connect to the exchange `"amq.topic"` (created by default)
+  with the previous routing key (`"*.error"`) where you'll receive errors from all
+  the servers:
+
+  ```elixir
+  iex(1)> channel = %Yggdrasil.Channel{channel: {"amq.topic", "*.error"},
+  ...(1)>                              decoder: Yggdrasil.Decoder.Default.RabbitMQ}
+  iex(2)> Yggdrasil.subscribe(channel)
+  ```
+
+  Then using `AMQP` library, publish some messages in RabbitMQ:
+
+  ```elixir
+  iex(3)> options = Application.get_env(:yggdrasil, :rabbitmq, [])
+  iex(4)> {:ok, conn} = AMQP.Connection.open(options)
+  iex(5)> {:ok, chan} = AMQP.Channel.open(conn)
+  iex(6)> AMQP.Basic.publish(chan, "amq.topic", "miami.error", "Error from Miami")
+  iex(7)> AMQP.Basic.publish(chan, "amq.topic", "barcelona.error", "Error from Barcelona")
+  ```
+
+  And finally if you flush in your `iex` you'll see the message received
+  by the Elixir shell:
+
+  ```elixir
+  iex(8> flush()
+  {:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Miami"}
+  {:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Barcelona"}
+  :ok
+  ```
 
   ## Example using `GenServer`
 
@@ -209,6 +253,14 @@ defmodule Yggdrasil do
   end
   ```
 
+  > **Important**: The channel received by the `decode/2` function might be
+  > different than the channel the client is subscribed. For example, with the
+  > RabbitMQ adapter you can subscribe to the channel `{"amq.topic", "*.error"}`,
+  > but if the routing key of the received message is `"barcelona.error"`, then
+  > the channel received by this function will be `{"amq.topic", "barcelona.error"}`
+  > instead of `{"amq.topic", "*.error"}`. It is a good idea to include this
+  > channel to the decoded message in order to know its real procedence.
+
   To subscribe to this channel, clients must use the following `Yggdrasil` channel:
 
   ```elixir
@@ -241,7 +293,7 @@ defmodule Yggdrasil do
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 2.0.0"}]
+    [{:yggdrasil, "~> 2.0.1"}]
   end
   ```
 
