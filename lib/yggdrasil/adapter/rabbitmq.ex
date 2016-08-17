@@ -42,10 +42,7 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
     case AMQP.Connection.open(options) do
       {:ok, conn} ->
         Process.monitor(conn.pid)
-        {:ok, chan} = AMQP.Channel.open(conn)
-        {:ok, %{queue: queue}} = AMQP.Queue.declare(chan, "", exclusive: true)
-        :ok = AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
-        {:ok, _consumer_tag} = AMQP.Basic.consume(chan, queue)
+        {:ok, chan} = consume(conn, exchange, routing_key)
         new_state = %State{state | conn: conn, chan: chan}
         metadata = [channel: {exchange, routing_key}]
         Logger.debug("Connected to RabbitMQ #{inspect metadata}")
@@ -55,6 +52,16 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
         Logger.error("Cannot connect to RabbitMQ #{inspect metadata}")
         {:backoff, 1000, state}
     end
+  end
+
+  ##
+  # Starts consuming from an exchange.
+  defp consume(conn, exchange, routing_key) do
+    {:ok, chan} = AMQP.Channel.open(conn)
+    {:ok, %{queue: queue}} = AMQP.Queue.declare(chan, "", exclusive: true)
+    :ok = AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
+    {:ok, _} = AMQP.Basic.consume(chan, queue)
+    {:ok, chan}
   end
 
   @doc false
