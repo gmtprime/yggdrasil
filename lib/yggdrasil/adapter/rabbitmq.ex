@@ -4,6 +4,7 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   """
   use Connection
   use Yggdrasil.Adapter, module: Connection
+  require Logger
 
   alias Yggdrasil.Adapter 
   alias Yggdrasil.Publisher
@@ -46,15 +47,24 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
         :ok = AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
         {:ok, _consumer_tag} = AMQP.Basic.consume(chan, queue)
         new_state = %State{state | conn: conn, chan: chan}
+        metadata = [channel: {exchange, routing_key}]
+        Logger.debug("Connected to RabbitMQ #{inspect metadata}")
         {:ok, new_state}
-      {:error, _} ->
+      {:error, error} ->
+        metadata = [channel: {exchange, routing_key}, error: error]
+        Logger.error("Cannot connect to RabbitMQ #{inspect metadata}")
         {:backoff, 1000, state}
     end
   end
 
   @doc false
-  def disconnect(_info, %State{conn: conn} = state) do
+  def disconnect(
+    _info,
+    %State{conn: conn, exchange: exchange, routing_key: routing_key} = state
+  ) do
     AMQP.Connection.close(conn)
+    metadata = [channel: {exchange, routing_key}]
+    Logger.debug("Disconnected from RabbitMQ #{inspect metadata}")
     new_state = %State{state | chan: nil, conn: nil}
     {:connect, :reconnect, new_state}
   end
@@ -100,11 +110,16 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   end
 
   @doc false
-  def terminate(_reason, %State{conn: nil}) do
+  def terminate(
+    _reason,
+    %State{conn: nil, exchange: exchange, routing_key: routing_key}
+  ) do
+    metadata = [channel: {exchange, routing_key}]
+    Logger.debug("Terminated RabbitMQ connection #{inspect metadata}")
     :ok
   end
-  def terminate(_reason, %State{conn: conn}) do
+  def terminate(reason, %State{conn: conn} = state) do
     AMQP.Connection.close(conn)
-    :ok
+    terminate(reason, %State{state | conn: nil})
   end
 end

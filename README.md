@@ -291,7 +291,7 @@ dependencies in your `mix.exs` file:
 ```elixir
 def deps do
   [{:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
-   {:yggdrasil, "~> 2.0.1"}]
+   {:yggdrasil, "~> 2.0.2"}]
 end
 ```
 
