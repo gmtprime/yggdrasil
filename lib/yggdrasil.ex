@@ -84,8 +84,8 @@ defmodule Yggdrasil do
 
   ```elixir
   iex(8> flush()
-  {:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Miami"}
-  {:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Barcelona"}
+  {:Y_CAST_EVENT, {"amq.topic", "*.error"}, "Error from Miami"}
+  {:Y_CAST_EVENT, {"amq.topic", "*.error"}, "Error from Barcelona"}
   :ok
   ```
 
@@ -126,7 +126,7 @@ defmodule Yggdrasil do
       :ok
     end
   end
-  ````
+  ```
 
   So in `iex`:
 
