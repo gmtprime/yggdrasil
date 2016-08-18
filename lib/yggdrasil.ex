@@ -293,7 +293,7 @@ defmodule Yggdrasil do
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 2.0.2"}]
+    [{:yggdrasil, "~> 2.0.3"}]
   end
   ```
 
