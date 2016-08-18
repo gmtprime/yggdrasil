@@ -24,9 +24,13 @@ defmodule Yggdrasil.Publisher.Generator do
   Stops a `generator` with a `reason`. By default is  `reason` is `:normal`.
   """
   def stop(generator, reason \\ :normal) do
-    for child <- Supervisor.which_children(generator) do
-      {_, pid, _, _} = child
-      apply(@supervisor, :stop, [pid, reason])
+    try do
+      for child <- Supervisor.which_children(generator) do
+        {_, pid, _, _} = child
+        apply(@supervisor, :stop, [pid, reason])
+      end
+    catch
+      _, _ -> :ok
     end
     Supervisor.stop(generator, reason)
   end

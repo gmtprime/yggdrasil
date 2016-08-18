@@ -27,7 +27,7 @@ defmodule Yggdrasil.Publisher.Supervisor do
   Stops the `supervisor`.
   """
   def stop(supervisor) do
-    if Process.alive?(supervisor), do: stop(supervisor, :normal), else: :ok
+    stop(supervisor, :normal)
   end
 
   @doc """
@@ -40,8 +40,8 @@ defmodule Yggdrasil.Publisher.Supervisor do
         apply(module, :stop, [child, reason])
       end
       Supervisor.stop(supervisor, reason)
-    rescue
-      _ -> :ok
+    catch
+      _, _ -> :ok
     end
   end
   def stop(name, reason) do
