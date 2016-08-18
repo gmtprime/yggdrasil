@@ -6,17 +6,19 @@
 > Norse cosmology.
 
 `Yggdrasil` manages subscriptions to channels/queues in several brokers with
-the possibility to add more. Simple Redis, RabbitMQ and Postgres adapters
+the possibility to add more. Simple Redis, RabbitMQ and PostgreSQL adapters
 are implemented. Message passing is done through
 [`YProcess`](https://github.com/gmtprime/y_process). `YProcess` allows to use
 `Phoenix.PubPub` as a pub/sub to distribute messages between processes.
 
-## Example using Redis
+## Example using `Redis`
 
 ```elixir
 iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
 iex(2)> Yggdrasil.subscribe(channel)
 ```
+
+> By default, the Redis adapter connects to `"redis://localhost:6379"`.
 
 Then in redis:
 
@@ -36,7 +38,7 @@ iex(3> flush()
 
 Things to note:
 
-  * Every message coming from a broker (Redis, RabbitMQ, Postgres) will be like:
+  * Every message coming from a broker (Redis, RabbitMQ, PostgreSQL) will be like:
 
   ```elixir
   {:Y_CAST_EVENT, channel, message}
@@ -68,6 +70,9 @@ iex(1)> channel = %Yggdrasil.Channel{channel: {"amq.topic", "*.error"}, decoder:
 iex(2)> Yggdrasil.subscribe(channel)
 ```
 
+> By default, the RabbitMQ adapter connects to
+> `"amqp://guest:guest@localhost:5672/"`
+
 Then using `AMQP` library, publish some messages in RabbitMQ:
 
 ```elixir
@@ -83,14 +88,55 @@ by the Elixir shell:
 
 ```elixir
 iex(8> flush()
-{:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Miami"}
-{:Y_CAST_EVENT, {"yggdrasil.logs", "*.error"}, "Error from Barcelona"}
+{:Y_CAST_EVENT, {"amq.topic", "*.error"}, "Error from Miami"}
+{:Y_CAST_EVENT, {"amq.topic", "*.error"}, "Error from Barcelona"}
+:ok
+```
+
+## Example using `PostgreSQL`
+
+For this example, it's necessary to provide a valid configuration for the
+PostgreSQL adapter i.e:
+
+```elixir
+use Mix.Config
+
+config :yggdrasil,
+  postgres: [hostname: "localhost",
+             port: 5432,
+             username: "yggdrasil_test",
+             password: "yggdrasil_test",
+             database: "yggdrasil_test"]
+```
+
+This will connect the adapter to the database `yggdrasil_test` with the user
+`yggdrasil_test` and the password `yggdrasil_test` on `localhost:5432`.
+
+```elixir
+iex(1)> channel = %Yggdrasil.Channel{channel: "postgres_channel", decoder: Yggdrasil.Decoder.Default.Postgres}
+iex(2)> Yggdrasil.subscribe(channel)
+```
+
+Then in PostgreSQL:
+
+```
+yggdrasil_test=> NOTIFY postgres_channel, 'hello'
+NOTIFY
+```
+
+And finally if you flush in `iex` you'll see the message received by the Elixir
+shell:
+
+```elixir
+iex(8> flush()
+{:Y_CAST_EVENT, "postgres_channel", "hello"}
 :ok
 ```
 
 ## Example using `GenServer`
 
-The previous example can be wrapped inside a `GenServer`
+Any of the previous examples can be wrapped inside a `GenServer`, in this case
+it is Redis:
 
 ```elixir
 defmodule Subscriber do
@@ -125,7 +171,7 @@ defmodule Subscriber do
     :ok
   end
 end
-````
+```
 
 So in `iex`:
 
@@ -255,8 +301,8 @@ end
 > RabbitMQ adapter you can subscribe to the channel `{"amq.topic", "*.error"}`,
 > but if the routing key of the received message is `"barcelona.error"`, then
 > the channel received by this function will be `{"amq.topic", "barcelona.error"}`
-> instead of `{"amq.topic", "*.error"}`. It is a good idea to include this channel to the
-> decoded message in order to know its real procedence.
+> instead of `{"amq.topic", "*.error"}`. It is a good idea to include this
+> channel to the decoded message in order to know its real procedence.
 
 To subscribe to this channel, clients must use the following `Yggdrasil` channel:
 
@@ -291,11 +337,12 @@ dependencies in your `mix.exs` file:
 ```elixir
 def deps do
   [{:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
-   {:yggdrasil, "~> 2.0.4"}]
+   {:yggdrasil, "~> 2.0.5"}]
 end
 ```
 
-> Overriding `:amqp_client` dependency is necessary in order to use `Yggdrasil` with Erlang 19.
+> Overriding `:amqp_client` dependency is necessary in order to use `Yggdrasil`
+> with Erlang 19.
 
 and ensure `Yggdrasil` is started before your application:
 
@@ -371,6 +418,8 @@ Specific configuration parameters are as follows:
 
   ```elixir
   use Mix.Config
+
+  config :yggdrasil,
     postgres: [hostname: "localhost",
                port: 5432,
                username: "postgres",
@@ -386,7 +435,7 @@ Specific configuration parameters are as follows:
   * [`YProcess`](https://github.com/gmtprime/y_process): wrapper over `GenServer` with pubsub capabilities.
   * [`Redix.PubSub`](https://github.com/whatyouhide/redix_pubsub): Redis pubsub.
   * [`AMQP`](https://github.com/pma/amqp): RabbitMQ pubsub.
-  * [`Postgrex`](https://github.com/elixir-ecto/postgrex): Postgres pubsub.
+  * [`Postgrex`](https://github.com/elixir-ecto/postgrex): PostgreSQL pubsub.
   * [`Connection`](https://github.com/fishcakez/connection): wrapper over `GenServer` to handle connections.
   * [`Credo`](https://github.com/rrrene/credo): static code analysis tool for the Elixir language.
   * [`InchEx`](https://github.com/rrrene/inch_ex): Mix task that gives you hints where to improve your inline docs.

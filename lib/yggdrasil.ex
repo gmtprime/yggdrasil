@@ -4,7 +4,7 @@ defmodule Yggdrasil do
   > Norse cosmology.
 
   `Yggdrasil` manages subscriptions to channels/queues in several brokers with
-  the possibility to add more. Simple Redis, RabbitMQ and Postgres adapters
+  the possibility to add more. Simple Redis, RabbitMQ and PostgreSQL adapters
   are implemented. Message passing is done through
   [`YProcess`](https://github.com/gmtprime/y_process). `YProcess` allows to use
   `Phoenix.PubPub` as a pub/sub to distribute messages between processes.
@@ -12,10 +12,11 @@ defmodule Yggdrasil do
   ## Example using Redis
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel",
-  ...(1)>                              decoder: Yggdrasil.Decoder.Default.Redis}
+  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
   iex(2)> Yggdrasil.subscribe(channel)
   ```
+
+  > By default, the Redis adapter connects to `"redis://localhost:6379"`.
 
   Then in redis:
 
@@ -35,7 +36,8 @@ defmodule Yggdrasil do
 
   Things to note:
 
-    * Every message coming from a broker (Redis, RabbitMQ, Postgres) will be like:
+    * Every message coming from a broker (Redis, RabbitMQ, PostgreSQL) will be
+    like:
 
     ```elixir
     {:Y_CAST_EVENT, channel, message}
@@ -43,7 +45,6 @@ defmodule Yggdrasil do
 
     * The process calling `Yggdrasil.subscribe/1` will be the one that subscribes
     to the channel
-
 
   ## Example using RabbitMQ
 
@@ -64,10 +65,12 @@ defmodule Yggdrasil do
   the servers:
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{channel: {"amq.topic", "*.error"},
-  ...(1)>                              decoder: Yggdrasil.Decoder.Default.RabbitMQ}
+  iex(1)> channel = %Yggdrasil.Channel{channel: {"amq.topic", "*.error"}, decoder: Yggdrasil.Decoder.Default.RabbitMQ}
   iex(2)> Yggdrasil.subscribe(channel)
   ```
+
+  > By default, the RabbitMQ adapter connects to
+  > `"amqp://guest:guest@localhost:5672/"`
 
   Then using `AMQP` library, publish some messages in RabbitMQ:
 
@@ -89,9 +92,50 @@ defmodule Yggdrasil do
   :ok
   ```
 
+  ## Example using PostgreSQL
+
+  For this example, it's necessary to provide a valid configuration for the
+  PostgreSQL adapter i.e:
+
+  ```elixir
+  use Mix.Config
+
+  config :yggdrasil,
+    postgres: [hostname: "localhost",
+              port: 5432,
+              username: "yggdrasil_test",
+              password: "yggdrasil_test",
+              database: "yggdrasil_test"]
+  ```
+
+  This will connect the adapter to the database `yggdrasil_test` with the user
+  `yggdrasil_test` and the password `yggdrasil_test` on `localhost:5432`.
+
+  ```elixir
+  iex(1)> channel = %Yggdrasil.Channel{channel: "postgres_channel", decoder: Yggdrasil.Decoder.Default.Postgres}
+  iex(2)> Yggdrasil.subscribe(channel)
+  ```
+
+  Then in PostgreSQL:
+
+  ```
+  yggdrasil_test=> NOTIFY postgres_channel, 'hello'
+  NOTIFY
+  ```
+
+  And finally if you flush in `iex` you'll see the message received by the Elixir
+  shell:
+
+  ```elixir
+  iex(8> flush()
+  {:Y_CAST_EVENT, "postgres_channel", "hello"}
+  :ok
+  ```
+
   ## Example using GenServer
 
-  The previous example can be wrapped inside a `GenServer`
+  Any of the previous examples can be wrapped inside a `GenServer`, in this case
+  it is Redis:
 
   ```elixir
   defmodule Subscriber do
@@ -131,8 +175,7 @@ defmodule Yggdrasil do
   So in `iex`:
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel",
-  ...(1)>                              decoder: Yggdrasil.Decoder.Default.Redis}
+  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
   iex(2)> {:ok, subscriber} = Subscriber.start_link(channel)
   iex(3)>
   ```
@@ -189,8 +232,7 @@ defmodule Yggdrasil do
   So in `iex`:
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel",
-  ...(1)>                              decoder: Yggdrasil.Decoder.Default.Redis}
+  iex(1)> channel = %Yggdrasil.Channel{channel: "redis_channel", decoder: Yggdrasil.Decoder.Default.Redis}
   iex(2)> {:ok, y_subscriber} = YSubscriber.start_link(channel)
   iex(3)>
   ```
@@ -293,9 +335,13 @@ defmodule Yggdrasil do
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 2.0.4"}]
+    [{:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
+    {:yggdrasil, "~> 2.0.5"}]
   end
   ```
+
+  > Overriding `:amqp_client` dependency is necessary in order to use `Yggdrasil`
+  > with Erlang 19.
 
   and ensure `Yggdrasil` is started before your application:
 
@@ -371,6 +417,8 @@ defmodule Yggdrasil do
 
     ```elixir
     use Mix.Config
+
+    config :yggdrasil,
       postgres: [hostname: "localhost",
                 port: 5432,
                 username: "postgres",
