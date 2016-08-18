@@ -4,13 +4,14 @@ defmodule Yggdrasil.Adapter.Elixir do
   """
   use YProcess, backend: Yggdrasil.Backend 
   use Yggdrasil.Adapter, module: YProcess
+  require Logger
 
   alias Yggdrasil.Adapter
   alias Yggdrasil.Publisher
 
   ##
   # State for the Elixir adapter. 
-  defstruct [:channel, :publisher, :connected?, :pid]
+  defstruct [:channel, :publisher, :ready, :parent]
   alias __MODULE__, as: State
 
   ##
@@ -22,47 +23,39 @@ defmodule Yggdrasil.Adapter.Elixir do
 
   @doc false
   def is_connected?(adapter) do
-    task = Task.async(fn ->
-      case YProcess.call(adapter, {:connected?, self()}) do
-        true -> true
-        false ->
-          receive do
-            :connected? -> true
-            _ -> false
-          after
-            5000 -> false
-          end
-      end
-    end)
-    Task.await(task)
+    YProcess.call(adapter, :connected?)
   end
 
   @doc false
   def init(%Adapter{publisher: publisher, channel: channel}) do
     adapter_channel = get_channel_name(channel)
     state = %State{channel: adapter_channel, publisher: publisher,
-                   connected?: false, pid: nil}
+                   ready: false, parent: nil}
     {:join, [adapter_channel], state}
   end
 
   @doc false
-  def ready(:joined, _channels, %State{pid: pid} = state) when is_pid(pid) do
-    send pid, :connected?
-    new_state = %State{state | connected?: true, pid: nil}
-    {:noreply, new_state}
-  end
-  def ready(:joined, _channels, %State{} = state) do
-    new_state = %State{state | connected?: true, pid: nil}
-    {:noreply, new_state}
+  def ready(:joined, channels, %State{parent: pid} = state) do
+    if not is_nil(pid), do: send pid, true
+    channel = channels |> List.first |> elem(1)
+    Logger.debug("Connected to Elixir #{inspect [channel: channel]}")
+    {:noreply, %State{state | ready: true, parent: nil}}
   end
 
   @doc false
-  def handle_call({:connected?, _}, _, %State{connected?: true} = state) do
-    {:reply, true, state} 
+  def handle_call(:connected?, from, %State{ready: false} = state) do
+    pid = spawn_link fn ->
+      result = receive do
+        result -> result
+      after
+        5000 -> false
+      end
+      YProcess.reply(from, result)
+    end
+    {:noreply, %State{state | parent: pid}}
   end
-  def handle_call({:connected?, pid}, _, %State{connected?: false} = state) do
-    new_state = %State{state | pid: pid}
-    {:reply, false, new_state}
+  def handle_call(:connected?, _from, %State{ready: true} = state) do
+    {:reply, true, state} 
   end
 
   @doc false

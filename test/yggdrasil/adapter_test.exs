@@ -37,6 +37,7 @@ defmodule Yggdrasil.AdapterTest do
     {:ok, client} = TestClient.start_link(self(), ref)
     {:ok, publisher} = Publisher.start_link(channel)
     {:ok, adapter} = Adapter.start_link(channel, publisher)
+    :true = Adapter.is_connected?(adapter)
     {:ok, producer} = TestProducer.start_link(channel_name)
     assert_receive :ready, 500
 
