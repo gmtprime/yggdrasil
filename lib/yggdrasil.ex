@@ -336,7 +336,7 @@ defmodule Yggdrasil do
   ```elixir
   def deps do
     [{:amqp_client, git: "https://github.com/jbrisbin/amqp_client.git", override: true},
-    {:yggdrasil, "~> 2.0.5"}]
+    {:yggdrasil, "~> 2.0.6"}]
   end
   ```
 
