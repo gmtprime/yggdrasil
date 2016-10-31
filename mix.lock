@@ -2,7 +2,7 @@
   "amqp_client": {:git, "https://github.com/jbrisbin/amqp_client.git", "d50aec00b94f0766a048b4eceaf25ddfdeeb1d86", []},
   "bunt": {:hex, :bunt, "0.1.6", "5d95a6882f73f3b9969fdfd1953798046664e6f77ec4e486e6fafc7caad97c6f", [:mix], []},
   "connection": {:hex, :connection, "1.0.4", "a1cae72211f0eef17705aaededacac3eb30e6625b04a6117c1b2db6ace7d5976", [:mix], []},
-  "credo": {:hex, :credo, "0.4.11", "03a64e9d53309b7132556284dda0be57ba1013885725124cfea7748d740c6170", [:mix], [{:bunt, "~> 0.1.6", [hex: :bunt, optional: false]}]},
+  "credo": {:hex, :credo, "0.5.1", "2395862b94628cadf0f5c68975c1440393f425b955f1e70ce1aea267e00187a1", [:mix], [{:bunt, "~> 0.1.6", [hex: :bunt, optional: false]}]},
   "db_connection": {:hex, :db_connection, "1.0.0-rc.5", "1d9ab6e01387bdf2de7a16c56866971f7c2f75aea7c69cae2a0346e4b537ae0d", [:mix], [{:connection, "~> 1.0.2", [hex: :connection, optional: false]}, {:poolboy, "~> 1.5", [hex: :poolboy, optional: true]}, {:sbroker, "~> 1.0.0-beta.3", [hex: :sbroker, optional: true]}]},
   "decimal": {:hex, :decimal, "1.1.2", "79a769d4657b2d537b51ef3c02d29ab7141d2b486b516c109642d453ee08e00c", [:mix], []},
   "earmark": {:hex, :earmark, "1.0.1", "2c2cd903bfdc3de3f189bd9a8d4569a075b88a8981ded9a0d95672f6e2b63141", [:mix], []},
@@ -17,4 +17,5 @@
   "redix": {:hex, :redix, "0.4.0", "c8cfad755252e5441c4119437ba3a8989518af7aa90dbd6f4ff7207b72e4a967", [:mix], [{:connection, "~> 1.0.0", [hex: :connection, optional: false]}]},
   "redix_pubsub": {:hex, :redix_pubsub, "0.1.1", "7b6a7d4f5c148798ac268aa17083dbcd1cad2bce10dbadf5ec1cbedc2b91a15f", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:redix, "~> 0.4.0", [hex: :redix, optional: false]}]},
   "uuid": {:hex, :uuid, "1.1.4", "36c7734e4c8e357f2f67ba57fb61799d60c20a7f817b104896cca64b857e3686", [:mix], []},
+  "version_check": {:hex, :version_check, "0.1.1", "fb9a166a9154262c900e847d84bfedfb4ba8e223331964554b19119be0b2652b", [:mix], []},
   "y_process": {:hex, :y_process, "0.2.1", "ea934dbca14dc80b2ff449f50ef7dbfd41d6c1a099c9e92e46ec05c8f12f8039", [:mix], [{:phoenix_pubsub, "~> 1.0", [hex: :phoenix_pubsub, optional: false]}]}}

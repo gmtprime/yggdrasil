@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "2.0.7"
+  @version "2.0.8"
 
   def project do
     [app: :yggdrasil,
@@ -28,10 +28,11 @@ defmodule Yggdrasil.Mixfile do
      {:amqp, "~> 0.1.4"},
      {:postgrex, ">= 0.0.0"},
      {:connection, "~> 1.0.4"},
+     {:version_check, "~> 0.1"},
      {:uuid, "~> 1.1.4", only: [:dev, :test]},
      {:earmark, ">= 0.0.0", only: :dev},
      {:ex_doc, "~> 0.13", only: :dev},
-     {:credo, "~> 0.4.8", only: [:dev, :docs]},
+     {:credo, "~> 0.5", only: [:dev, :docs]},
      {:inch_ex, ">= 0.0.0", only: [:dev, :docs]}]
   end
 
