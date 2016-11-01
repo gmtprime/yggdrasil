@@ -27,7 +27,7 @@ defmodule Yggdrasil.Mixfile do
      {:amqp, "~> 0.1.5"},
      {:postgrex, ">= 0.0.0"},
      {:connection, "~> 1.0.4"},
-     {:version_check, github: "gmtprime/version_check"},
+     {:version_check, "~> 0.1"},
      {:uuid, "~> 1.1.4", only: [:dev, :test]},
      {:earmark, ">= 0.0.0", only: :dev},
      {:ex_doc, "~> 0.13", only: :dev},
