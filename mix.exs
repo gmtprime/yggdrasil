@@ -24,7 +24,6 @@ defmodule Yggdrasil.Mixfile do
     [{:y_process, "~> 0.2.1"},
      {:exreg, "~> 0.0.3"},
      {:redix_pubsub, ">= 0.0.0"},
-     {:amqp_client, github: "jbrisbin/amqp_client", override: true, only: [:dev, :test]},
      {:amqp, "~> 0.1.5"},
      {:postgrex, ">= 0.0.0"},
      {:connection, "~> 1.0.4"},
