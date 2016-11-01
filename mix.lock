@@ -17,5 +17,5 @@
   "redix": {:hex, :redix, "0.4.0", "c8cfad755252e5441c4119437ba3a8989518af7aa90dbd6f4ff7207b72e4a967", [], [{:connection, "~> 1.0.0", [hex: :connection, optional: false]}]},
   "redix_pubsub": {:hex, :redix_pubsub, "0.1.1", "7b6a7d4f5c148798ac268aa17083dbcd1cad2bce10dbadf5ec1cbedc2b91a15f", [], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:redix, "~> 0.4.0", [hex: :redix, optional: false]}]},
   "uuid": {:hex, :uuid, "1.1.5", "96cb36d86ee82f912efea4d50464a5df606bf3f1163d6bdbb302d98474969369", [:mix], []},
-  "version_check": {:hex, :version_check, "0.1.1", "fb9a166a9154262c900e847d84bfedfb4ba8e223331964554b19119be0b2652b", [:mix], []},
+  "version_check": {:git, "https://github.com/gmtprime/version_check.git", "5a5b3f35843cc796ecbd65358726e3797828cba7", []},
   "y_process": {:hex, :y_process, "0.2.2", "89596fb4128d34d6cd828df34437aae807756767f1b18fe8bf6685cc72ec5248", [:mix], [{:phoenix_pubsub, "~> 1.0", [hex: :phoenix_pubsub, optional: false]}]}}

@@ -29,11 +29,7 @@ defmodule Yggdrasil.Adapter do
     quote do
       @behaviour Yggdrasil.Adapter
 
-      @doc """
-      Starts the adapter. Receives an `Yggdrasil.Channel` that contains the
-      `decoder` module and the name of the `channel`; the `publisher` PID, and
-      a list of `options`.
-      """
+      @doc false
       def start_link(
         %Yggdrasil.Channel{decoder: decoder, channel: channel},
         publisher,
@@ -45,10 +41,7 @@ defmodule Yggdrasil.Adapter do
         module.start_link(adapter, args, options)
       end
 
-      @doc """
-      Stops the adapter using the server `pid` and a `reason`. By default,
-      `reason` is `:normal`.
-      """
+      @doc false
       def stop(pid, reason \\ :normal) do
         module = unquote(module)
         exports = module.module_info()[:exports]
@@ -60,9 +53,7 @@ defmodule Yggdrasil.Adapter do
         end
       end
 
-      @doc """
-      Whether the `_adapter` is connected or not.
-      """
+      @doc false
       def is_connected?(_adapter), do: true
 
       defoverridable [start_link: 2, start_link: 3, stop: 1, stop: 2,
