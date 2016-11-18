@@ -16,18 +16,6 @@ before_script:
       echo '
       use Mix.Config
 
-      import_config "#{Mix.env}.exs"
-      ' > config/config.exs
-  - >
-      echo '
-      use Mix.Config
-
-      import_config "test.exs"
-      ' > config/dev.exs
-  - >
-      echo '
-      use Mix.Config
-
       config :logger,
         level: :warn
 
