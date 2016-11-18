@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "2.1.0"
+  @version "3.0.0"
 
   def project do
     [app: :yggdrasil,
@@ -20,11 +20,15 @@ defmodule Yggdrasil.Mixfile do
      mod: {Yggdrasil, []}]
   end
 
+  @amqp_client "https://github.com/jbrisbin/amqp_client.git"
+
   defp deps do
-    [{:y_process, "~> 0.2.1"},
-     {:exreg, "~> 0.0.3"},
+    [{:exreg, "~> 0.0.3"},
+     {:phoenix_pubsub, "~> 1.0"},
+     {:poolboy, "~> 1.5"},
      {:redix_pubsub, ">= 0.0.0"},
      {:amqp, "~> 0.1.5"},
+     {:amqp_client, git: @amqp_client, override: true},
      {:postgrex, ">= 0.0.0"},
      {:connection, "~> 1.0.4"},
      {:version_check, "~> 0.1"},

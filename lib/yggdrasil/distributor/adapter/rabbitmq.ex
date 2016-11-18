@@ -1,45 +1,52 @@
-defmodule Yggdrasil.Adapter.RabbitMQ do
+defmodule Yggdrasil.Distributor.Adapter.RabbitMQ do
   @moduledoc """
-  Yggdrasil adapter for RabbitMQ.
+  Yggdrasil distributor adapter for RabbitMQ.
   """
   use Connection
-  use Yggdrasil.Adapter, module: Connection
+
   require Logger
 
-  alias Yggdrasil.Adapter 
-  alias Yggdrasil.Publisher
+  alias Yggdrasil.Channel
+  alias Yggdrasil.Distributor.Publisher
+  alias Yggdrasil.Distributor.Backend
 
-  ##
-  # State for RabbitMQ adapter.
-  defstruct [:publisher, :routing_key, :exchange, :conn, :chan, :parent]
+  defstruct [:publisher, :channel, :routing_key, :exchange, :conn, :chan]
   alias __MODULE__, as: State
 
-  ##
-  # Gets Redis options from configuration.
-  defp rabbitmq_options do
-    Application.get_env(:yggdrasil, :rabbitmq, [])
+  #############################################################################
+  # Client API.
+
+  @doc """
+  Starts a RabbitMQ distributor adapter in a `channel` with some distributor
+  `publisher` and optionally `GenServer` `options`.
+  """
+  def start_link(%Channel{} = channel, publisher, options \\ []) do
+    state = %State{publisher: publisher, channel: channel}
+    Connection.start_link(__MODULE__, state, options)
   end
 
-  @doc false
-  def is_connected?(adapter) do
-    Connection.call(adapter, :connected?)
+  @doc """
+  Stops the RabbitMQ adapter with its `pid`.
+  """
+  def stop(pid) do
+    GenServer.stop(pid)
   end
 
+  #############################################################################
+  # Connection callbacks.
+
   @doc false
-  def init(%Adapter{publisher: publisher, channel: {exchange, channel}}) do
+  def init(%State{channel: %Channel{name: {_, _}}} = state) do
     Process.flag(:trap_exit, true)
-    state = %State{publisher: publisher,
-                   routing_key: channel,
-                   exchange: exchange}
     {:connect, :init, state}
   end
 
   @doc false
   def connect(
     _info,
-    %State{exchange: exchange, routing_key: routing_key} = state
+    %State{channel: %Channel{name: {exchange, routing_key}} = channel} = state
   ) do
-    options = rabbitmq_options()
+    options = rabbitmq_options(channel)
     {:ok, conn} = AMQP.Connection.open(options)
     try do
       consume(conn, exchange, routing_key)
@@ -68,15 +75,11 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   # Backoff.
   defp backoff(
     error,
-    %State{exchange: exchange, routing_key: routing_key, parent: nil} = state
+    %State{channel: %Channel{name: {exchange, routing_key}}} = state
   ) do
     metadata = [channel: {exchange, routing_key}, error: error]
     Logger.error("Cannot connect to RabbitMQ #{inspect metadata}")
     {:backoff, 5000, state}
-  end
-  defp backoff(error, %State{parent: pid} = state) do
-    send pid, false
-    backoff(error, %State{state | parent: nil})
   end
 
   ##
@@ -84,17 +87,13 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   defp connected(
     conn,
     chan,
-    %State{exchange: exchange, routing_key: routing_key, parent: nil} = state
+    %State{channel: %Channel{name: {exchange, routing_key}}} = state
   ) do
     Process.monitor(conn.pid)
     metadata = [channel: {exchange, routing_key}]
     Logger.debug("Connected to RabbitMQ #{inspect metadata}")
     new_state = %State{state | conn: conn, chan: chan}
     {:ok, new_state}
-  end
-  defp connected(conn, chan, %State{parent: pid} = state) do
-    send pid, true
-    connected(conn, chan, %State{state | parent: nil})
   end
 
   @doc false
@@ -109,7 +108,7 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   ##
   # Disconnected.
   defp disconnected(
-    %State{exchange: exchange, routing_key: routing_key} = state
+    %State{channel: %Channel{name: {exchange, routing_key}}} = state
   ) do
     metadata = [channel: {exchange, routing_key}]
     Logger.debug("Disconnected from RabbitMQ #{inspect metadata}")
@@ -117,37 +116,24 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   end
 
   @doc false
-  def handle_call(:connected?, from, %State{conn: nil} = state) do
-    pid = spawn_link fn ->
-      result = receive do
-        result -> result
-      after
-        5000 -> false
-      end
-      Connection.reply(from, result)
-    end
-    {:noreply, %State{state | parent: pid}}
-  end
-  def handle_call(:connected?, _from, %State{} = state) do
-    {:reply, true, state}
-  end
-
-  @doc false
-  def handle_info({:basic_consume_ok, _}, %State{} = state) do
+  def handle_info(
+    {:basic_consume_ok, _},
+    %State{channel: %Channel{} = channel} = state
+  ) do
+    Backend.connected(channel)
     {:noreply, state}
   end
   def handle_info(
     {:basic_deliver, message, info},
     %State{
       publisher: publisher,
-      exchange: exchange,
       chan: chan
     } = state
   ) do
-    %{delivery_tag: tag, redelivered: redelivered, routing_key: real} = info
+    %{delivery_tag: tag, redelivered: redelivered} = info
     try do
       :ok = AMQP.Basic.ack(chan, tag)
-      Publisher.sync_notify(publisher, {exchange, real}, message)
+      Publisher.notify(publisher, message)
     rescue
       _ ->
         :ok = AMQP.Basic.reject(chan, tag, requeue: not redelivered)
@@ -182,10 +168,23 @@ defmodule Yggdrasil.Adapter.RabbitMQ do
   # Terminated.
   defp terminated(
     reason,
-    %State{exchange: exchange, routing_key: routing_key}
+    %State{channel: %Channel{name: {exchange, routing_key}}}
   ) do
     metadata = [channel: {exchange, routing_key}, error: reason]
     Logger.debug("Terminated RabbitMQ connection #{inspect metadata}")
     :ok
+  end
+
+  #############################################################################
+  # Helpers.
+
+  @doc false
+  def rabbitmq_options(%Channel{namespace: nil}) do
+    Application.get_env(:yggdrasil, :rabbitmq, [])
+  end
+  def rabbitmq_options(%Channel{namespace: namespace}) do
+    default = [rabbitmq: []]
+    result = Application.get_env(:yggdrasil, namespace, default)
+    Keyword.get(result, :rabbitmq, [])
   end
 end

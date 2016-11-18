@@ -2,38 +2,62 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Publisher
   alias Yggdrasil.Publisher.Generator
 
-  test "start/stop generator" do
-    {:ok, generator} = Generator.start_link()
-    Generator.stop(generator)
+  test "start publisher" do
+    name = UUID.uuid4()
+    sub_channel = %Channel{
+      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      transformer: Yggdrasil.Transformer.Default,
+      name: name,
+      namespace: PublisherGenTest0
+    }
+    Yggdrasil.subscribe(sub_channel)
+
+    assert_receive {:Y_CONNECTED, ^sub_channel}
+    pub_channel = %Channel{
+      adapter: Yggdrasil.Publisher.Adapter.Elixir,
+      transformer: Yggdrasil.Transformer.Default,
+      name: name,
+      namespace: PublisherGenTest0
+    }
+
+    assert {:ok, generator} = Generator.start_link()
+    assert {:ok, _} = Generator.start_publisher(generator, pub_channel)
+    assert :ok = Publisher.publish(pub_channel, "message")
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert :ok = Generator.stop(generator)
+
+    Yggdrasil.unsubscribe(sub_channel)
   end
 
-  test "start publisher/stop publisher" do
-    ref = make_ref()
-    channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
+  test "start publisher twice" do
+    name = UUID.uuid4()
+    sub_channel = %Channel{
+      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      transformer: Yggdrasil.Transformer.Default,
+      name: name,
+      namespace: PublisherGenTest1
+    }
+    Yggdrasil.subscribe(sub_channel)
 
-    {:ok, generator} = Generator.start_link()
-    {:ok, _} = Generator.start_publisher(generator, channel)
-    assert %{active: 1} = Supervisor.count_children(generator)
+    assert_receive {:Y_CONNECTED, ^sub_channel}
+    pub_channel = %Channel{
+      adapter: Yggdrasil.Publisher.Adapter.Elixir,
+      transformer: Yggdrasil.Transformer.Default,
+      name: name,
+      namespace: PublisherGenTest1
+    }
 
-    assert :ok = Generator.stop_publisher(channel)
-    assert %{active: 0} = Supervisor.count_children(generator)
-    Generator.stop(generator)
-  end
+    assert {:ok, generator} = Generator.start_link()
+    assert {:ok, publisher} = Generator.start_publisher(generator, pub_channel)
+    assert {:ok, {:already_connected, ^publisher}} =
+      Generator.start_publisher(generator, pub_channel)
+    assert :ok = Publisher.publish(pub_channel, "message")
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert :ok = Generator.stop(generator)
 
-  test "start publisher just once" do
-    ref = make_ref()
-    channel = %Channel{channel: ref, decoder: Yggdrasil.Decoder.Default}
-
-    {:ok, generator} = Generator.start_link()
-    {:ok, pid} = Generator.start_publisher(generator, channel)
-    assert %{active: 1} = Supervisor.count_children(generator)
-    {:ok, ^pid} = Generator.start_publisher(generator, channel)
-    assert %{active: 1} = Supervisor.count_children(generator)
-
-    assert :ok = Generator.stop_publisher(channel)
-    assert %{active: 0} = Supervisor.count_children(generator)
-    Generator.stop(generator)
+    Yggdrasil.unsubscribe(sub_channel)
   end
 end

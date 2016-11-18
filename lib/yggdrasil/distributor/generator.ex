@@ -1,28 +1,30 @@
-defmodule Yggdrasil.Publisher.Generator do
+defmodule Yggdrasil.Distributor.Generator do
+  @moduledoc """
+  Supervisor to generate distributors on demand.
+  """
   use Supervisor
-
   alias Yggdrasil.Channel
 
-  @publisher Yggdrasil.Publisher
+  @distributor Yggdrasil.Distributor
   @registry Application.get_env(:yggdrasil, :registry, ExReg)
 
   #############################################################################
   # Client API.
 
   @doc """
-  Starts a publisher generator with `Supervisor` `options`.
+  Starts a distributor generator with `Supervisor` `options`.
   """
   def start_link(options \\ []) do
     Supervisor.start_link(__MODULE__, nil, options)
   end
 
   @doc """
-  Stops a publisher `generator`.
+  Stops a distributor `generator`.
   """
   def stop(generator) do
     for {_, pid, _, _} <- Supervisor.which_children(generator) do
       try do
-        @publisher.stop(pid)
+        @distributor.stop(pid)
       catch
         _, _ -> :ok
       end
@@ -31,18 +33,30 @@ defmodule Yggdrasil.Publisher.Generator do
   end
 
   @doc """
-  Starts a publisher using the `generator` and the `channel` to identify the
-  connection.
+  Starts a distributor using the `generator` and the `channel` to identify
+  the connection.
   """
-  def start_publisher(generator, %Channel{} = channel) do
-    channel = %Channel{channel | name: nil}
-    name = {@publisher, channel}
+  def start_distributor(generator, %Channel{} = channel) do
+    name = {@distributor, channel}
     case @registry.whereis_name(name) do
       :undefined ->
         via_tuple = {:via, @registry, name}
         Supervisor.start_child(generator, [channel, [name: via_tuple]])
       pid ->
         {:ok, {:already_connected, pid}}
+    end
+  end
+
+  @doc """
+  Stops a distributor using the `channel` information.
+  """
+  def stop_distributor(%Channel{} = channel) do
+    name = {@distributor, channel}
+    case @registry.whereis_name(name) do
+      :undefined ->
+        :ok
+      pid ->
+        @distributor.stop(pid)
     end
   end
 
@@ -54,7 +68,7 @@ defmodule Yggdrasil.Publisher.Generator do
     import Supervisor.Spec
 
     children = [
-      supervisor(@publisher, [], restart: :transient)
+      supervisor(@distributor, [], restart: :transient)
     ]
     supervise(children, strategy: :simple_one_for_one)
   end

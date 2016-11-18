@@ -16,16 +16,10 @@ before_script:
       echo '
       use Mix.Config
 
-      import_config "#{Mix.env}.exs"
-      ' > config/config.exs
-  - >
-      echo '
-      use Mix.Config
-
       config :logger,
-        level: :info
+        level: :warn
 
-      config :yggdrasil,
+      config :yggdrasil, Test,
         redis: [host: "localhost",
                 port: 6379],
         rabbitmq: [host: "localhost",
@@ -37,12 +31,6 @@ before_script:
                    username: "postgres",
                    password: "postgres",
                    database: "travis_ci_test"]
-
-      config :y_process,
-        backend: YProcess.Backend.PhoenixPubSub,
-        name: Yggdrasil.PubSub,
-        adapter: Phoenix.PubSub.PG2,
-        options: [pool_size: 1]
       ' > config/test.exs
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile

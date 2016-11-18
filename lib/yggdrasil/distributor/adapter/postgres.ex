@@ -1,43 +1,55 @@
-defmodule Yggdrasil.Adapter.Postgres do
+defmodule Yggdrasil.Distributor.Adapter.Postgres do
   @moduledoc """
-  Yggdrasil adapter for Postgres.
+  Yggdrasil distributor adapter for Postgres.
   """
   use Connection
-  use Yggdrasil.Adapter, module: Connection
+
   require Logger
 
-  alias Yggdrasil.Adapter 
-  alias Yggdrasil.Publisher
+  alias Yggdrasil.Channel
+  alias Yggdrasil.Distributor.Publisher
+  alias Yggdrasil.Distributor.Backend
 
-  ##
-  # State for RabbitMQ adapter.
-  defstruct [:publisher, :channel, :conn, :ref, :parent]
+  defstruct [:publisher, :channel, :conn, :ref]
   alias __MODULE__, as: State
 
-  ##
-  # Gets Redis options from configuration.
-  defp postgres_options do
-    Application.get_env(:yggdrasil, :postgres, [])
-  end
+  #############################################################################
+  # Client API.
 
-  @doc false
-  def is_connected?(adapter) do
-    Connection.call(adapter, :connected?)
-  end
-
-  @doc false
-  def init(%Adapter{publisher: publisher, channel: channel}) do
-    Process.flag(:trap_exit, true)
+  @doc """
+  Starts a Postgres distributor adapter in a `channel` with some distributor
+  `publisher` and optionally `GenServer` `options`.
+  """
+  def start_link(%Channel{} = channel, publisher, options \\ []) do
     state = %State{publisher: publisher, channel: channel}
+    Connection.start_link(__MODULE__, state, options)
+  end
+
+  @doc """
+  Stops the Postgres adapter with its `pid`.
+  """
+  def stop(pid) do
+    GenServer.stop(pid)
+  end
+
+  #############################################################################
+  # Connection callbacks.
+
+  @doc false
+  def init(%State{} = state) do
+    Process.flag(:trap_exit, true)
     {:connect, :init, state}
   end
 
   @doc false
-  def connect(_info, %State{channel: channel} = state) do
-    options = postgres_options()
+  def connect(
+    _info,
+    %State{channel: %Channel{name: name} = channel} = state
+  ) do
+    options = postgres_options(channel)
     {:ok, conn} = Postgrex.Notifications.start_link(options)
     try do
-      Postgrex.Notifications.listen(conn, channel)
+      Postgrex.Notifications.listen(conn, name)
     catch
       _, reason ->
         backoff(reason, state)
@@ -51,28 +63,25 @@ defmodule Yggdrasil.Adapter.Postgres do
 
   ##
   # Backoff.
-  defp backoff(error, %State{channel: channel, parent: nil} = state) do
-    metadata = [channel: channel, error: error]
+  defp backoff(error, %State{channel: %Channel{name: name}} = state) do
+    metadata = [channel: name, error: error]
     Logger.error("Cannot connect to Postgres #{inspect metadata}")
     {:backoff, 5000, state}
-  end
-  defp backoff(error, %State{parent: pid} = state) do
-    send pid, false
-    backoff(error, %State{state | parent: nil})
   end
 
   ##
   # Connected.
-  defp connected(conn, ref, %State{channel: channel, parent: nil} = state) do
+  defp connected(
+    conn,
+    ref,
+    %State{channel: %Channel{name: name} = channel} = state
+  ) do
     Process.monitor(conn)
-    metadata = [channel: channel]
+    metadata = [channel: name]
     Logger.debug("Connected to Postgres #{inspect metadata}")
     new_state = %State{state | conn: conn, ref: ref}
+    Backend.connected(channel)
     {:ok, new_state}
-  end
-  defp connected(conn, ref, %State{parent: pid} = state) do
-    send pid, true
-    connected(conn, ref, %State{state | parent: nil})
   end
 
   @doc false
@@ -87,34 +96,18 @@ defmodule Yggdrasil.Adapter.Postgres do
 
   ##
   # Disconnected.
-  defp disconnected(%State{channel: channel} = state) do
-    metadata = [channel: channel]
+  defp disconnected(%State{channel: %Channel{name: name}} = state) do
+    metadata = [channel: name]
     Logger.debug("Disconnected from Postgres #{inspect metadata}")
     {:backoff, 5000, state}
   end
 
   @doc false
-  def handle_call(:connected?, from, %State{conn: nil} = state) do
-    pid = spawn_link fn ->
-      result = receive do
-        result -> result
-      after
-        5000 -> false
-      end
-      Connection.reply(from, result)
-    end
-    {:noreply, %State{state | parent: pid}}
-  end
-  def handle_call(:connected?, _from, %State{} = state) do
-    {:reply, true, state}
-  end
-
-  @doc false
   def handle_info(
     {:notification, _, _, _, message},
-    %State{publisher: publisher, channel: channel} = state
+    %State{publisher: publisher} = state
   ) do
-    Publisher.sync_notify(publisher, channel, message)
+    Publisher.notify(publisher, message)
     {:noreply, state}
   end
   def handle_info({:DOWN, _, :process, _, _}, %State{} = state) do
@@ -141,9 +134,22 @@ defmodule Yggdrasil.Adapter.Postgres do
 
   ##
   # Terminated.
-  defp terminated(reason, %State{channel: channel}) do
-    metadata = [channel: channel, reason: reason]
+  defp terminated(reason, %State{channel: %Channel{name: name}}) do
+    metadata = [channel: name, reason: reason]
     Logger.debug("Terminated Postgres connection #{inspect metadata}")
     :ok
+  end
+
+  #############################################################################
+  # Helpers.
+
+  @doc false
+  def postgres_options(%Channel{namespace: nil}) do
+    Application.get_env(:yggdrasil, :postgres, [])
+  end
+  def postgres_options(%Channel{namespace: namespace}) do
+    default = [postgres: []]
+    result = Application.get_env(:yggdrasil, namespace, default)
+    Keyword.get(result, :postgres, [])
   end
 end
