@@ -15,7 +15,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     }
     Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Elixir,
       transformer: Yggdrasil.Transformer.Default,
@@ -26,7 +26,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     assert {:ok, generator} = Generator.start_link()
     assert {:ok, _} = Generator.start_publisher(generator, pub_channel)
     assert :ok = Publisher.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
     assert :ok = Generator.stop(generator)
 
     Yggdrasil.unsubscribe(sub_channel)
@@ -42,7 +42,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     }
     Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Elixir,
       transformer: Yggdrasil.Transformer.Default,
@@ -55,7 +55,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     assert {:ok, {:already_connected, ^publisher}} =
       Generator.start_publisher(generator, pub_channel)
     assert :ok = Publisher.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
     assert :ok = Generator.stop(generator)
 
     Yggdrasil.unsubscribe(sub_channel)

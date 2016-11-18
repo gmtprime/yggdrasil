@@ -29,10 +29,10 @@ defmodule Yggdrasil.BrokerTest do
 
     assert :ok = Backend.subscribe(channel)
     assert :ok = Broker.subscribe(broker, channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     assert :ok = Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
     assert :ok = Broker.unsubscribe(broker, channel)
     assert Backend.unsubscribe(channel)
 
@@ -53,17 +53,15 @@ defmodule Yggdrasil.BrokerTest do
 
     assert :ok = Backend.subscribe(channel)
     assert :ok = Broker.subscribe(broker, channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     assert :ok = Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
     assert :ok = Broker.subscribe(broker, channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     assert :ok = Broker.unsubscribe(broker, channel)
     assert Backend.unsubscribe(channel)
 
     :ok = Broker.stop(broker)
   end
-
-
 end

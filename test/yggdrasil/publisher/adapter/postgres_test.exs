@@ -14,7 +14,7 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
     
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Postgres,
       transformer: Yggdrasil.Transformer.Default,
@@ -23,7 +23,7 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
     }
     assert {:ok, adapter} = Postgres.start_link(Test)
     assert :ok = Postgres.publish(adapter, pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
     assert :ok = Postgres.stop(adapter)
 
     :ok = Yggdrasil.unsubscribe(sub_channel)

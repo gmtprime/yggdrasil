@@ -9,7 +9,7 @@ defmodule Yggdrasil.Distributor.BackendTest do
     channel = %Channel{name: name}
     assert :ok = Backend.subscribe(channel)
     assert :ok = Backend.publish(channel, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
     assert :ok = Backend.unsubscribe(channel)
   end
 
@@ -18,7 +18,7 @@ defmodule Yggdrasil.Distributor.BackendTest do
     channel = %Channel{name: name}
     assert :ok = Backend.subscribe(channel)
     assert :ok = Backend.connected(channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     assert :ok = Backend.unsubscribe(channel)
   end
 
@@ -27,7 +27,7 @@ defmodule Yggdrasil.Distributor.BackendTest do
     channel = %Channel{name: name}
     assert :ok = Backend.subscribe(channel)
     assert :ok = Backend.connected(channel, self())
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     assert :ok = Backend.unsubscribe(channel)
   end
 end

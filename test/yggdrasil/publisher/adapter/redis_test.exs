@@ -14,7 +14,7 @@ defmodule Yggdrasil.Publisher.Adapter.RedisTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
     
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Redis,
       transformer: Yggdrasil.Transformer.Default,
@@ -23,7 +23,7 @@ defmodule Yggdrasil.Publisher.Adapter.RedisTest do
     }
     assert {:ok, adapter} = Redis.start_link(Test)
     assert :ok = Redis.publish(adapter, pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
     assert :ok = Redis.stop(adapter)
 
     :ok = Yggdrasil.unsubscribe(sub_channel)

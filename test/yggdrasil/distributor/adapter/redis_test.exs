@@ -34,12 +34,12 @@ defmodule Yggdrasil.Distributor.Adapter.RedisTest do
     {:ok, publisher} = Publisher.start_link(channel)
     {:ok, adapter} = Redis.start_link(channel, publisher)
 
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     options = Redis.redis_options(channel)
     {:ok, conn} = Redix.start_link(options)
     {:ok, 1} = Redix.command(conn, ~w(PUBLISH #{name} #{"message"}))
     Redix.stop(conn)
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     :ok = Redis.stop(adapter)
     :ok = Publisher.stop(publisher)

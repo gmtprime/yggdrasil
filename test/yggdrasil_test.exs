@@ -12,10 +12,10 @@ defmodule YggdrasilTest do
       name: name
     }
     assert :ok = Yggdrasil.subscribe(channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
     assert :ok = Yggdrasil.unsubscribe(channel)
   end
 
@@ -29,7 +29,7 @@ defmodule YggdrasilTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Elixir,
       transformer: Yggdrasil.Transformer.Default,
@@ -37,7 +37,7 @@ defmodule YggdrasilTest do
       namespace: YggdrasilTest
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
   end
@@ -52,7 +52,7 @@ defmodule YggdrasilTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Redis,
       transformer: Yggdrasil.Transformer.Default,
@@ -60,7 +60,7 @@ defmodule YggdrasilTest do
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
   end
@@ -75,7 +75,7 @@ defmodule YggdrasilTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
       transformer: Yggdrasil.Transformer.Default,
@@ -83,7 +83,7 @@ defmodule YggdrasilTest do
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
   end
@@ -98,7 +98,7 @@ defmodule YggdrasilTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Postgres,
       transformer: Yggdrasil.Transformer.Default,
@@ -106,7 +106,7 @@ defmodule YggdrasilTest do
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
   end

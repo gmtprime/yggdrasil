@@ -14,7 +14,7 @@ defmodule Yggdrasil.PublisherTest do
     }
     Yggdrasil.subscribe(sub_channel)
 
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.Elixir,
       transformer: Yggdrasil.Transformer.Default,
@@ -24,7 +24,7 @@ defmodule Yggdrasil.PublisherTest do
     assert {:ok, publisher} = Publisher.start_link(pub_channel)
     assert :ok = Publisher.publish(pub_channel, "message")
     assert :ok = Publisher.stop(publisher)
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
 
     Yggdrasil.unsubscribe(sub_channel)
   end

@@ -14,7 +14,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQTest do
     }
     :ok = Yggdrasil.subscribe(sub_channel)
     
-    assert_receive {:Y_CONNECTED, ^sub_channel}
+    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
       transformer: Yggdrasil.Transformer.Default,
@@ -23,7 +23,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQTest do
     }
     assert {:ok, adapter} = RabbitMQ.start_link(Test)
     assert :ok = RabbitMQ.publish(adapter, pub_channel, "message")
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 500
     assert :ok = RabbitMQ.stop(adapter)
 
     :ok = Yggdrasil.unsubscribe(sub_channel)

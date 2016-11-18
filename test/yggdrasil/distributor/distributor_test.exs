@@ -28,10 +28,10 @@ defmodule Yggdrasil.DistributorTest do
     Backend.subscribe(channel)
     {:ok, distributor} = Distributor.start_link(channel)
 
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     :ok = Distributor.stop(distributor)
     Backend.unsubscribe(channel)

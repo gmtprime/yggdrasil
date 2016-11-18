@@ -21,10 +21,10 @@ defmodule Yggdrasil.Distributor.GeneratorTest do
     Backend.subscribe(channel)
     {:ok, _} = Generator.start_distributor(generator, channel)
 
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     :ok = Generator.stop_distributor(channel)
     :ok = Generator.stop(generator)
@@ -44,10 +44,10 @@ defmodule Yggdrasil.Distributor.GeneratorTest do
 
     assert {:ok, {:already_connected, ^distributor}} =
       Generator.start_distributor(generator, channel)
-    assert_receive {:Y_CONNECTED, ^channel}
+    assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
     Backend.publish(stream, "message")
-    assert_receive {:Y_EVENT, ^channel, "message"}
+    assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     :ok = Generator.stop(generator)
     Backend.unsubscribe(channel)
