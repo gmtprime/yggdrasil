@@ -11,7 +11,6 @@ services:
   - postgresql
 before_script:
   - psql -c 'CREATE DATABASE travis_ci_test;' -U postgres
-  - mkdir config
   - >
       echo '
       use Mix.Config
