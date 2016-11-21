@@ -56,7 +56,7 @@ defmodule Yggdrasil.Distributor.Backend do
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
   def publish(%Channel{} = channel, message) do
-    real_message = {:Y_EVENT, channel, message} 
+    real_message = {:Y_EVENT, channel, message}
     channel_name = transform_name(channel)
     PubSub.broadcast(@pubsub, channel_name, real_message)
   end

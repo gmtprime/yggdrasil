@@ -1,4 +1,7 @@
 defmodule Yggdrasil.Publisher.Generator do
+  @moduledoc """
+  Generator of publisher pools.
+  """
   use Supervisor
 
   alias Yggdrasil.Channel

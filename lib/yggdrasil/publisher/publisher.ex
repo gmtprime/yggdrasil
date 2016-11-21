@@ -1,4 +1,7 @@
 defmodule Yggdrasil.Publisher do
+  @moduledoc """
+  Publisher pool of processes.
+  """
   use Supervisor
 
   alias Yggdrasil.Channel

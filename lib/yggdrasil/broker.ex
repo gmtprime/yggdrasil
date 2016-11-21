@@ -102,7 +102,7 @@ defmodule Yggdrasil.Broker do
     end
     {:noreply, state}
   end
-  def handle_info(_msg, _from, %State{} = state) do
+  def handle_info(_msg, %State{} = state) do
     {:noreply, state}
   end
 

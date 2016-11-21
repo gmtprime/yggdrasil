@@ -47,9 +47,9 @@ defmodule Yggdrasil.Mixfile do
 
   defp description do
     """
-    Yggdrasil is an app to manage channels subscriptions (open connections)
-    from several brokers and redistributing the messages received from them to
-    the subscribed Elixir processes.
+    Yggdrasil is a pubsub connection manager that works for Redis, RabbitMQ and
+    PostgreSQL by default, but with the possibilty to extend functionality to
+    other brokers.
     """
   end
 
