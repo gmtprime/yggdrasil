@@ -46,6 +46,8 @@ defmodule Yggdrasil do
   this allows you to have several connection configurations for the same
   broker.
 
+  # General Example
+
   It's possible to define custom transformers to _decode_ and _encode_ messages
   _from_ and _to_ the brokers respectively i.e:
 

@@ -22,10 +22,18 @@ defmodule Yggdrasil.Transformer do
       @behaviour Yggdrasil.Transformer
 
       @doc false
-      def decode(_channel, message), do: {:ok, message}
+      def decode(_channel, message) do
+        {:ok, message}
+      end
 
       @doc false
-      def encode(_channel, message), do: {:ok, message}
+      def encode(_channel, message) when is_binary(message) do
+        {:ok, message}
+      end
+      def encode(_channel, data) do
+        encoded = inspect data
+        {:ok, encoded}
+      end
 
       defoverridable [decode: 2, encode: 2]
     end
