@@ -26,7 +26,7 @@ defmodule Yggdrasil.Distributor.Adapter.Elixir do
   end
 
   @doc """
-  Stops the Redis adapter with its `pid`.
+  Stops the Elixir adapter with its `pid`.
   """
   def stop(pid) do
     GenServer.stop(pid)

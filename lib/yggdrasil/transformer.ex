@@ -27,12 +27,8 @@ defmodule Yggdrasil.Transformer do
       end
 
       @doc false
-      def encode(_channel, message) when is_binary(message) do
+      def encode(_channel, message) do
         {:ok, message}
-      end
-      def encode(_channel, data) do
-        encoded = inspect data
-        {:ok, encoded}
       end
 
       defoverridable [decode: 2, encode: 2]
