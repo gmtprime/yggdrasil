@@ -12,10 +12,11 @@ defmodule Yggdrasil.Distributor.Backend do
 
   @doc false
   def transform_name(%Channel{namespace: nil} = channel) do
+
     transform_name(%Channel{channel | namespace: Yggdrasil})
   end
-  def transform_name(%Channel{name: name, namespace: namespace}) do
-    {name, namespace} |> :erlang.phash2() |> Integer.to_string()
+  def transform_name(%Channel{} = channel) do
+    channel |> :erlang.phash2() |> Integer.to_string()
   end
 
   @doc """
