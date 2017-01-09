@@ -104,10 +104,10 @@ defmodule Yggdrasil.Distributor.Adapter.Postgres do
 
   @doc false
   def handle_info(
-    {:notification, _, _, _, message},
+    {:notification, _, _, channel, message},
     %State{publisher: publisher} = state
   ) do
-    Publisher.notify(publisher, message)
+    Publisher.notify(publisher, channel, message)
     {:noreply, state}
   end
   def handle_info({:DOWN, _, :process, _, _}, %State{} = state) do

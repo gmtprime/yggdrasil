@@ -54,10 +54,10 @@ defmodule Yggdrasil.Distributor.Adapter.Redis do
     {:noreply, state}
   end
   def handle_info(
-    {:redix_pubsub, _, :pmessage, %{channel: _, payload: message}},
+    {:redix_pubsub, _, :pmessage, %{channel: channel_name, payload: message}},
     %State{publisher: publisher} = state
   ) do
-    Publisher.notify(publisher, message)
+    Publisher.notify(publisher, channel_name, message)
     {:noreply, state}
   end
   def handle_info({:redix_pubsub, _, _, _}, %State{} = state) do

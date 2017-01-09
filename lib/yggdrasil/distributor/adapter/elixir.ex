@@ -46,9 +46,9 @@ defmodule Yggdrasil.Distributor.Adapter.Elixir do
   @doc false
   def handle_info(
     {:Y_EVENT, _, message},
-    %State{publisher: publisher} = state
+    %State{publisher: publisher, channel: %Channel{name: name}} = state
   ) do
-    Publisher.notify(publisher, message)
+    Publisher.notify(publisher, name, message)
     {:noreply, state}
   end
   def handle_info(_, state) do

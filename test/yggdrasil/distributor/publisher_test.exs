@@ -25,7 +25,7 @@ defmodule Yggdrasil.Distributor.PublisherTest do
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)
 
-    assert :ok = Publisher.notify(publisher, "message")
+    assert :ok = Publisher.notify(publisher, name, "message")
     assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     Backend.unsubscribe(channel)

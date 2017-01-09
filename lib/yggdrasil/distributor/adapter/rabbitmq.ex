@@ -130,10 +130,14 @@ defmodule Yggdrasil.Distributor.Adapter.RabbitMQ do
       chan: chan
     } = state
   ) do
-    %{delivery_tag: tag, redelivered: redelivered} = info
+    %{delivery_tag: tag,
+      redelivered: redelivered,
+      exchange: exchange,
+      routing_key: routing_key
+     } = info
     try do
       :ok = AMQP.Basic.ack(chan, tag)
-      Publisher.notify(publisher, message)
+      Publisher.notify(publisher, {exchange, routing_key}, message)
     rescue
       _ ->
         :ok = AMQP.Basic.reject(chan, tag, requeue: not redelivered)

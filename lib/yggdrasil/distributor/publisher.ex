@@ -28,10 +28,11 @@ defmodule Yggdrasil.Distributor.Publisher do
   end
 
   @doc """
-  Notifies synchronously of a new `message` to a `publisher`.
+  Notifies synchronously of a new `message` coming from a `channel_name` to a
+  `publisher`.
   """
-  def notify(publisher, message) do
-    GenServer.call(publisher, {:notify, message})
+  def notify(publisher, channel_name, message) do
+    GenServer.call(publisher, {:notify, channel_name, message})
   end
 
   #############################################################################
@@ -45,12 +46,13 @@ defmodule Yggdrasil.Distributor.Publisher do
 
   @doc false
   def handle_call(
-    {:notify, message},
+    {:notify, channel_name, message},
     _from,
     %Channel{transformer: transformer_module} = channel
   ) do
+    real_channel = %Channel{channel | name: channel_name}
     result =
-      with {:ok, decoded} <- transformer_module.decode(channel, message),
+      with {:ok, decoded} <- transformer_module.decode(real_channel, message),
            do: Backend.publish(channel, decoded)
     {:reply, result, channel}
   end
