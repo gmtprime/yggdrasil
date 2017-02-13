@@ -36,8 +36,10 @@ provides a basic fault tolerant subscription to Redis channel
 this channel would be used only by subscribers so the `transformer` module
 should have the function `decode/2` to decode the messages coming from Redis
 to the subscribers. The default `transformer` module does nothing to the
-incoming message, so it should be a string. The `namespace` tells `Yggdrasil`
-which adapter configuration should be used, i.e:
+incoming message, so it should be a string. If no `transformer` is supplied,
+then it's used the default `transformer` `Yggdrasil.Default.Transformer`.
+The `namespace` tells `Yggdrasil` which adapter configuration should be used,
+i.e:
 
 ```elixir
 use Mix.Config
@@ -47,7 +49,8 @@ config :yggdrasil, TestRedis,
 ```
 
 this allows you to have several connection configurations for the same
-broker.
+broker. By default, the `namespace` is `Yggdrasil` if no `namespace` is
+supplied.
 
 # General Example
 

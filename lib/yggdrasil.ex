@@ -11,7 +11,7 @@ defmodule Yggdrasil do
   using `:pool_boy` library.
 
   This library provides three functions
-  
+
     * For clients: `Yggdrasil.subscribe/1` and `Yggdrasil.unsubscribe/1`.
     * For servers: `Yggdrasil.publish/2`.
 
