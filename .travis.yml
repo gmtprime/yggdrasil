@@ -4,7 +4,7 @@ elixir:
   - 1.4.0
 otp_release:
   - 18.2
-  - 19.0
+  - 19.1
 matrix:
     # We are only interested on the newest/oldest pair.
     exclude:
