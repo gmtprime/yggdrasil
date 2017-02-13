@@ -7,18 +7,16 @@ defmodule Yggdrasil.PublisherTest do
   test "publish message" do
     name = UUID.uuid4()
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Elixir,
       namespace: PublisherTest
     }
     Yggdrasil.subscribe(sub_channel)
 
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Elixir,
       namespace: PublisherTest
     }
     assert {:ok, publisher} = Publisher.start_link(pub_channel)

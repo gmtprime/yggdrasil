@@ -9,9 +9,8 @@ defmodule Yggdrasil.Distributor.Adapter.PostgresTest do
   test "start - stop" do
     name = "postgres_0"
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Postgres,
       namespace: Test
     }
     Backend.subscribe(channel)
@@ -25,9 +24,8 @@ defmodule Yggdrasil.Distributor.Adapter.PostgresTest do
   test "distribute message" do
     name = "postgres_1"
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Postgres,
       namespace: Test
     }
     Backend.subscribe(channel)

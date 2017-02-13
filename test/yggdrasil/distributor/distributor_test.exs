@@ -8,9 +8,8 @@ defmodule Yggdrasil.DistributorTest do
   test "start - stop" do
     name = UUID.uuid4()
     channel = %Channel{
+      name: name,
       adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
-      name: name
     }
     Backend.subscribe(channel)
     assert {:ok, distributor} = Distributor.start_link(channel)
@@ -21,9 +20,8 @@ defmodule Yggdrasil.DistributorTest do
   test "distribution" do
     name = UUID.uuid4()
     channel = %Channel{
+      name: name,
       adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
-      name: name
     }
     Backend.subscribe(channel)
     {:ok, distributor} = Distributor.start_link(channel)

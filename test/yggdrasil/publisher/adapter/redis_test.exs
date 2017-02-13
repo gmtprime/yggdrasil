@@ -7,18 +7,16 @@ defmodule Yggdrasil.Publisher.Adapter.RedisTest do
   test "publisher" do
     name = "redis_channel_2"
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Redis,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
     
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Redis,
       namespace: Test
     }
     assert {:ok, adapter} = Redis.start_link(Test)

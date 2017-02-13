@@ -11,10 +11,6 @@ defmodule Yggdrasil.Distributor.Backend do
   @pubsub Application.get_env(:yggdrasil, :pubsub_name, Yggdrasil.PubSub)
 
   @doc false
-  def transform_name(%Channel{namespace: nil} = channel) do
-
-    transform_name(%Channel{channel | namespace: Yggdrasil})
-  end
   def transform_name(%Channel{} = channel) do
     channel |> :erlang.phash2() |> Integer.to_string()
   end

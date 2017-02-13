@@ -20,15 +20,12 @@ defmodule Yggdrasil.Mixfile do
      mod: {Yggdrasil, []}]
   end
 
-  @amqp_client "https://github.com/jbrisbin/amqp_client.git"
-
   defp deps do
     [{:exreg, "~> 0.0.3"},
      {:phoenix_pubsub, "~> 1.0"},
      {:poolboy, "~> 1.5"},
      {:redix_pubsub, ">= 0.0.0"},
-     {:amqp, "~> 0.1.5"},
-     {:amqp_client, git: @amqp_client, override: true},
+     {:amqp, "~> 0.2.0-pre.1"},
      {:postgrex, ">= 0.0.0"},
      {:connection, "~> 1.0.4"},
      {:version_check, "~> 0.1"},

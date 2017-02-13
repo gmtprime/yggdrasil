@@ -14,12 +14,15 @@ defmodule Yggdrasil.Channel do
   @doc """
   Channel struct definition.
   """
-  defstruct [:name, :transformer, :adapter, :namespace]
+  defstruct name: nil,
+            adapter: nil,
+            transformer: Yggdrasil.Transformer.Default,
+            namespace: Yggdrasil
 
   @type t :: %__MODULE__{
     name: any(),
-    transformer: module(),
     adapter: module(),
+    transformer: module(),
     namespace: atom()
   }
 end

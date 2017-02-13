@@ -9,9 +9,8 @@ defmodule Yggdrasil.Distributor.Adapter.RabbitMQTest do
   test "start - stop" do
     name = {"amq.topic", "rabbitmq_0"}
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
       namespace: Test
     }
     Backend.subscribe(channel)
@@ -25,9 +24,8 @@ defmodule Yggdrasil.Distributor.Adapter.RabbitMQTest do
   test "distribute message" do
     name = {"amq.topic", "rabbitmq_1"}
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
       namespace: Test
     }
     Backend.subscribe(channel)

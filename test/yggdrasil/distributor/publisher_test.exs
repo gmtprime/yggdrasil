@@ -8,8 +8,7 @@ defmodule Yggdrasil.Distributor.PublisherTest do
   test "start, stop" do
     name = UUID.uuid4()
     channel = %Channel{
-      name: name,
-      transformer: Yggdrasil.Transformer.Default
+      name: name
     }
 
     {:ok, publisher} = Publisher.start_link(channel)
@@ -19,8 +18,7 @@ defmodule Yggdrasil.Distributor.PublisherTest do
   test "notify" do
     name = UUID.uuid4()
     channel = %Channel{
-      name: name,
-      transformer: Yggdrasil.Transformer.Default
+      name: name
     }
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)

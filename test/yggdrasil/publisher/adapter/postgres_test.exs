@@ -7,18 +7,16 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
   test "publisher" do
     name = "postgres_2"
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Postgres,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
     
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Postgres,
       namespace: Test
     }
     assert {:ok, adapter} = Postgres.start_link(Test)

@@ -9,9 +9,8 @@ defmodule Yggdrasil.Distributor.Adapter.RedisTest do
   test "start - stop" do
     name = "redis_channel_0"
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Redis,
       namespace: Test
     }
     Backend.subscribe(channel)
@@ -25,9 +24,8 @@ defmodule Yggdrasil.Distributor.Adapter.RedisTest do
   test "distribute message" do
     name = "redis_channel_1"
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Redis,
       namespace: Test
     }
     Backend.subscribe(channel)

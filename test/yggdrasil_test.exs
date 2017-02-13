@@ -7,9 +7,8 @@ defmodule YggdrasilTest do
   test "subscribe - unsubscribe" do
     name = UUID.uuid4()
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
-      name: name
+      name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Elixir
     }
     assert :ok = Yggdrasil.subscribe(channel)
     assert_receive {:Y_CONNECTED, ^channel}, 500
@@ -22,18 +21,16 @@ defmodule YggdrasilTest do
   test "publish elixir" do
     name = UUID.uuid4()
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Elixir,
       namespace: YggdrasilTest
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Elixir,
       namespace: YggdrasilTest
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
@@ -45,18 +42,16 @@ defmodule YggdrasilTest do
   test "publish Redis" do
     name = "redis_full_test"
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Redis,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Redis,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Redis,
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
@@ -68,18 +63,16 @@ defmodule YggdrasilTest do
   test "publish RabbitMQ" do
     name = {"amq.topic", "rabbitmq_full_test"}
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")
@@ -91,18 +84,16 @@ defmodule YggdrasilTest do
   test "publish Postgres" do
     name = "postgres_full_test"
     sub_channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Postgres,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
 
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
-      adapter: Yggdrasil.Publisher.Adapter.Postgres,
-      transformer: Yggdrasil.Transformer.Default,
       name: name,
+      adapter: Yggdrasil.Publisher.Adapter.Postgres,
       namespace: Test
     }
     assert :ok = Yggdrasil.publish(pub_channel, "message")

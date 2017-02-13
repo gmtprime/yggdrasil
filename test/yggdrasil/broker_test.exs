@@ -22,9 +22,8 @@ defmodule Yggdrasil.BrokerTest do
     {:ok, broker} = Broker.start_link(generator, monitors)
     name = UUID.uuid4()
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
-      name: name
+      name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Elixir
     }
 
     assert :ok = Backend.subscribe(channel)
@@ -46,9 +45,8 @@ defmodule Yggdrasil.BrokerTest do
     {:ok, broker} = Broker.start_link(generator, monitors)
     name = UUID.uuid4()
     channel = %Channel{
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
-      transformer: Yggdrasil.Transformer.Default,
-      name: name
+      name: name,
+      adapter: Yggdrasil.Distributor.Adapter.Elixir
     }
 
     assert :ok = Backend.subscribe(channel)
