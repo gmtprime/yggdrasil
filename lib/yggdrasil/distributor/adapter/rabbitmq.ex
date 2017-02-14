@@ -183,7 +183,7 @@ defmodule Yggdrasil.Distributor.Adapter.RabbitMQ do
   # Helpers.
 
   @doc false
-  def rabbitmq_options(%Channel{namespace: nil}) do
+  def rabbitmq_options(%Channel{namespace: Yggdrasil}) do
     Application.get_env(:yggdrasil, :rabbitmq, [])
   end
   def rabbitmq_options(%Channel{namespace: namespace}) do

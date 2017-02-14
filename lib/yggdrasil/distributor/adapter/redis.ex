@@ -77,7 +77,7 @@ defmodule Yggdrasil.Distributor.Adapter.Redis do
   # Helpers.
 
   @doc false
-  def redis_options(%Channel{namespace: nil}) do
+  def redis_options(%Channel{namespace: Yggdrasil}) do
     Application.get_env(:yggdrasil, :redis, [host: "localhost"])
   end
   def redis_options(%Channel{namespace: namespace}) do

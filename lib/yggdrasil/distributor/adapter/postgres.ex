@@ -144,7 +144,7 @@ defmodule Yggdrasil.Distributor.Adapter.Postgres do
   # Helpers.
 
   @doc false
-  def postgres_options(%Channel{namespace: nil}) do
+  def postgres_options(%Channel{namespace: Yggdrasil}) do
     Application.get_env(:yggdrasil, :postgres, [])
   end
   def postgres_options(%Channel{namespace: namespace}) do
