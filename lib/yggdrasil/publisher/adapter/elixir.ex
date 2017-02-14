@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Publisher.Adapter.Elixir do
   @moduledoc """
   A server for elixir publishing.
+
+  The name of a channel is an arbitrary Elixir term.
   """
   use GenServer
 

@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Distributor.Adapter.Postgres do
   @moduledoc """
   Yggdrasil distributor adapter for Postgres.
+
+  The name of a channels is a string.
   """
   use Connection
 

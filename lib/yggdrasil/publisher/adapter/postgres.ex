@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Publisher.Adapter.Postgres do
   @moduledoc """
   A server for Postgres publishing.
+
+  The name of a channel is a string.
   """
   use Connection
 

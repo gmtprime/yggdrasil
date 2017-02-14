@@ -1,6 +1,9 @@
 defmodule Yggdrasil.Distributor.Adapter.RabbitMQ do
   @moduledoc """
   Yggdrasil distributor adapter for RabbitMQ.
+
+  The name of a channel is a tuple with the exchange name and the routing key
+  respectively.
   """
   use Connection
 

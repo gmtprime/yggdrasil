@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![Deps Status](https://beta.hexfaktor.org/badge/all/github/gmtprime/yggdrasil.svg)](https://beta.hexfaktor.org/github/gmtprime/yggdrasil) [![Inline docs](http://inch-ci.org/github/gmtprime/yggdrasil.svg?branch=master)](http://inch-ci.org/github/gmtprime/yggdrasil)
 
-
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
@@ -18,7 +17,34 @@ This library provides three functions
   * For clients: `Yggdrasil.subscribe/1` and `Yggdrasil.unsubscribe/1`.
   * For servers: `Yggdrasil.publish/2`.
 
-And the channels can be defined with the structure `Yggdrasil.Channel`, i.e:
+# Small Example
+
+The following example uses the Elixir distribution to send the messages. It
+is equivalent to the Redis, RabbitMQ and Postgres distributions when a
+connection configuration is supplied:
+
+```elixir
+iex(1)> alias Yggdrasil.Channel
+iex(2)> channel = %Channel{
+...(2)>   name: "elixir_channel",
+...(2)>   adapter: Yggdrasil.Elixir
+...(2)> }
+iex(3)> Yggdrasil.subscribe(channel)
+iex(4)> flush()
+{:Y_CONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
+```
+
+and to publish a for the subscribers:
+
+```elixir
+iex(5)> Yggdrasil.publish(channel, "message")
+iex(6)> flush()
+{:Y_EVENT, %Yggdrasil.Channel{name: "elixir_channel", (...)}, "message"}
+```
+
+# Channel Structure
+
+The channels can be defined with the structure `Yggdrasil.Channel`, i.e:
 
 ```elixir
 channel = %Yggdrasil.Channel{
@@ -52,38 +78,49 @@ this allows you to have several connection configurations for the same
 broker. By default, the `namespace` is `Yggdrasil` if no `namespace` is
 supplied.
 
-# General Example
+Virtual adapters are provided to write a bit less when connecting to the
+provided publishing/subscribing adapters:
+
+  * For `Elixir`: `Yggdrasil.Elixir` for both publishing and subscribing.
+  * For `Redis`: `Yggdrasil.Redis` for both publishing and subscribing.
+  * For `RabbitMQ`: `Yggdrasil.RabbitMQ` for both publishing and subscribing.
+  * For `Postgres`: `Yggdrasil.Postgres` for both publishing and subscribing.
+
+They are virtual, so they are changed before the publishing or subscription
+for the actual adapters.
+
+# Custom Transformers
 
 It's possible to define custom transformers to _decode_ and _encode_ messages
 _from_ and _to_ the brokers respectively i.e:
 
 ```elixir
-defmodule QuoteTransformer do
-  use Yggdrasil.Transformer
-
-  alias Yggdrasil.Channel
-
-  def decode(%Channel{} = _channel, message) do
-    with {:ok, quoted} <- Code.string_to_quoted(message),
-          {encoded, _} <- Code.eval_quoted(quoted),
-          do: {:ok, encoded}
-    end
-
-  def encode(%Channel{} = _channel, data) do
-    encoded = inspect(data)
-    {:ok, encoded}
-  end
-end
+iex(1)> defmodule QuoteTransformer do
+...(1)>   use Yggdrasil.Transformer
+...(1)>
+...(1)>   alias Yggdrasil.Channel
+...(1)>
+...(1)>   def decode(%Channel{} = _channel, message) do
+...(1)>     with {:ok, quoted} <- Code.string_to_quoted(message),
+...(1)>          {encoded, _} <- Code.eval_quoted(quoted),
+...(1)>          do: {:ok, encoded}
+...(1)>     end
+...(1)>
+...(1)>   def encode(%Channel{} = _channel, data) do
+...(1)>     encoded = inspect(data)
+...(1)>     {:ok, encoded}
+...(1)>   end
+...(1)> end
 ```
 
 and using the RabbitMQ adapter the subscription channel would be:
 
 ```elixir
-iex(1)> sub_chan = %Yggdrasil.Channel{
-  name: {"amq.topic", "quotes"},
-  adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-  transformer: QuoteTransformer
-}
+iex(2)> sub_chan = %Yggdrasil.Channel{
+...(2)>   name: {"amq.topic", "quotes"},
+...(2)>   adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
+...(2)>   transformer: QuoteTransformer
+...(2)> }
 ```
 where the `name` of the channel for this adapter is a tuple with the
 exchange name and the routing key and the configuration doesn't have a
@@ -99,32 +136,24 @@ config :yggdrasil,
 and the publication channel would be:
 
 ```elixir
-iex(2)> pub_chan = %Yggdrasil.Channel{
-  name: {"amq.topic", "quotes"},
-  adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
-  transformer: QuoteTransformer
-}
+iex(3)> pub_chan = %Yggdrasil.Channel{
+...(3)>   name: {"amq.topic", "quotes"},
+...(3)>   adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
+...(3)>   transformer: QuoteTransformer
+...(3)> }
 ```
 
-Using this in `IEx`:
+then:
 
 ```elixir
-iex(3)> Yggdrasil.subscribe(sub_chan)
+iex(4)> Yggdrasil.subscribe(sub_chan)
 :ok
-iex(4)> flush()
-{:Y_CONNECTED,
-  %Yggdrasil.Channel{adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-    name: {"amq.topic", "quotes"}, namespace: nil,
-    transformer: QuoteTransformer}}
-iex(5)> Yggdrasil.publish(pub_chan, %{"answer" => 42})
+iex(5)> flush()
+{:Y_CONNECTED, %Yggdrasil.Channel{} = _channel}
+iex(6)> Yggdrasil.publish(pub_chan, %{"answer" => 42})
 :ok
-iex(6)> flush()
-{:Y_EVENT,
-  %Yggdrasil.Channel{adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
-    name: {"amq.topic", "quotes"}, namespace: nil,
-    transformer: QuoteTransformer},
-  %{"answer" => 42}
-}
+iex(7)> flush()
+{:Y_EVENT, %Yggdrasil.Channel{} = _channel, %{"answer" => 42}}
 ```
 
 The available subscription adapters are:

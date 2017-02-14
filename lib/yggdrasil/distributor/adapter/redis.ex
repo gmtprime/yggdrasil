@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Distributor.Adapter.Redis do
   @moduledoc """
   Yggdrasil distributor adapter for Redis.
+
+  The name of a channel is a string.
   """
   use GenServer
 

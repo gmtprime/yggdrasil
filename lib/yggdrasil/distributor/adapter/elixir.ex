@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Distributor.Adapter.Elixir do
   @moduledoc """
   Yggdrasil distributor adapter for Elixir.
+
+  The name of a channel is an arbitary Elixir term.
   """
   use GenServer
 

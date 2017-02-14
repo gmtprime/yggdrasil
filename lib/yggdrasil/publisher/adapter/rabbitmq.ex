@@ -1,6 +1,9 @@
 defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   @moduledoc """
   A server for Redis publishing.
+
+  The name of a channel is a tuple containing the exchange name and the routing
+  key respectively.
   """
   use Connection
 

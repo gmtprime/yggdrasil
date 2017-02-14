@@ -1,6 +1,8 @@
 defmodule Yggdrasil.Publisher.Adapter.Redis do
   @moduledoc """
   A server for Redis publishing.
+
+  The name of a channel is a string.
   """
   use GenServer
 
