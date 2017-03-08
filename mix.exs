@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "3.0.2"
+  @version "3.0.3"
 
   def project do
     [app: :yggdrasil,
@@ -16,7 +16,8 @@ defmodule Yggdrasil.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :phoenix_pubsub, :redix_pubsub, :amqp, :postgrex],
+    [applications: [:logger, :poolboy, :phoenix_pubsub, :redix_pubsub, :amqp,
+                    :postgrex],
      mod: {Yggdrasil, []}]
   end
 
