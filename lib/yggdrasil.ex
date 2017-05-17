@@ -8,7 +8,7 @@ defmodule Yggdrasil do
   are implemented. Message passing is done through `Phoenix.PubSub` adapters.
 
   `Yggdrasil` also manages publishing pools to Redis, RabbitMQ and PostgreSQL
-  using `:pool_boy` library.
+  using `:poolboy` library.
 
   This library provides three functions
 
@@ -23,10 +23,7 @@ defmodule Yggdrasil do
 
   ```elixir
   iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{
-  ...(2)>   name: "elixir_channel",
-  ...(2)>   adapter: Yggdrasil.Elixir
-  ...(2)> }
+  iex(2)> channel = %Channel{name: "elixir_channel"}
   iex(3)> Yggdrasil.subscribe(channel)
   iex(4)> flush()
   {:Y_CONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
@@ -48,13 +45,13 @@ defmodule Yggdrasil do
   channel = %Yggdrasil.Channel{
     name: "redis_channel",
     transformer: Yggdrasil.Transformer.Default,
-    adapter: Yggdrasil.Distributor.Adapter.Redis,
+    adapter: Yggdrasil.Subscriber.Adapter.Redis,
     namespace: TestRedis
   }
   ```
 
   where `name` is the name of the channel understood by the adapter. In this
-  case the `adapter` used is `Yggdrasil.Distributor.Adapter.Redis` that
+  case the `adapter` used is `Yggdrasil.Subscriber.Adapter.Redis` that
   provides a basic fault tolerant subscription to Redis channel
   `"redis_channel"`, so the channel should be a string. Also for that reason
   this channel would be used only by subscribers so the `transformer` module
@@ -76,16 +73,38 @@ defmodule Yggdrasil do
   broker. By default, the `namespace` is `Yggdrasil` if no `namespace` is
   supplied.
 
-  Virtual adapters are provided to write a bit less when connecting to the
-  provided publishing/subscribing adapters:
+  The provided subscription adapters are the following (all are equivalents):
 
-    * For `Elixir`: `Yggdrasil.Elixir` for both publishing and subscribing.
-    * For `Redis`: `Yggdrasil.Redis` for both publishing and subscribing.
-    * For `RabbitMQ`: `Yggdrasil.RabbitMQ` for both publishing and subscribing.
-    * For `Postgres`: `Yggdrasil.Postgres` for both publishing and subscribing.
+    * For `Elixir`: `Yggdrasil.Subscriber.Adapter.Elixir` and
+    `Yggdrasil.Distributor.Adapter.Elixir`.
+    * For `Redis`: `Yggdrasil.Subscriber.Adapter.Redis` and
+    `Yggdrasil.Distributor.Adapter.Redis`.
+    * For `RabbitMQ`: `Yggdrasil.Subscriber.Adapter.RabbitMQ` and
+    `Yggdrasil.Distributor.Adapter.RabbitMQ`.
+    * For `Postgres`: `Yggdrasil.Subscriber.Adapter.Postgres` and
+    `Yggdrasil.Distributor.Adapter.Postgres`.
 
-  They are virtual, so they are changed before the publishing or subscription
-  for the actual adapters.
+  The provided publisher adapters are the following:
+
+    * For `Elixir`: `Yggdrasil.Publisherer.Adapter.Elixir`.
+    * For `Redis`: `Yggdrasil.Publisher.Adapter.Redis`.
+    * For `RabbitMQ`: `Yggdrasil.Publisher.Adapter.RabbitMQ`.
+    * For `Postgres`: `Yggdrasil.Publisher.Adapter.Postgres`.
+
+  Also there is possible to use hibrid adapters. They work both subscriptions
+  and publishing (recommended):
+
+    * For `Elixir`: `:elixir` and `Yggdrasil.Elixir`.
+    * For `Redis`: `:redis` and `Yggdrasil.Redis`.
+    * For `RabbitMQ`: `:rabbitmq` and `Yggdrasil.RabbitMQ`.
+    * For `Postgres`: `:postgres` and `Yggdrasil.Postgres`.
+
+  The format for the channels for every adapter is the following:
+
+    * For `Elixir` adapter: any valid term.
+    * For `Redis` adapter: a string.
+    * For `RabbitMQ` adapter: a tuple with exchange and routing key.
+    * For `Postgres` adapter: a string.
 
   # Custom Transformers
 
@@ -116,7 +135,7 @@ defmodule Yggdrasil do
   ```elixir
   iex(2)> sub_chan = %Yggdrasil.Channel{
   ...(2)>   name: {"amq.topic", "quotes"},
-  ...(2)>   adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
+  ...(2)>   adapter: :rabbitmq,
   ...(2)>   transformer: QuoteTransformer
   ...(2)> }
   ```
@@ -136,7 +155,7 @@ defmodule Yggdrasil do
   ```elixir
   iex(3)> pub_chan = %Yggdrasil.Channel{
   ...(3)>   name: {"amq.topic", "quotes"},
-  ...(3)>   adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
+  ...(3)>   adapter: :rabbitmq,
   ...(3)>   transformer: QuoteTransformer
   ...(3)> }
   ```
@@ -154,36 +173,6 @@ defmodule Yggdrasil do
   {:Y_EVENT, %Yggdrasil.Channel{} = _channel, %{"answer" => 42}}
   ```
 
-  The available subscription adapters are:
-
-    * `Yggdrasil.Distributor.Adapter.Elixir` which uses `Phoenix.PubSub`
-    directly as broker. Channel names can be any Elixir term.
-    * `Yggdrasil.Distributor.Adapter.Redis` which uses `Redis` as broker.
-    Channel names should be strings. Namespaces are relevant to keep several
-    connection configurations.
-    * `Yggdrasil.Distributor.Adapter.RabbitMQ` which uses `RabbitMQ` as broker.
-    Channel names should be tuples with the name of the exchange as first
-    element and the routing key as second element. Namespaces are relevant to
-    keep several connection configurations.
-    * `Yggdrasil.Distributor.Adapter.Postgres` which uses `Postgres` as broker.
-    Channel names should be strings. Namespaces are relevant to keep several
-    connection configurations.
-
-  The available publishing adapters are:
-
-    * `Yggdrasil.Publisher.Adapter.Elixir` which uses `Phoenix.PubSub`
-    directly as broker. Channel names can be any Elixir term.
-    * `Yggdrasil.Publisher.Adapter.Redis` which uses `Redis` as broker.
-    Channel names should be strings. Namespaces are relevant to keep several
-    connection configurations.
-    * `Yggdrasil.Publisher.Adapter.RabbitMQ` which uses `RabbitMQ` as broker.
-    Channel names should be tuples with the name of the exchange as first
-    element and the routing key as second element. Namespaces are relevant to
-    keep several connection configurations.
-    * `Yggdrasil.Publisher.Adapter.Postgres` which uses `Postgres` as broker.
-    Channel names should be strings. Namespaces are relevant to keep several
-    connection configurations.
-
   The only available transformer module is `Yggdrasil.Transformer.Default` and
   does nothing to the messages.
 
@@ -198,9 +187,11 @@ defmodule Yggdrasil do
     `Yggdrasil.PubSub`.
     * `pubsub_options` - Options of the `Phoenix.PubSub` adapter. By default
     are `[pool_size: 1]`.
-    * `publisher_options` - `Poolboy` options. By default are
+    * `publisher_options` - `Poolboy` options for publishing. By default are
     `[size: 5, max_overflow: 10]`.
     * `registry` - Process name registry. By default is used `ExReg`.
+    * `subscriber_options` - `Poolboy` options for RabbitMQ subscriber. By
+    default are `[size: 5, max_overflow: 10]`.
 
   Also it can be specified the connection configurations with or without
   namespace:
@@ -229,21 +220,21 @@ defmodule Yggdrasil do
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Publisher
 
-  #############################################################################
-  # Distributor functions.
-
   @publisher_gen Yggdrasil.Publisher.Generator
   @distributor_gen Yggdrasil.Distributor.Generator
   @rabbitmq_gen Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator
   @broker Yggdrasil.Broker
+
+  ######################
+  # Subscriber functions
 
   @doc """
   Subscribes to a `channel`.
   """
   @spec subscribe(Channel.t()) :: :ok | {:error, term()}
   def subscribe(%Channel{} = channel) do
-    with {:ok, channel} <- transform_channel(:client, channel),
-         :ok <- Backend.subscribe(channel),
+    channel = transform_channel(:client, channel)
+    with :ok <- Backend.subscribe(channel),
          do: @broker.subscribe(@broker, channel, self())
   end
 
@@ -252,21 +243,21 @@ defmodule Yggdrasil do
   """
   @spec unsubscribe(Channel.t()) :: :ok | {:error, term()}
   def unsubscribe(%Channel{} = channel) do
-    with {:ok, channel} <- transform_channel(:client, channel),
-         :ok <- Backend.unsubscribe(channel),
+    channel = transform_channel(:client, channel)
+    with :ok <- Backend.unsubscribe(channel),
          do: @broker.unsubscribe(@broker, channel, self())
   end
 
-  #############################################################################
-  # Publisher function.
+  #####################
+  # Publisher functions
 
   @doc """
   Publishes a `message` in a `channel`.
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
   def publish(%Channel{} = channel, message) do
-    with {:ok, channel} <- transform_channel(:server, channel),
-         {:ok, _} <- @publisher_gen.start_publisher(@publisher_gen, channel),
+    channel = transform_channel(:server, channel)
+    with {:ok, _} <- @publisher_gen.start_publisher(@publisher_gen, channel),
          do: Publisher.publish(channel, message)
   end
 
@@ -274,25 +265,72 @@ defmodule Yggdrasil do
   # Helpers
 
   @doc false
-  def transform_channel(:server, %Channel{adapter: adapter} = channel) do
-    if :erlang.function_exported(adapter, :get_server_adapter, 0) do
-        with {:ok, adapter} = apply(adapter, :get_server_adapter, []),
-              do: {:ok, %Channel{channel | adapter: adapter}}
-    else
-      {:ok, channel}
-    end
+  def transform_channel(:server, %Channel{adapter: :elixir} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Elixir}
   end
-  def transform_channel(:client, %Channel{adapter: adapter} = channel) do
-    if :erlang.function_exported(adapter, :get_client_adapter, 0) do
-        with {:ok, adapter} = apply(adapter, :get_client_adapter, []),
-             do: {:ok, %Channel{channel | adapter: adapter}}
-    else
-      {:ok, channel}
-    end
+  def transform_channel(:server, %Channel{adapter: :redis} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Redis}
+  end
+  def transform_channel(:server, %Channel{adapter: :rabbitmq} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.RabbitMQ}
+  end
+  def transform_channel(:server, %Channel{adapter: :postgres} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Postgres}
+  end
+  def transform_channel(:client, %Channel{adapter: :elixir} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Elixir}
+  end
+  def transform_channel(:client, %Channel{adapter: :redis} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Redis}
+  end
+  def transform_channel(:client, %Channel{adapter: :rabbitmq} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ}
+  end
+  def transform_channel(:client, %Channel{adapter: :postgres} = channel) do
+    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Postgres}
+  end
+  def transform_channel(type, %Channel{adapter: Yggdrasil.Elixir} = channel) do
+    transform_channel(type, %Channel{channel | adapter: :elixir})
+  end
+  def transform_channel(type, %Channel{adapter: Yggdrasil.Redis} = channel) do
+    transform_channel(type, %Channel{channel | adapter: :redis})
+  end
+  def transform_channel(type, %Channel{adapter: Yggdrasil.RabbitMQ} = channel) do
+    transform_channel(type, %Channel{channel | adapter: :rabbitmq})
+  end
+  def transform_channel(type, %Channel{adapter: Yggdrasil.Postgres} = channel) do
+    transform_channel(type, %Channel{channel | adapter: :postgres})
+  end
+  def transform_channel(
+    :client,
+    %Channel{adapter: Yggdrasil.Distributor.Adapter.Elixir} = channel
+  ) do
+    transform_channel(:client, %Channel{channel | adapter: :elixir})
+  end
+  def transform_channel(
+    :client,
+    %Channel{adapter: Yggdrasil.Distributor.Adapter.Redis} = channel
+  ) do
+    transform_channel(:client, %Channel{channel | adapter: :redis})
+  end
+  def transform_channel(
+    :client,
+    %Channel{adapter: Yggdrasil.Distributor.Adapter.RabbitMQ} = channel
+  ) do
+    transform_channel(:client, %Channel{channel | adapter: :rabbitmq})
+  end
+  def transform_channel(
+    :client,
+    %Channel{adapter: Yggdrasil.Distributor.Adapter.Postgres} = channel
+  ) do
+    transform_channel(:client, %Channel{channel | adapter: :postgres})
+  end
+  def transform_channel(_, %Channel{} = channel) do
+    channel
   end
 
-  #############################################################################
-  # Application start.
+  ###################
+  # Application start
 
   @adapter Application.get_env(:yggdrasil, :pubsub_adapter, Phoenix.PubSub.PG2)
   @name Application.get_env(:yggdrasil, :pubsub_name, Yggdrasil.PubSub)

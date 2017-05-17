@@ -15,7 +15,7 @@ defmodule Yggdrasil.Channel do
   Channel struct definition.
   """
   defstruct name: nil,
-            adapter: nil,
+            adapter: :elixir,
             transformer: Yggdrasil.Transformer.Default,
             namespace: Yggdrasil
 
