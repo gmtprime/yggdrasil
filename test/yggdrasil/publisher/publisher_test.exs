@@ -8,7 +8,7 @@ defmodule Yggdrasil.PublisherTest do
     name = UUID.uuid4()
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir,
       namespace: PublisherTest
     }
     Yggdrasil.subscribe(sub_channel)

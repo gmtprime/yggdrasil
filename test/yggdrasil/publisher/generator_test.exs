@@ -9,7 +9,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     name = UUID.uuid4()
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir,
       namespace: PublisherGenTest0
     }
     Yggdrasil.subscribe(sub_channel)
@@ -34,7 +34,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
     name = UUID.uuid4()
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir,
       namespace: PublisherGenTest1
     }
     Yggdrasil.subscribe(sub_channel)

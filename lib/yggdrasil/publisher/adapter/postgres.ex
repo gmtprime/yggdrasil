@@ -9,7 +9,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Adapter.Postgres
+  alias Yggdrasil.Subscriber.Adapter.Postgres
 
   defstruct [:conn, :namespace]
   alias __MODULE__, as: State

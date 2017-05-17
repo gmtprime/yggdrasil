@@ -4,13 +4,13 @@ defmodule Yggdrasil.Distributor.Adapter.ElixirTest do
   alias Yggdrasil.Channel
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Adapter.Elixir, as: Basic
+  alias Yggdrasil.Subscriber.Adapter.Elixir, as: Basic
 
   test "start - stop" do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     Backend.subscribe(channel)
     assert {:ok, publisher} = Publisher.start_link(channel)
@@ -24,7 +24,7 @@ defmodule Yggdrasil.Distributor.Adapter.ElixirTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     Backend.subscribe(channel)
     assert {:ok, publisher} = Publisher.start_link(channel)

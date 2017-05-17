@@ -8,7 +8,7 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
     name = "postgres_2"
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
+      adapter: Yggdrasil.Subscriber.Adapter.Postgres,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)

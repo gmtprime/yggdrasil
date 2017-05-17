@@ -8,7 +8,7 @@ defmodule Yggdrasil.Publisher.Adapter.RedisTest do
     name = "redis_channel_2"
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
+      adapter: Yggdrasil.Subscriber.Adapter.Redis,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)

@@ -1,18 +1,18 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "3.0.3"
+  @version "3.1.0"
 
   def project do
     [app: :yggdrasil,
      version: @version,
-     elixir: "~> 1.2",
+     elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     description: description,
-     package: package,
-     docs: docs,
-     deps: deps]
+     description: description(),
+     package: package(),
+     docs: docs(),
+     deps: deps()]
   end
 
   def application do
@@ -26,15 +26,14 @@ defmodule Yggdrasil.Mixfile do
      {:phoenix_pubsub, "~> 1.0"},
      {:poolboy, "~> 1.5"},
      {:redix_pubsub, ">= 0.0.0"},
-     {:amqp, "~> 0.2.0-pre.1"},
+     {:amqp, "~> 0.2"},
      {:postgrex, ">= 0.0.0"},
-     {:connection, "~> 1.0.4"},
+     {:connection, "~> 1.0"},
      {:version_check, "~> 0.1"},
-     {:uuid, "~> 1.1.4", only: [:dev, :test]},
-     {:earmark, ">= 0.0.0", only: :dev},
-     {:ex_doc, "~> 0.13", only: :dev},
-     {:credo, "~> 0.6", only: [:dev, :docs]},
-     {:inch_ex, "~> 0.5.6", only: [:dev, :docs]}]
+     {:uuid, "~> 1.1", only: [:dev, :test]},
+     {:ex_doc, "~> 0.15", only: :dev},
+     {:credo, "~> 0.7", only: [:dev, :docs]},
+     {:inch_ex, "~> 0.5", only: [:dev, :docs]}]
   end
 
   defp docs do

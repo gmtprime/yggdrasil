@@ -234,6 +234,7 @@ defmodule Yggdrasil do
 
   @publisher_gen Yggdrasil.Publisher.Generator
   @distributor_gen Yggdrasil.Distributor.Generator
+  @rabbitmq_gen Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator
   @broker Yggdrasil.Broker
 
   @doc """
@@ -308,6 +309,7 @@ defmodule Yggdrasil do
 
     children = [
       supervisor(@adapter, [@name, @options]),
+      supervisor(@rabbitmq_gen, [[name: @rabbitmq_gen]]),
       supervisor(@publisher_gen, [[name: @publisher_gen]]),
       supervisor(@distributor_gen, [[name: @distributor_gen]]),
       worker(@broker, [@distributor_gen, monitors, [name: @broker]])

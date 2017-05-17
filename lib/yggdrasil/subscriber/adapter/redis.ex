@@ -1,4 +1,4 @@
-defmodule Yggdrasil.Distributor.Adapter.Redis do
+defmodule Yggdrasil.Subscriber.Adapter.Redis do
   @moduledoc """
   Yggdrasil distributor adapter for Redis.
 

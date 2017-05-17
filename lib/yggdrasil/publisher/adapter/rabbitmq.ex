@@ -10,7 +10,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Adapter.RabbitMQ
+  alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
 
   defstruct [:conn, :chan, :namespace]
   alias __MODULE__, as: State
@@ -52,7 +52,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
 
   @doc false
   def connect(_info, %State{namespace: namespace} = state) do
-    options = RabbitMQ.rabbitmq_options(%Channel{namespace: namespace})
+    options = Conn.rabbitmq_options(namespace)
     {:ok, conn} = AMQP.Connection.open(options)
     try do
       AMQP.Channel.open(conn)

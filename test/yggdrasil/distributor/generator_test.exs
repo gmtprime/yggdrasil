@@ -15,7 +15,7 @@ defmodule Yggdrasil.Distributor.GeneratorTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     Backend.subscribe(channel)
     {:ok, _} = Generator.start_distributor(generator, channel)
@@ -35,7 +35,7 @@ defmodule Yggdrasil.Distributor.GeneratorTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     Backend.subscribe(channel)
     {:ok, distributor} = Generator.start_distributor(generator, channel)

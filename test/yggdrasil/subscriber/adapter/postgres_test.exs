@@ -4,13 +4,13 @@ defmodule Yggdrasil.Distributor.Adapter.PostgresTest do
   alias Yggdrasil.Channel
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Adapter.Postgres
+  alias Yggdrasil.Subscriber.Adapter.Postgres
 
   test "start - stop" do
     name = "postgres_0"
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
+      adapter: Yggdrasil.Subscriber.Adapter.Postgres,
       namespace: Test
     }
     Backend.subscribe(channel)
@@ -25,7 +25,7 @@ defmodule Yggdrasil.Distributor.Adapter.PostgresTest do
     name = "postgres_1"
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
+      adapter: Yggdrasil.Subscriber.Adapter.Postgres,
       namespace: Test
     }
     Backend.subscribe(channel)

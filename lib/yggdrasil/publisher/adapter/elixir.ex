@@ -50,7 +50,7 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   ) do
     stream = %Channel{
       channel | name: {:elixir, name},
-                adapter: Yggdrasil.Distributor.Adapter.Elixir
+                adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     result =
       with {:ok, encoded} <- encoder.encode(stream, message),

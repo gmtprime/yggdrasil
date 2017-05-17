@@ -23,7 +23,7 @@ defmodule Yggdrasil.BrokerTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
 
     assert :ok = Backend.subscribe(channel)
@@ -46,7 +46,7 @@ defmodule Yggdrasil.BrokerTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
 
     assert :ok = Backend.subscribe(channel)

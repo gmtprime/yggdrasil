@@ -7,7 +7,7 @@ defmodule Yggdrasil.Publisher.Adapter.Redis do
   use GenServer
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Adapter.Redis
+  alias Yggdrasil.Subscriber.Adapter.Redis
 
   defstruct [:conn, :namespace]
   alias __MODULE__, as: State

@@ -8,7 +8,7 @@ defmodule YggdrasilTest do
     name = UUID.uuid4()
     channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     assert :ok = Yggdrasil.subscribe(channel)
     assert_receive {:Y_CONNECTED, ^channel}, 500
@@ -22,7 +22,7 @@ defmodule YggdrasilTest do
     name = UUID.uuid4()
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Elixir,
+      adapter: Yggdrasil.Subscriber.Adapter.Elixir,
       namespace: YggdrasilTest
     }
     :ok = Yggdrasil.subscribe(sub_channel)
@@ -43,7 +43,7 @@ defmodule YggdrasilTest do
     name = "redis_full_test"
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Redis,
+      adapter: Yggdrasil.Subscriber.Adapter.Redis,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
@@ -64,7 +64,7 @@ defmodule YggdrasilTest do
     name = {"amq.topic", "rabbitmq_full_test"}
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
+      adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
@@ -85,7 +85,7 @@ defmodule YggdrasilTest do
     name = "postgres_full_test"
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.Postgres,
+      adapter: Yggdrasil.Subscriber.Adapter.Postgres,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)

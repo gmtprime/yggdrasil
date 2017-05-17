@@ -1,4 +1,4 @@
-defmodule Yggdrasil.Distributor.Adapter.Postgres do
+defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   @moduledoc """
   Yggdrasil distributor adapter for Postgres.
 

@@ -1,6 +1,6 @@
-defmodule Yggdrasil.Distributor.Adapter.Elixir do
+defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   @moduledoc """
-  Yggdrasil distributor adapter for Elixir.
+  Yggdrasil subscriber adapter for Elixir.
 
   The name of a channel is an arbitary Elixir term.
   """
@@ -19,7 +19,7 @@ defmodule Yggdrasil.Distributor.Adapter.Elixir do
   # Client API.
 
   @doc """
-  Starts a Elixir distributor adapter in a `channel` with some distributor
+  Starts a Elixir subscriber adapter in a `channel` with some subscriber
   `publisher` and optionally `GenServer` `options`.
   """
   def start_link(%Channel{} = channel, publisher, options \\ []) do

@@ -8,7 +8,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQTest do
     name = {"amq.topic", "rabbitmq_2"}
     sub_channel = %Channel{
       name: name,
-      adapter: Yggdrasil.Distributor.Adapter.RabbitMQ,
+      adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ,
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
