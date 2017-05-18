@@ -4,19 +4,21 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   a process request a connection.
   """
   use Connection
-  alias Yggdrasil.Channel
 
   require Logger
 
-  defstruct [:namespace, :conn, :ref]
+  defstruct [:namespace, :conn]
   alias __MODULE__, as: State
+
+  ############
+  # Public API
 
   @doc """
   Starts a RabbitMQ connection handler with a `namespace` to get the options
   to connect to RabbitMQ. Additionally, `GenServer` `options` can be provided.
   """
   def start_link(namespace, options  \\ []) do
-    state = %State{namespace: namespace, ref: make_ref()}
+    state = %State{namespace: namespace}
     Connection.start_link(__MODULE__, state, options)
   end
 
@@ -29,25 +31,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   end
 
   @doc """
-  Subscribes to an Yggdrasil channel to receive connection updates from the
-  RabbitMQ connection identified by the `namespace`.
-  """
-  def subscribe(namespace \\ Yggdrasil) do
-    channel = sub_channel(namespace)
-    Yggdrasil.subscribe(channel)
-  end
-
-  @doc """
-  Unsubscribes from an Yggdrasil channel to stop receiving connection
-  updates from the RabbitMQ connection identified by the `namespace`.
-  """
-  def unsubscribe(namespace \\ Yggdrasil) do
-    channel = sub_channel(namespace)
-    Yggdrasil.unsubscribe(channel)
-  end
-
-  @doc """
-  Opens a RabbitMQ channel.
+  Opens a RabbitMQ channel in the connection process identified by a `pid`.
   """
   def open_channel(pid) do
     Connection.call(pid, :open)
@@ -65,16 +49,14 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   @doc false
   def connect(_, %State{namespace: namespace, conn: nil} = state) do
     options = rabbitmq_options(namespace)
-    try do
-      {:ok, conn} = AMQP.Connection.open(options)
-      connected(conn, state)
-    catch
-      _, reason ->
-        backoff(reason, state)
-    rescue
-      error ->
-        backoff(error, state)
-    end
+    {:ok, conn} = AMQP.Connection.open(options)
+    connected(conn, state)
+  catch
+    _, reason ->
+      backoff(reason, state)
+  rescue
+    error ->
+      backoff(error, state)
   end
 
   @doc false
@@ -91,17 +73,15 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     {:reply, {:error, "Not connected"}, state}
   end
   def handle_call(:open, _from, %State{conn: conn} = state) do
-    try do
-      AMQP.Channel.open(conn)
-    catch
-      _, reason ->
-        {:reply, {:ok, reason}, state}
-    else
-      {:ok, _} = channel ->
-        {:reply, channel, state}
-      error ->
-        {:reply, error, state}
-    end
+    AMQP.Channel.open(conn)
+  catch
+    _, reason ->
+      {:reply, {:ok, reason}, state}
+  else
+    {:ok, _} = channel ->
+      {:reply, channel, state}
+    error ->
+      {:reply, error, state}
   end
   def handle_call(_msg, _from, %State{} = state) do
     {:noreply, state}
@@ -129,12 +109,29 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     terminate(reason, %State{state | conn: nil})
   end
 
+  #########
+  # Helpers
+
+  @doc false
+  def rabbitmq_options(Yggdrasil) do
+    :yggdrasil
+    |> Application.get_env(:rabbitmq, [])
+  end
+  def rabbitmq_options(namespace) do
+    :yggdrasil
+    |> Application.get_env(namespace, [rabbitmq: []])
+    |> Keyword.get(:rabbitmq, [])
+    |> Keyword.pop(:subscriber_options)
+    |> elem(1)
+  end
+
   @doc false
   def connected(conn, %State{namespace: namespace} = state) do
-    publish(:connected, state)
     Process.monitor(conn.pid)
     metadata = [namespace: namespace]
-    Logger.debug("Opened a connection with RabbitMQ #{inspect metadata}")
+    Logger.debug(fn ->
+      "Opened a connection with RabbitMQ #{inspect metadata}"
+    end)
     new_state = %State{state | conn: conn}
     {:ok, new_state}
   end
@@ -142,65 +139,35 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   @doc false
   def backoff(error, %State{namespace: namespace} = state) do
     metadata = [namespace: namespace, error: error]
-    Logger.error("Cannot open connection to RabbitMQ #{inspect metadata}")
+    Logger.error(fn ->
+      "Cannot open connection to RabbitMQ #{inspect metadata}"
+    end)
     {:backoff, 5_000, state}
   end
 
   @doc false
   def disconnected(%State{namespace: namespace} = state) do
-    publish(:disconnected, state)
     metadata = [namespace: namespace]
-    Logger.debug("Disconnected from RabbitMQ #{inspect metadata}")
+    Logger.debug(fn ->
+      "Disconnected from RabbitMQ #{inspect metadata}"
+    end)
     {:backoff, 5_000, state}
   end
 
   @doc false
-  def terminated(:normal, %State{namespace: namespace} = state) do
-    publish(:stopped, state)
+  def terminated(:normal, %State{namespace: namespace}) do
     metadata = [namespace: namespace]
-    Logger.debug("Terminated RabbitMQ connection #{inspect metadata}")
+    Logger.debug(fn ->
+      "Terminated RabbitMQ connection #{inspect metadata}"
+    end)
     :ok
   end
-  def terminated(reason, %State{namespace: namespace} = state) do
-    publish(:terminated, state)
+  def terminated(reason, %State{namespace: namespace}) do
     metadata = [namespace: namespace, reason: reason]
-    Logger.debug("Terminated RabbitMQ connection #{inspect metadata}" <>
-                 " with #{inspect reason}")
+    Logger.debug(fn ->
+      "Terminated RabbitMQ connection #{inspect metadata}" <>
+      " with #{inspect reason}"
+    end)
     :ok
-  end
-
-  #########
-  # Helpers
-
-  @doc false
-  def rabbitmq_options(Yggdrasil) do
-    Application.get_env(:yggdrasil, :rabbitmq, [])
-  end
-  def rabbitmq_options(namespace) do
-    default = [rabbitmq: []]
-    result = Application.get_env(:yggdrasil, namespace, default)
-    Keyword.get(result, :rabbitmq, [])
-  end
-
-  @doc false
-  def pub_channel(%State{namespace: namespace}) do
-    %Channel{
-      name: {:rabbitmq_connection, namespace},
-      adapter: Yggdrasil.Publisher.Adapter.Elixir
-    }
-  end
-
-  @doc false
-  def publish(message, %State{ref: ref} = state) do
-    channel = pub_channel(state)
-    Yggdrasil.publish(channel, {message, ref})
-  end
-
-  @doc false
-  def sub_channel(namespace) do
-    %Channel{
-      name: {:rabbitmq_connection, namespace},
-      adapter: Yggdrasil.Subscriber.Adapter.Elixir
-    }
   end
 end

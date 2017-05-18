@@ -1,8 +1,55 @@
 defmodule Yggdrasil.Publisher.Adapter.Postgres do
   @moduledoc """
-  A server for Postgres publishing.
+  Yggdrasil publisher adapter for Postgres. The name of the channel must be a
+  binary e.g:
 
-  The name of a channel is a string.
+  Subscription to channel:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> sub_channel = %Channel{
+  ...(2)>   name: "postgres_channel",
+  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Postgres
+  ...(2)> }
+  iex(3)> Yggdrasil.subscribe(sub_channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
+  ```
+
+  Publishing message:
+
+  ```elixir
+  iex(5)> pub_channel = %Channel{
+  ...(5)>   name: "postgres_channel",
+  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Postgres
+  ...(5)> }
+  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  :ok
+  ```
+
+  Subscriber receiving message:
+
+  ```elixir
+  iex(7)> flush()
+  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
+  ```
+
+  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
+  used. For the previous example we can do the following:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> channel = %Channel{name: "postgres_channel", adapter: :postgres}
+  iex(3)> Yggdrasil.subscribe(channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
+  iex(5)> Yggdrasil.publish(channel, "message")
+  :ok
+  iex(6)> flush()
+  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"} 
+  ```
   """
   use Connection
 
@@ -109,7 +156,9 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
 
   defp terminated(reason, %State{} = _state) do
     metadata = [error: reason]
-    Logger.debug("Terminated Postgres connection #{inspect metadata}")
+    Logger.debug(fn ->
+      "Terminated Postgres connection #{inspect metadata}"
+    end)
     :ok
   end
 end

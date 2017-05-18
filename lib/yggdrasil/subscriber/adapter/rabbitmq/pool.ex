@@ -64,14 +64,20 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
   #########
   # Helpers
 
+  @doc false
   def subscriber_options(Yggdrasil) do
-    default = [size: 5, max_overflow: 10]
-    Application.get_env(:yggdrasil, :subscriber_options, default)
+    poolboy_opts = [size: 5, max_overflow: 10]
+    default = [subscriber_options: poolboy_opts]
+    :yggdrasil
+    |> Application.get_env(:rabbitmq, default)
+    |> Keyword.get(:subscriber_options, poolboy_opts)
   end
   def subscriber_options(namespace) do
-    default = [size: 5, max_overflow: 10]
-    options =
-      Application.get_env(:yggdrasil, namespace, [subscriber_options: default])
-    Keyword.get(options, :subscriber_options, default)
+    poolboy_opts = [size: 5, max_overflow: 10]
+    default = [subscriber_options: poolboy_opts]
+    :yggdrasil
+    |> Application.get_env(namespace, [rabbitmq: default])
+    |> Keyword.get(:rabbitmq, default)
+    |> Keyword.get(:subscriber_options, poolboy_opts)
   end
 end

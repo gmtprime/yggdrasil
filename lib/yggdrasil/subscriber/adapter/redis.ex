@@ -1,8 +1,54 @@
 defmodule Yggdrasil.Subscriber.Adapter.Redis do
   @moduledoc """
-  Yggdrasil distributor adapter for Redis.
+  Yggdrasil subscriber adapter for Redis. The name of the channel must be a
+  binary e.g:
 
-  The name of a channel is a string.
+  Subscription to channel:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> sub_channel = %Channel{
+  ...(2)>   name: "redis_channel",
+  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Redis
+  ...(2)> }
+  iex(3)> Yggdrasil.subscribe(sub_channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
+  ```
+
+  Publishing message:
+
+  ```elixir
+  iex(5)> pub_channel = %Channel{
+  ...(5)>   name: "redis_channel",
+  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Redis
+  ...(5)> }
+  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  :ok
+  ```
+
+  Subscriber receiving message:
+
+  ```elixir
+  iex(7)> flush()
+  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"}
+  ```
+
+  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
+  used. For the previous example we can do the following:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> channel = %Channel{name: "redis_channel", adapter: :redis}
+  iex(3)> Yggdrasil.subscribe(channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
+  iex(5)> Yggdrasil.publish(channel, "message")
+  :ok
+  iex(6)> flush()
+  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"} 
   """
   use GenServer
 
@@ -51,7 +97,9 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
     {:redix_pubsub, _, :psubscribed, %{pattern: _}},
     %State{channel: %Channel{name: name} = channel} = state
   ) do
-    Logger.debug("Connected to Redis #{inspect [channel: name]}")
+    Logger.debug(fn ->
+      "Connected to Redis #{inspect [channel: name]}"
+    end)
     Backend.connected(channel)
     {:noreply, state}
   end

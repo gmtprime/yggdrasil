@@ -1,9 +1,56 @@
 defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   @moduledoc """
-  A server for Redis publishing.
+  Yggdrasil publisher adapter for RabbitMQ. The name of the channel should be
+  a tuple with the name of the exchange and the routing key. The exchange
+  should be a topic e.g:
 
-  The name of a channel is a tuple containing the exchange name and the routing
-  key respectively.
+  Subscription to channel:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> sub_channel = %Channel{
+  ...(2)>   name: {"amq.topic", "r_key"},
+  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ
+  ...(2)> }
+  iex(3)> Yggdrasil.subscribe(sub_channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
+  ```
+
+  Publishing message:
+
+  ```elixir
+  iex(5)> pub_channel = %Channel{
+  ...(5)>   name: {"amp.topic", "r_key"},
+  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.RabbitMQ
+  ...(5)> }
+  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  :ok
+  ```
+
+  Subscriber receiving message:
+
+  ```elixir
+  iex(7)> flush()
+  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
+  ```
+
+  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
+  used. For the previous example we can do the following:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> channel = %Channel{name: {"amq.topic", "r_key"}, adapter: :rabbitmq}
+  iex(3)> Yggdrasil.subscribe(channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
+  iex(5)> Yggdrasil.publish(channel, "message")
+  :ok
+  iex(6)> flush()
+  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"} 
+  ```
   """
   use Connection
 
@@ -69,7 +116,9 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
 
   defp backoff(error, %State{} = state) do
     metadata = [error: error]
-    Logger.error("Cannot connect to RabbitMQ #{inspect metadata}")
+    Logger.error(fn ->
+      "Cannot connect to RabbitMQ #{inspect metadata}"
+    end)
     {:backoff, 5000, state}
   end
 
@@ -88,7 +137,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   end
 
   defp disconnected(%State{} = state) do
-    Logger.debug("Disconnected from RabbitMQ")
+    Logger.debug(fn -> "Disconnected from RabbitMQ" end)
     {:backoff, 5000, state}
   end
 
@@ -133,7 +182,9 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
 
   defp terminated(reason, %State{} = _state) do
     metadata = [error: reason]
-    Logger.debug("Terminated RabbitMQ connection #{inspect metadata}")
+    Logger.debug(fn ->
+      "Terminated RabbitMQ connection #{inspect metadata}"
+    end)
     :ok
   end
 end

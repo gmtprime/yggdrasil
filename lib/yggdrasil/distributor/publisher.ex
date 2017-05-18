@@ -40,7 +40,7 @@ defmodule Yggdrasil.Distributor.Publisher do
 
   @doc false
   def init(%Channel{} = channel) do
-    Logger.debug("Started publisher for #{inspect channel}")
+    Logger.debug(fn -> "Started publisher for #{inspect channel}" end)
     {:ok, channel}
   end
 

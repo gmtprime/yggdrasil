@@ -1,8 +1,55 @@
 defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   @moduledoc """
-  Yggdrasil subscriber adapter for Elixir.
+  Yggdrasil subscriber adapter for Elixir. The name of the channel can be any
+  arbitrary term e.g:
 
-  The name of a channel is an arbitary Elixir term.
+  Subscription to channel:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> sub_channel = %Channel{
+  ...(2)>   name: {:test, "elixir_channel"},
+  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Elixir
+  ...(2)> }
+  iex(3)> Yggdrasil.subscribe(sub_channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: {:test, "elixir_channel"}, (...)}}
+  ```
+
+  Publishing message:
+
+  ```elixir
+  iex(5)> pub_channel = %Channel{
+  ...(5)>   name: {:test, "elixir_channel"},
+  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Elixir
+  ...(5)> }
+  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  :ok
+  ```
+
+  Subscriber receiving message:
+
+  ```elixir
+  iex(7)> flush()
+  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"}
+  ```
+
+  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
+  used. For the previous example we can do the following:
+
+  ```elixir
+  iex(1)> alias Yggdrasil.Channel
+  iex(2)> channel = %Channel{name: {:test, "elixir_channel"}, adapter: :elixir}
+  iex(3)> Yggdrasil.subscribe(channel)
+  :ok
+  iex(4)> flush()
+  {:Y_CONNECTED, %Channel{name: {:test, "elixir_channel"}, (...)}}
+  iex(5)> Yggdrasil.publish(channel, "message")
+  :ok
+  iex(6)> flush()
+  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"} 
+  ```
   """
   use GenServer
 

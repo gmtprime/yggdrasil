@@ -144,16 +144,22 @@ defmodule Yggdrasil.Broker do
   def do_subscribe(channel, pid, %State{} = state) do
     case start_distributor(channel, state) do
       {:ok, {:already_connected, _}} ->
-        Logger.debug("#{inspect pid} subscribed to #{inspect channel}")
+        Logger.debug(fn ->
+          "#{inspect pid} subscribed to #{inspect channel}"
+        end)
         add_subscriber(channel, pid, state)
         Backend.connected(channel, pid)
         :ok
       {:ok, _} ->
-        Logger.debug("#{inspect pid} subscribed to #{inspect channel}")
+        Logger.debug(fn ->
+          "#{inspect pid} subscribed to #{inspect channel}"
+        end)
         add_subscriber(channel, pid, state)
         :ok
       error ->
-        Logger.error("#{inspect pid} couldn't subscribed to #{inspect channel}")
+        Logger.error(fn ->
+          "#{inspect pid} couldn't subscribed to #{inspect channel}"
+        end)
         error
     end
   end
@@ -206,10 +212,14 @@ defmodule Yggdrasil.Broker do
   def do_unsubscribe(channel, pid, %State{} = state) do
     case remove_subscriber(channel, pid, state) do
       counter when counter > 0 ->
-        Logger.debug("#{inspect pid} unsubscribed to #{inspect channel}")
+        Logger.debug(fn ->
+          "#{inspect pid} unsubscribed to #{inspect channel}"
+        end)
         :ok
       _ ->
-        Logger.debug("Stopping distributor for #{inspect channel}")
+        Logger.debug(fn ->
+          "Stopping distributor for #{inspect channel}"
+        end)
         stop_distributor(channel)
         :ok
     end

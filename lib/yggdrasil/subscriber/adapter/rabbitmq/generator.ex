@@ -52,7 +52,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   end
 
   @doc """
-  Opens a RabbitMQ channel.
+  Opens a RabbitMQ channel for a `namespace`.
   """
   def open_channel(namespace) do
     Pool.open_channel(namespace)
