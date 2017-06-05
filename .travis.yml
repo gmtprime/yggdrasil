@@ -19,7 +19,7 @@ services:
 env:
   - TEST_YGGDRASIL_POSTGRES_DATABASE="travis_ci_test"
 before_script:
-  - psql -c 'CREATE DATABASE $TEST_YGGDRASIL_POSTGRES_DATABASE;' -U postgres
+  - psql -c "CREATE DATABASE '$TEST_YGGDRASIL_POSTGRES_DATABASE'" -U postgres
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
   - MIX_ENV=test mix compile
