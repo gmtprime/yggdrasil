@@ -16,28 +16,10 @@ services:
   - rabbitmq
   - redis-server
   - postgresql
+env:
+  - TEST_YGGDRASIL_POSTGRES_DATABASE="travis_ci_test"
 before_script:
-  - psql -c 'CREATE DATABASE travis_ci_test;' -U postgres
-  - >
-      echo '
-      use Mix.Config
-
-      config :logger,
-        level: :warn
-
-      config :yggdrasil, Test,
-        redis: [host: "localhost",
-                port: 6379],
-        rabbitmq: [host: "localhost",
-                   port: 5672,
-                   username: "guest",
-                   password: "guest",
-                   virtual_host: "/"],
-        postgres: [hostname: "localhost",
-                   username: "postgres",
-                   password: "postgres",
-                   database: "travis_ci_test"]
-      ' > config/test.exs
+  - psql -c 'CREATE DATABASE $TEST_YGGDRASIL_POSTGRES_DATABASE;' -U postgres
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
   - MIX_ENV=test mix compile

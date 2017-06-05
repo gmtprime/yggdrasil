@@ -34,7 +34,7 @@ defmodule Yggdrasil.Mixfile do
      {:uuid, "~> 1.1", only: [:dev, :test]},
      {:ex_doc, "~> 0.15", only: :dev},
      {:credo, "~> 0.8", only: [:dev, :docs]},
-     {:inch_ex, "~> 0.5", only: [:dev, :docs]}]
+     {:inch_ex, "~> 0.5", only: [:dev, :test, :docs]}]
   end
 
   defp docs do
