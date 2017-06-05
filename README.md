@@ -230,7 +230,7 @@ dependencies in your `mix.exs` file:
 
 ```elixir
 def deps do
-  [{:yggdrasil, "~> 3.1"}]
+  [{:yggdrasil, "~> 3.2"}]
 end
 ```
 
