@@ -5,8 +5,9 @@ defmodule Yggdrasil.Publisher do
   use Supervisor
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Settings
 
-  @registry Application.get_env(:yggdrasil, :registry, ExReg)
+  @registry Settings.registry()
 
   #############################################################################
   # Client API.
@@ -69,12 +70,14 @@ defmodule Yggdrasil.Publisher do
 
   @doc false
   def publisher_options(%Channel{namespace: nil}) do
-    default = [size: 5, max_overflow: 10]
-    Application.get_env(:yggdrasil, :publisher_options, default)
+    Settings.yggdrasil_publisher_options()
   end
   def publisher_options(%Channel{namespace: namespace}) do
-    default = [publisher_options: [size: 5, max_overflow: 10]]
-    options = Application.get_env(:yggdrasil, namespace, default)
-    Keyword.get(options, :publisher_options, [size: 5, max_overflow: 10])
+    name = Settings.gen_env_name(namespace, :publisher_options)
+    Skogsra.get_app_env(:yggdrasil, :publisher_options,
+      domain: namespace,
+      default: Settings.yggdrasil_publisher_options(),
+      name: name
+    )
   end
 end

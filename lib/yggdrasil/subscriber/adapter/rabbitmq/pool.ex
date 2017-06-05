@@ -4,8 +4,9 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
   """
   use Supervisor
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
+  alias Yggdrasil.Settings
 
-  @registry Application.get_env(:yggdrasil, :registry, ExReg)
+  @registry Settings.registry()
 
   ############
   # Client API
@@ -66,18 +67,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
 
   @doc false
   def subscriber_options(Yggdrasil) do
-    poolboy_opts = [size: 5, max_overflow: 10]
-    default = [subscriber_options: poolboy_opts]
-    :yggdrasil
-    |> Application.get_env(:rabbitmq, default)
-    |> Keyword.get(:subscriber_options, poolboy_opts)
+    Settings.yggdrasil_rabbitmq_subscriber_options()
   end
   def subscriber_options(namespace) do
-    poolboy_opts = [size: 5, max_overflow: 10]
-    default = [subscriber_options: poolboy_opts]
-    :yggdrasil
-    |> Application.get_env(namespace, [rabbitmq: default])
-    |> Keyword.get(:rabbitmq, default)
-    |> Keyword.get(:subscriber_options, poolboy_opts)
+    Skogsra.get_app_env(:yggdrasil, :subscriber_options,
+      domain: [namespace, :rabbitmq],
+      default: Settings.yggdrasil_rabbitmq_subscriber_options()
+    )
   end
 end

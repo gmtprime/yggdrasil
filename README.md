@@ -69,14 +69,14 @@ where:
     use Mix.Config
 
     config :yggdrasil,
-      redis: [host: "localhost"]
+      redis: [hostname: "localhost"]
     ```
   but for `TestRedis` namespace would be like this:
     ```elixir
     use Mix.Config
 
     config: :yggdrasil, TestRedis,
-      redis: [host: "localhost"]
+      redis: [hostname: "localhost"]
     ```
 
 # Small Example
@@ -202,11 +202,11 @@ Also it can be specified the connection configurations with or without
 namespace:
 
   * `redis` - List of options of `Redix`:
-    + `host` - Redis hostname.
+    + `hostname` - Redis hostname.
     + `port` - Redis port.
     + `password` - Redis password.
   * `rabbitmq` - List of options of `AMQP`:
-    + `host` - RabbitMQ hostname.
+    + `hostname` - RabbitMQ hostname.
     + `port` - RabbitMQ port.
     + `username` - Username.
     + `password` - Password.
@@ -219,6 +219,9 @@ namespace:
     + `username` - Postgres username.
     + `password` - Postgres password.
     + `database` - Postgres database name.
+
+For more information about configuration using OS environment variables look at
+`Yggdrasil.Settings`.
 
 ## Installation
 

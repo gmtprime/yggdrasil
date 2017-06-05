@@ -4,9 +4,10 @@ defmodule Yggdrasil.Distributor.Generator do
   """
   use Supervisor
   alias Yggdrasil.Channel
+  alias Yggdrasil.Settings
 
   @distributor Yggdrasil.Distributor
-  @registry Application.get_env(:yggdrasil, :registry, ExReg)
+  @registry Settings.registry()
 
   #############################################################################
   # Client API.

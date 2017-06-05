@@ -49,7 +49,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   iex(5)> Yggdrasil.publish(channel, "message")
   :ok
   iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"} 
+  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
   ```
   """
   use Connection
@@ -60,6 +60,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   alias Yggdrasil.Distributor.Publisher
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator
+  alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
 
   defstruct [:publisher, :channel, :chan]
   alias __MODULE__, as: State
@@ -170,13 +171,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   # Helpers
 
   @doc false
-  def rabbitmq_options(%Channel{namespace: Yggdrasil}) do
-    Application.get_env(:yggdrasil, :rabbitmq, [])
-  end
   def rabbitmq_options(%Channel{namespace: namespace}) do
-    default = [rabbitmq: []]
-    result = Application.get_env(:yggdrasil, namespace, default)
-    Keyword.get(result, :rabbitmq, [])
+    Conn.rabbitmq_options(namespace)
   end
 
   @doc false

@@ -4,8 +4,9 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   """
   use Supervisor
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool
+  alias Yggdrasil.Settings
 
-  @registry Application.get_env(:yggdrasil, :registry, ExReg)
+  @registry Settings.registry()
 
   ############
   # Client API

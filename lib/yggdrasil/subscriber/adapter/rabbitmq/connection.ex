@@ -7,6 +7,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
 
   require Logger
 
+  alias Yggdrasil.Settings
+
   defstruct [:namespace, :conn]
   alias __MODULE__, as: State
 
@@ -109,21 +111,91 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     terminate(reason, %State{state | conn: nil})
   end
 
-  #########
-  # Helpers
+  ################
+  # Config helpers
 
   @doc false
-  def rabbitmq_options(Yggdrasil) do
-    :yggdrasil
-    |> Application.get_env(:rabbitmq, [])
-  end
   def rabbitmq_options(namespace) do
+    options = get_namespace_options(namespace)
+    connection_options = gen_connection_options(namespace)
+    Keyword.merge(options, connection_options)
+  end
+
+  @doc false
+  def get_namespace_options(Yggdrasil) do
     :yggdrasil
-    |> Application.get_env(namespace, [rabbitmq: []])
-    |> Keyword.get(:rabbitmq, [])
+    |> Skogsra.get_app_env(:rabbitmq, default: [])
     |> Keyword.pop(:subscriber_options)
     |> elem(1)
   end
+  def get_namespace_options(namespace) do
+    :yggdrasil
+    |> Skogsra.get_app_env(:rabbitmq, default: [], domain: namespace)
+    |> Keyword.pop(:subscriber_options)
+    |> elem(1)
+  end
+
+  @doc false
+  def gen_connection_options(namespace) do
+    [host: get_hostname(namespace),
+     port: get_port(namespace),
+     username: get_username(namespace),
+     password: get_password(namespace),
+     virtual_host: get_virtual_host(namespace)]
+  end
+
+  @doc false
+  def get_value(namespace, key, default) do
+    name = Settings.gen_env_name(namespace, key, "_YGGDRASIL_RABBIT_")
+    Skogsra.get_app_env(:yggdrasil, key,
+      domain: [namespace, :rabbitmq],
+      default: default,
+      name: name
+    )
+  end
+
+  @doc false
+  def get_hostname(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_hostname()
+  end
+  def get_hostname(namespace) do
+    get_value(namespace, :hostname, Settings.yggdrasil_rabbitmq_hostname())
+  end
+
+  @doc false
+  def get_port(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_port()
+  end
+  def get_port(namespace) do
+    get_value(namespace, :port, Settings.yggdrasil_rabbitmq_port())
+  end
+
+  @doc false
+  def get_username(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_username()
+  end
+  def get_username(namespace) do
+    get_value(namespace, :username, Settings.yggdrasil_rabbitmq_username())
+  end
+
+  @doc false
+  def get_password(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_password()
+  end
+  def get_password(namespace) do
+    get_value(namespace, :password, Settings.yggdrasil_rabbitmq_password())
+  end
+
+  @doc false
+  def get_virtual_host(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_virtual_host()
+  end
+  def get_virtual_host(namespace) do
+    get_value(namespace, :virtual_host, Settings.yggdrasil_rabbitmq_virtual_host())
+  end
+
+  #########
+  # Helpers
 
   @doc false
   def connected(conn, %State{namespace: namespace} = state) do

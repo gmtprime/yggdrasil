@@ -67,14 +67,14 @@ defmodule Yggdrasil do
       use Mix.Config
 
       config :yggdrasil,
-        redis: [host: "localhost"]
+        redis: [hostname: "localhost"]
       ```
     but for `TestRedis` namespace would be like this:
       ```elixir
       use Mix.Config
 
       config: :yggdrasil, TestRedis,
-        redis: [host: "localhost"]
+        redis: [hostname: "localhost"]
       ```
 
   # Small Example
@@ -200,11 +200,11 @@ defmodule Yggdrasil do
   namespace:
 
     * `redis` - List of options of `Redix`:
-      + `host` - Redis hostname.
+      + `hostname` - Redis hostname.
       + `port` - Redis port.
       + `password` - Redis password.
     * `rabbitmq` - List of options of `AMQP`:
-      + `host` - RabbitMQ hostname.
+      + `hostname` - RabbitMQ hostname.
       + `port` - RabbitMQ port.
       + `username` - Username.
       + `password` - Password.
@@ -217,10 +217,14 @@ defmodule Yggdrasil do
       + `username` - Postgres username.
       + `password` - Postgres password.
       + `database` - Postgres database name.
+
+  For more information about configuration using OS environment variables look
+  at `Yggdrasil.Settings`.
   """
   use Application
   use VersionCheck, application: :yggdrasil
 
+  alias Yggdrasil.Settings
   alias Yggdrasil.Channel
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Publisher
@@ -337,9 +341,9 @@ defmodule Yggdrasil do
   ###################
   # Application start
 
-  @adapter Application.get_env(:yggdrasil, :pubsub_adapter, Phoenix.PubSub.PG2)
-  @name Application.get_env(:yggdrasil, :pubsub_name, Yggdrasil.PubSub)
-  @options Application.get_env(:yggdrasil, :pubsub_options, [pool_size: 1])
+  @adapter Settings.pubsub_adapter()
+  @name Settings.pubsub_name()
+  @options Settings.pubsub_options()
 
   @doc false
   def start(_type, _args) do

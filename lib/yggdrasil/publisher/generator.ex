@@ -5,9 +5,10 @@ defmodule Yggdrasil.Publisher.Generator do
   use Supervisor
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Settings
 
   @publisher Yggdrasil.Publisher
-  @registry Application.get_env(:yggdrasil, :registry, ExReg)
+  @registry Settings.registry()
 
   #############################################################################
   # Client API.

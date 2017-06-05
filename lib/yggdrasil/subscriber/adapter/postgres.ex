@@ -48,7 +48,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   iex(5)> Yggdrasil.publish(channel, "message")
   :ok
   iex(6)> flush()
-  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"} 
+  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
   ```
   """
   use Connection
@@ -58,6 +58,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   alias Yggdrasil.Channel
   alias Yggdrasil.Distributor.Publisher
   alias Yggdrasil.Distributor.Backend
+  alias Yggdrasil.Settings
 
   defstruct [:publisher, :channel, :conn, :ref]
   alias __MODULE__, as: State
@@ -201,12 +202,76 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   # Helpers.
 
   @doc false
-  def postgres_options(%Channel{namespace: Yggdrasil}) do
-    Application.get_env(:yggdrasil, :postgres, [])
-  end
   def postgres_options(%Channel{namespace: namespace}) do
-    default = [postgres: []]
-    result = Application.get_env(:yggdrasil, namespace, default)
-    Keyword.get(result, :postgres, [])
+    options = get_namespace_options(namespace)
+    connection_options = gen_connection_options(namespace)
+    Keyword.merge(options, connection_options)
+  end
+
+  @doc false
+  def get_namespace_options(Yggdrasil) do
+    Skogsra.get_app_env(:yggdrasil, :postgres, default: [])
+  end
+  def get_namespace_options(namespace) do
+    Skogsra.get_app_env(:yggdrasil, :postgres, default: [], domain: namespace)
+  end
+
+  @doc false
+  def gen_connection_options(namespace) do
+    [hostname: get_hostname(namespace),
+     port: get_port(namespace),
+     username: get_username(namespace),
+     password: get_password(namespace),
+     database: get_database(namespace)]
+  end
+
+  @doc false
+  def get_value(namespace, key, default) do
+    name = Settings.gen_env_name(namespace, key, "_YGGDRASIL_POSTGRES_")
+    Skogsra.get_app_env(:yggdrasil, key,
+      domain: [namespace, :postgres],
+      default: default,
+      name: name
+    )
+  end
+
+  @doc false
+  def get_hostname(Yggdrasil) do
+    Settings.yggdrasil_postgres_hostname()
+  end
+  def get_hostname(namespace) do
+    get_value(namespace, :hostname, Settings.yggdrasil_postgres_hostname())
+  end
+
+  @doc false
+  def get_port(Yggdrasil) do
+    Settings.yggdrasil_postgres_port()
+  end
+  def get_port(namespace) do
+    get_value(namespace, :port, Settings.yggdrasil_postgres_port())
+  end
+
+  @doc false
+  def get_username(Yggdrasil) do
+    Settings.yggdrasil_postgres_username()
+  end
+  def get_username(namespace) do
+    get_value(namespace, :username, Settings.yggdrasil_postgres_username())
+  end
+
+  @doc false
+  def get_password(Yggdrasil) do
+    Settings.yggdrasil_postgres_password()
+  end
+  def get_password(namespace) do
+    get_value(namespace, :password, Settings.yggdrasil_postgres_password())
+  end
+
+  @doc false
+  def get_database(Yggdrasil) do
+    Settings.yggdrasil_postgres_database()
+  end
+  def get_database(namespace) do
+    get_value(namespace, :database, Settings.yggdrasil_postgres_database())
   end
 end

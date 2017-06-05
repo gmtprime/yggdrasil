@@ -7,8 +7,9 @@ defmodule Yggdrasil.Distributor.Backend do
   """
   alias Phoenix.PubSub
   alias Yggdrasil.Channel
+  alias Yggdrasil.Settings
 
-  @pubsub Application.get_env(:yggdrasil, :pubsub_name, Yggdrasil.PubSub)
+  @pubsub Settings.pubsub_name()
 
   @doc false
   def transform_name(%Channel{} = channel) do
