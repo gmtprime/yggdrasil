@@ -44,7 +44,12 @@ defmodule Yggdrasil.Publisher.Generator do
     case @registry.whereis_name(name) do
       :undefined ->
         via_tuple = {:via, @registry, name}
-        Supervisor.start_child(generator, [channel, [name: via_tuple]])
+        case Supervisor.start_child(generator, [channel, [name: via_tuple]]) do
+          {:error, {:already_started, pid}} ->
+            {:ok, {:already_connected, pid}}
+          {:error, _} = error -> error
+          ok -> ok
+        end
       pid ->
         {:ok, {:already_connected, pid}}
     end
