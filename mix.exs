@@ -25,14 +25,14 @@ defmodule Yggdrasil.Mixfile do
     [{:exreg, "~> 0.0.3"},
      {:phoenix_pubsub, "~> 1.0"},
      {:poolboy, "~> 1.5"},
-     {:redix_pubsub, ">= 0.0.0"},
-     {:amqp, "~> 0.2"},
-     {:postgrex, ">= 0.0.0"},
+     {:redix_pubsub, "~> 0.4"},
+     {:amqp, "~> 0.3"},
+     {:postgrex, "~> 0.13"},
      {:connection, "~> 1.0"},
      {:version_check, "~> 0.1"},
      {:skogsra, "~> 0.1"},
      {:uuid, "~> 1.1", only: [:dev, :test]},
-     {:ex_doc, "~> 0.15", only: :dev},
+     {:ex_doc, "~> 0.18", only: :dev},
      {:credo, "~> 0.8", only: [:dev, :docs]},
      {:inch_ex, "~> 0.5", only: [:dev, :test, :docs]}]
   end

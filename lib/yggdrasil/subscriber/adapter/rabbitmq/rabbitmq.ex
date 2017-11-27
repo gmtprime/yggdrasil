@@ -2,7 +2,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   @moduledoc """
   Yggdrasil subscriber adapter for RabbitMQ. The name of the channel should be
   a tuple with the name of the exchange and the routing key. The exchange
-  should be a topic e.g:
+  should be a topic (or any exchange that redirects to topic) e.g:
 
   Subscription to channel:
 

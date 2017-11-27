@@ -23,7 +23,9 @@ defmodule Yggdrasil do
     + To publish:
       ```elixir
       Yggdrasil.publish(Yggdrasil.Channel.t(), message()) :: :ok
-        when message: term
+        when message: term()
+      Yggdrasil.publish(Yggdrasil.Channel.t(), message(), options()) :: :ok
+        when message: term(), options: Keyword.t()
       ```
 
   On subscription, the client receives a message with the following structure:
@@ -261,13 +263,16 @@ defmodule Yggdrasil do
   # Publisher functions
 
   @doc """
-  Publishes a `message` in a `channel`.
+  Publishes a `message` in a `channel` with some optional `options`.
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
-  def publish(%Channel{} = channel, message) do
+  @spec publish(Channel.t(), term(), Keyword.t()) :: :ok | {:error, term()}
+  def publish(channel, message, options \\ [])
+
+  def publish(%Channel{} = channel, message, options) do
     channel = transform_channel(:server, channel)
     with {:ok, _} <- @publisher_gen.start_publisher(@publisher_gen, channel),
-         do: Publisher.publish(channel, message)
+         do: Publisher.publish(channel, message, options)
   end
 
   #########

@@ -1,17 +1,18 @@
+sudo: false
 language: elixir
 elixir:
-  - 1.3.2
-  - 1.4.0
+  - 1.3.4
+  - 1.5.1
 otp_release:
-  - 18.2
-  - 19.1
+  - 18.3
+  - 20.0
 matrix:
     # We are only interested on the newest/oldest pair.
     exclude:
-        - elixir: 1.4.0
-          otp_release: 18.2
-        - elixir: 1.3.2
-          otp_release: 19.1
+        - elixir: 1.5.1
+          otp_release: 18.3
+        - elixir: 1.3.4
+          otp_release: 20.0
 services:
   - rabbitmq
   - redis-server
@@ -19,6 +20,11 @@ services:
 env:
   - TEST_YGGDRASIL_POSTGRES_DATABASE="travis_ci_test"
 before_script:
+  - rabbitmq-plugins enable rabbitmq_management
+  - mkdir /usr/lib/rabbitmq/plugins
+  - wget https://bintray.com/rabbitmq/community-plugins/download_file\?file_path\=rabbitmq_delayed_message_exchange-0.0.1.ez -O /usr/lib/rabbitmq/plugins/rabbitmq_delayed_message_exchange-0.0.1.ez
+  - rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+  - rabbitmqadmin declare exchange name=custom.delayed_topic type=x-delayed-message durable=true 'arguments={"x-delayed-type":"topic"}'
   - psql -c "CREATE DATABASE $TEST_YGGDRASIL_POSTGRES_DATABASE" -U postgres
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile

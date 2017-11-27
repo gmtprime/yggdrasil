@@ -20,6 +20,8 @@ defmodule Yggdrasil.Distributor.Backend do
   Subscribes to a `channel`.
   """
   @spec subscribe(Channel.t()) :: :ok | {:error, term()}
+  def subscribe(channel)
+
   def subscribe(%Channel{} = channel) do
     channel_name = transform_name(channel)
     PubSub.unsubscribe(@pubsub, channel_name)
@@ -30,6 +32,8 @@ defmodule Yggdrasil.Distributor.Backend do
   Unsubscribes from a `channel`.
   """
   @spec unsubscribe(Channel.t()) :: :ok | {:error, term()}
+  def unsubscribe(channel)
+
   def unsubscribe(%Channel{} = channel) do
     channel_name = transform_name(channel)
     PubSub.unsubscribe(@pubsub, channel_name)
@@ -53,6 +57,8 @@ defmodule Yggdrasil.Distributor.Backend do
   Publishes a `message` in a `channel`.
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
+  def publish(channel, message)
+
   def publish(%Channel{} = channel, message) do
     real_message = {:Y_EVENT, channel, message}
     channel_name = transform_name(channel)

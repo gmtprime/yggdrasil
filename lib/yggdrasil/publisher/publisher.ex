@@ -16,7 +16,11 @@ defmodule Yggdrasil.Publisher do
   Starts a pool of publisher adapters using the information of a `channel`.
   Additionally can receive `Supervisor` `options`.
   """
-  def start_link(%Channel{} = channel, options \\ []) do
+  @spec start_link(Channel.t()) :: Supervisor.on_start()
+  @spec start_link(Channel.t(), Supervisor.options()) :: Supervisor.on_start()
+  def start_link(channel, options \\ [])
+
+  def start_link(%Channel{} = channel, options) do
     channel = %Channel{channel | name: nil}
     Supervisor.start_link(__MODULE__, channel, options)
   end
@@ -24,6 +28,7 @@ defmodule Yggdrasil.Publisher do
   @doc """
   Stops the `supervisor`.
   """
+  @spec stop(Supervisor.supervisor()) :: :ok
   def stop(supervisor) do
     for {module, child, _, _} <- Supervisor.which_children(supervisor) do
       try do
@@ -36,13 +41,17 @@ defmodule Yggdrasil.Publisher do
   end
 
   @doc """
-  Publishes `message` in a `channel`.
+  Publishes `message` in a `channel` with some optional `options`.
   """
-  def publish(%Channel{adapter: adapter} = channel, message) do
+  @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
+  @spec publish(Channel.t(), term(), Keyword.t()) :: :ok | {:error, term()}
+  def publish(channel, message, options \\ [])
+
+  def publish(%Channel{adapter: adapter} = channel, message, options) do
     base = %Channel{channel | name: nil}
     pool_name = {:via, @registry, {Poolboy, base}}
     :poolboy.transaction(pool_name, fn worker ->
-      adapter.publish(worker, channel, message)
+      adapter.publish(worker, channel, message, options)
     end)
   end
 

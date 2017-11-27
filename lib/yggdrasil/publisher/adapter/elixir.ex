@@ -48,7 +48,7 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   iex(5)> Yggdrasil.publish(channel, "message")
   :ok
   iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"} 
+  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"}
   ```
   """
   use GenServer
@@ -63,21 +63,33 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   Starts an elixir publisher with a `namespace`. Additianally you can add
   `GenServer` `options`.
   """
-  def start_link(_, options \\ []) do
+  @spec start_link(term()) :: GenServer.on_start()
+  @spec start_link(term(), GenServer.options()) :: GenServer.on_start()
+  def start_link(namespace, options \\ [])
+
+  def start_link(_, options) do
     GenServer.start_link(__MODULE__, nil, options)
   end
 
   @doc """
   Stops an elixir `publisher`.
   """
+  @spec stop(GenServer.server()) :: :ok
   def stop(publisher) do
     GenServer.stop(publisher)
   end
 
   @doc """
-  Publishes a `message` in a `channel` using a `publisher`.
+  Publishes a `message` in a `channel` using a `publisher` and optional and
+  unused `options`.
   """
-  def publish(publisher, %Channel{} = channel, message) do
+  @spec publish(GenServer.server(), Channel.t(), term()) ::
+    :ok | {:error, term()}
+  @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
+    :ok | {:error, term()}
+  def publish(publisher, channel, message, options \\ [])
+
+  def publish(publisher, %Channel{} = channel, message, _options) do
     GenServer.call(publisher, {:publish, channel, message})
   end
 

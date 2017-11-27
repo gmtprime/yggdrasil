@@ -2,7 +2,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   @moduledoc """
   Yggdrasil publisher adapter for RabbitMQ. The name of the channel should be
   a tuple with the name of the exchange and the routing key. The exchange
-  should be a topic e.g:
+  should be a topic (or any exhange that redirect to topic) e.g:
 
   Subscription to channel:
 
@@ -49,7 +49,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   iex(5)> Yggdrasil.publish(channel, "message")
   :ok
   iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"} 
+  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
   ```
   """
   use Connection
@@ -69,22 +69,37 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   Starts a RabbitMQ publisher with a `namespace`. Additianally you can add
   `GenServer` `options`.
   """
-  def start_link(namespace, options \\ []) do
+  @spec start_link(term()) :: GenServer.on_start()
+  @spec start_link(term(), GenServer.options()) :: GenServer.on_start()
+  def start_link(namespace, options \\ [])
+
+  def start_link(namespace, options) do
     Connection.start_link(__MODULE__, namespace, options)
   end
 
   @doc """
   Stops a RabbitMQ `publisher`.
   """
+  @spec stop(GenServer.server()) :: :ok
+  def stop(publisher)
+
   def stop(publisher) do
     GenServer.stop(publisher)
   end
 
   @doc """
-  Publishes a `message` in a `channel` using a `publisher`.
+  Publishes a `message` in a `channel` using a `publisher` and optional
+  `options`. The `options` argument is a `Keyword` list of options expected
+  by `AMQP.Basic.publish/5` in its fifth argument.
   """
-  def publish(publisher, %Channel{} = channel, message) do
-    Connection.call(publisher, {:publish, channel, message})
+  @spec publish(GenServer.server(), Channel.t(), term()) ::
+    :ok | {:error, term()}
+  @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
+    :ok | {:error, term()}
+  def publish(publisher, channel, message, options \\ [])
+
+  def publish(publisher, %Channel{} = channel, message, options) do
+    Connection.call(publisher, {:publish, channel, message, options})
   end
 
   #############################################################################
@@ -142,19 +157,20 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   end
 
   @doc false
-  def handle_call({:publish, _, _}, _from, %State{chan: nil} = state) do
+  def handle_call({:publish, _, _, _}, _from, %State{chan: nil} = state) do
     {:reply, {:error, "Disconnected"}, state}
   end
   def handle_call(
     {:publish,
      %Channel{name: {exchange, routing_key}, transformer: encoder} = channel,
-     message},
+     message,
+     options},
     _from,
     %State{chan: chan} = state
   ) do
     result =
       with {:ok, encoded} <- encoder.encode(channel, message),
-           do: AMQP.Basic.publish(chan, exchange, routing_key, encoded)
+           do: AMQP.Basic.publish(chan, exchange, routing_key, encoded, options)
     {:reply, result, state}
   end
   def handle_call(_msg, _from, %State{} = state) do
