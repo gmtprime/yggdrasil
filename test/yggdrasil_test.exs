@@ -98,7 +98,7 @@ defmodule YggdrasilTest do
     }
     options = [headers: [{"x-delay", :long, 500}]]
     assert :ok = Yggdrasil.publish(pub_channel, "message", options)
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 1000
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 5_000
   end
 
   test "publish Postgres" do
