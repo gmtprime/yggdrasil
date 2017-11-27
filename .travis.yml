@@ -1,4 +1,3 @@
-sudo: false
 language: elixir
 elixir:
   - 1.3.4
@@ -20,11 +19,11 @@ services:
 env:
   - TEST_YGGDRASIL_POSTGRES_DATABASE="travis_ci_test"
 before_script:
-  - rabbitmq-plugins enable rabbitmq_management
-  - mkdir /usr/lib/rabbitmq/plugins
-  - wget https://bintray.com/rabbitmq/community-plugins/download_file\?file_path\=rabbitmq_delayed_message_exchange-0.0.1.ez -O /usr/lib/rabbitmq/plugins/rabbitmq_delayed_message_exchange-0.0.1.ez
-  - rabbitmq-plugins enable rabbitmq_delayed_message_exchange
-  - rabbitmqadmin declare exchange name=custom.delayed_topic type=x-delayed-message durable=true 'arguments={"x-delayed-type":"topic"}'
+  - sudo rabbitmq-plugins enable rabbitmq_management
+  - sudo mkdir /usr/lib/rabbitmq/plugins
+  - sudo wget https://bintray.com/rabbitmq/community-plugins/download_file\?file_path\=rabbitmq_delayed_message_exchange-0.0.1.ez -O /usr/lib/rabbitmq/plugins/rabbitmq_delayed_message_exchange-0.0.1.ez
+  - sudo rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+  - sudo rabbitmqadmin declare exchange name=custom.delayed_topic type=x-delayed-message durable=true 'arguments={"x-delayed-type":"topic"}'
   - psql -c "CREATE DATABASE $TEST_YGGDRASIL_POSTGRES_DATABASE" -U postgres
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
