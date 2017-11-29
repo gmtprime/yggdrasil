@@ -96,9 +96,9 @@ defmodule YggdrasilTest do
       adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
       namespace: Test
     }
-    options = [headers: [{"x-delay", :long, 500}]]
+    options = [headers: [{"x-delay", :long, 100}]]
     assert :ok = Yggdrasil.publish(pub_channel, "message", options)
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 5_000
+    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 60_000
   end
 
   test "publish Postgres" do
