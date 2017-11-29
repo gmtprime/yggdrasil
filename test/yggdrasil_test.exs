@@ -81,26 +81,6 @@ defmodule YggdrasilTest do
     :ok = Yggdrasil.unsubscribe(sub_channel)
   end
 
-  test "publish RabbitMQ with headers" do
-    name = {"custom.delayed_topic", "rabbitmq_headers_full_test"}
-    sub_channel = %Channel{
-      name: name,
-      adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ,
-      namespace: Test
-    }
-    :ok = Yggdrasil.subscribe(sub_channel)
-
-    assert_receive {:Y_CONNECTED, ^sub_channel}, 500
-    pub_channel = %Channel{
-      name: name,
-      adapter: Yggdrasil.Publisher.Adapter.RabbitMQ,
-      namespace: Test
-    }
-    options = [headers: [{"x-delay", :long, 100}]]
-    assert :ok = Yggdrasil.publish(pub_channel, "message", options)
-    assert_receive {:Y_EVENT, ^sub_channel, "message"}, 60_000
-  end
-
   test "publish Postgres" do
     name = "postgres_full_test"
     sub_channel = %Channel{
