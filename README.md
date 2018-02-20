@@ -54,30 +54,32 @@ channel = %Yggdrasil.Channel{
 
 where:
 
-  + `name` - It's the name of the channel. For `Redis` adapter, the name of
+- `name` - It's the name of the channel. For `Redis` adapter, the name of
   the channel is a string.
-  + `transformer` - Module that contains the functions `decode/2` and
+- `transformer` - Module that contains the functions `decode/2` and
   `encode/2` to transform the messages. The default `transformer`
   `Yggdrasil.Default.Transformer` module does nothing to the messages.
-  + `adapter` - It's the adapter to be used for subscriptions and/or
+- `adapter` - It's the adapter to be used for subscriptions and/or
   publishing. In this case `:redis` is the adapter used both for
   subscriptions and publishing.
-  + `namespace`: The namespace for the adapter configuration to allow several
+- `namespace`: The namespace for the adapter configuration to allow several
   adapter configurations run at once depending on the needs of the system. By
   default is `Yggdrasil` e.g:
-    ```elixir
-    use Mix.Config
 
-    config :yggdrasil,
-      redis: [hostname: "localhost"]
-    ```
+```elixir
+use Mix.Config
+
+config :yggdrasil,
+  redis: [hostname: "localhost"]
+```
   but for `TestRedis` namespace would be like this:
-    ```elixir
-    use Mix.Config
 
-    config: :yggdrasil, TestRedis,
-      redis: [hostname: "localhost"]
-    ```
+```elixir
+use Mix.Config
+
+config: :yggdrasil, TestRedis,
+  redis: [hostname: "localhost"]
+```
 
 # Small Example
 
@@ -220,8 +222,7 @@ namespace:
     + `password` - Postgres password.
     + `database` - Postgres database name.
 
-For more information about configuration using OS environment variables look at
-`Yggdrasil.Settings`.
+For more information about configuration using OS environment variables look at the module `Yggdrasil.Settings`.
 
 ## Installation
 
