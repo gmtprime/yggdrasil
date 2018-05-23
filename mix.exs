@@ -6,7 +6,7 @@ defmodule Yggdrasil.Mixfile do
   def project do
     [app: :yggdrasil,
      version: @version,
-     elixir: "~> 1.6",
+     elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      description: description(),
