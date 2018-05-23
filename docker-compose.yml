@@ -1,0 +1,17 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_DATABASE: travis_ci_test
+    ports:
+      - '5432:5432'
+  redis:
+    image: 'redis:latest'
+    ports:
+      - '6379:6379'
+  rabbitmq:
+    image: 'rabbitmq:latest'
+    ports:
+      - '5672:5672'
