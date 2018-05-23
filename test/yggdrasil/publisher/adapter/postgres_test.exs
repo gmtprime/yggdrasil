@@ -12,7 +12,7 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
       namespace: Test
     }
     :ok = Yggdrasil.subscribe(sub_channel)
-    
+
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       name: name,
@@ -25,5 +25,6 @@ defmodule Yggdrasil.Publisher.Adapter.PostgresTest do
     assert :ok = Postgres.stop(adapter)
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
+    assert_receive {:Y_DISCONNECTED, ^sub_channel}, 500
   end
 end

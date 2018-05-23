@@ -5,50 +5,35 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: "postgres_channel",
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Postgres
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(2)> channel = %Yggdrasil.Channel{name: "pg_channel", adapter: :postgres}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: "postgres_channel",
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Postgres
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: "pg_channel", (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: "postgres_channel", adapter: :postgres}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
   """
   use Connection
@@ -61,8 +46,8 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
   defstruct [:conn, :namespace]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a Postgres publisher with a `namespace`. Additianally you can add
@@ -100,8 +85,8 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     Connection.call(publisher, {:publish, channel, message})
   end
 
-  #############################################################################
-  # GenServer callback.
+  ####################
+  # GenServer callback
 
   @doc false
   def init(namespace) do

@@ -44,5 +44,6 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQTest do
     :ok = RabbitMQ.stop(adapter)
     :ok = Publisher.stop(publisher)
     Backend.unsubscribe(channel)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
   end
 end

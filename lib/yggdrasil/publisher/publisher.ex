@@ -9,8 +9,8 @@ defmodule Yggdrasil.Publisher do
 
   @registry Settings.registry()
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a pool of publisher adapters using the information of a `channel`.
@@ -55,8 +55,8 @@ defmodule Yggdrasil.Publisher do
     end)
   end
 
-  #############################################################################
-  # Supervisor callback.
+  #####################
+  # Supervisor callback
 
   @doc false
   def init(%Channel{adapter: adapter, namespace: namespace} = channel) do
@@ -74,8 +74,8 @@ defmodule Yggdrasil.Publisher do
     supervise(children, strategy: :one_for_one)
   end
 
-  #############################################################################
-  # Helpers.
+  #########
+  # Helpers
 
   @doc false
   def publisher_options(%Channel{namespace: nil}) do

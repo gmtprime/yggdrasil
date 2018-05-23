@@ -42,5 +42,6 @@ defmodule Yggdrasil.Distributor.Adapter.PostgresTest do
     :ok = Postgres.stop(adapter)
     :ok = Publisher.stop(publisher)
     Backend.unsubscribe(channel)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
   end
 end

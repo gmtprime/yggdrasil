@@ -11,4 +11,15 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.GeneratorTest do
     assert Process.alive?(chan.pid)
     assert :ok = Generator.stop(pid)
   end
+
+  test "close_channel" do
+    assert {:ok, pid} = Generator.start_link()
+    assert {:ok, _} = Generator.connect(pid, Yggdrasil)
+    assert {:ok, chan} = Generator.open_channel(Yggdrasil)
+    ref = Process.monitor(chan.pid)
+    assert :ok = Generator.close_channel(Yggdrasil, chan)
+    assert Process.alive?(chan.conn.pid)
+    assert_receive {:DOWN, ^ref, :process, _, :normal}
+    assert :ok = Generator.stop(pid)
+  end
 end

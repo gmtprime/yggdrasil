@@ -12,7 +12,7 @@ defmodule Yggdrasil.DistributorTest do
       adapter: Yggdrasil.Subscriber.Adapter.Elixir,
     }
     Backend.subscribe(channel)
-    assert {:ok, distributor} = Distributor.start_link(channel)
+    assert {:ok, distributor} = Distributor.start_link(channel, self())
     assert :ok = Distributor.stop(distributor)
     Backend.unsubscribe(channel)
   end
@@ -24,7 +24,7 @@ defmodule Yggdrasil.DistributorTest do
       adapter: Yggdrasil.Subscriber.Adapter.Elixir,
     }
     Backend.subscribe(channel)
-    {:ok, distributor} = Distributor.start_link(channel)
+    {:ok, distributor} = Distributor.start_link(channel, self())
 
     assert_receive {:Y_CONNECTED, ^channel}, 500
     stream = %Channel{channel | name: {:elixir, name}}
@@ -32,6 +32,8 @@ defmodule Yggdrasil.DistributorTest do
     assert_receive {:Y_EVENT, ^channel, "message"}, 500
 
     :ok = Distributor.stop(distributor)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
+
     Backend.unsubscribe(channel)
   end
 end

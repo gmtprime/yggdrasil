@@ -1,14 +1,15 @@
 defmodule Yggdrasil.Distributor do
   @moduledoc """
-  Supervisor for `Yggdrasil.Distributor.Adapter` and
-  `Yggdrasil.Distributor.Publisher`.
+  Supervisor for `Yggdrasil.Distributor.Manager`,
+  `Yggdrasil.Distributor.Adapter` and `Yggdrasil.Distributor.Publisher`.
   """
   use Supervisor
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
+  alias Yggdrasil.Distributor.Manager
+  alias Yggdrasil.Distributor.Publisher
 
-  @publisher Yggdrasil.Distributor.Publisher
   @registry Settings.registry()
 
   #############################################################################
@@ -16,11 +17,11 @@ defmodule Yggdrasil.Distributor do
 
   @doc """
   Starts the supervisor and its children using the `channel` as part of the
-  identificator for the supervision tree. Additionally it can receive
-  `Supervisor` `options`.
+  identificator for the supervision tree. It also receives the `pid` of
+  the first subscriber. Additionally it can receive `Supervisor` `options`.
   """
-  def start_link(%Channel{} = channel, options \\ []) do
-    Supervisor.start_link(__MODULE__, channel, options)
+  def start_link(%Channel{} = channel, pid, options \\ []) do
+    Supervisor.start_link(__MODULE__, [channel, pid], options)
   end
 
   @doc """
@@ -41,15 +42,21 @@ defmodule Yggdrasil.Distributor do
   # Supervisor callback.
 
   @doc false
-  def init(%Channel{adapter: adapter_module} = channel) do
+  def init([%Channel{adapter: adapter_module} = channel, pid]) do
     import Supervisor.Spec
 
+    manager_name = {:via, @registry, {Manager, channel}}
+    publisher_name = {:via, @registry, {Publisher, channel}}
     adapter_name = {:via, @registry, {adapter_module, channel}}
-    publisher_name = {:via, @registry, {@publisher, channel}}
 
     children = [
       worker(
-        @publisher,
+        Manager,
+        [channel, pid, [name: manager_name]],
+        restart: :transient
+      ),
+      worker(
+        Publisher,
         [channel, [name: publisher_name]],
         restart: :transient
       ),

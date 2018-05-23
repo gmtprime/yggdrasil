@@ -42,6 +42,16 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
     end)
   end
 
+  @doc """
+  Closes a RabbitMQ channel for a `namespace`.
+  """
+  def close_channel(namespace, channel) do
+    via_tuple = {:via, @registry, {RabbitMQ.Poolboy, namespace}}
+    :poolboy.transaction(via_tuple, fn worker ->
+      Conn.close_channel(worker, channel)
+    end)
+  end
+
   #####################
   # Supervisor callback
 

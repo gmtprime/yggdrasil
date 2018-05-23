@@ -6,50 +6,36 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: {"amq.topic", "r_key"},
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(1)> name = {"amq.topic", "channel"}
+  iex(2)> channel = %Yggdrasil.Channel{name: name, adapter: :rabbitmq}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: {"amp.topic", "r_key"},
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.RabbitMQ
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: {"amq.topic", "r_key"}, adapter: :rabbitmq}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
   """
   use Connection
@@ -88,8 +74,9 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   # Connection callbacks
 
   @doc false
-  def init(%State{channel: %Channel{name: {_, _}}} = state) do
+  def init(%State{channel: %Channel{name: {_, _}} = channel} = state) do
     Process.flag(:trap_exit, true)
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:connect, :init, state}
   end
 
@@ -113,16 +100,17 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   def disconnect(_info, %State{chan: nil} = state) do
     disconnected(state)
   end
-  def disconnect(info, %State{chan: _} = state) do
+  def disconnect(
+    info,
+    %State{chan: chan, channel: %Channel{namespace: namespace} = channel} = state
+  ) do
+    Backend.disconnected(channel)
+    Generator.close_channel(namespace, chan)
     disconnect(info, %State{state | chan: nil})
   end
 
   @doc false
-  def handle_info(
-    {:basic_consume_ok, _},
-    %State{channel: %Channel{} = channel} = state
-  ) do
-    Backend.connected(channel)
+  def handle_info({:basic_consume_ok, _}, %State{} = state) do
     {:noreply, state}
   end
   def handle_info(
@@ -163,7 +151,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   def terminate(reason, %State{chan: nil} = state) do
     terminated(reason, state)
   end
-  def terminate(reason, %State{chan: _} = state) do
+  def terminate(
+    reason,
+    %State{chan: chan, channel: %Channel{namespace: namespace} = channel} = state
+  ) do
+    Backend.disconnected(channel)
+    Generator.close_channel(namespace, chan)
     terminate(reason, %State{state | chan: nil})
   end
 
@@ -176,16 +169,13 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
 
   @doc false
-  def connected(
-    chan,
-    %State{channel: %Channel{name: {exchange, routing_key}}} = state
-  ) do
+  def connected(chan, %State{channel: %Channel{} = channel} = state) do
     Process.monitor(chan.pid)
     {:ok, new_state} = consume(chan, state)
-    metadata = [channel: {exchange, routing_key}]
     Logger.debug(fn ->
-      "Connected to RabbitMQ #{inspect metadata}"
+      "#{__MODULE__} connected to RabbitMQ #{inspect channel}"
     end)
+    Backend.connected(channel)
     {:ok, new_state}
   end
 
@@ -202,37 +192,31 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
 
   @doc false
-  def backoff(
-    error,
-    %State{channel: %Channel{name: {exchange, routing_key}}} = state
-  ) do
-    metadata = [channel: {exchange, routing_key}, error: error]
-    Logger.error(fn ->
-      "Cannot connect to RabbitMQ #{inspect metadata}"
+  def backoff(error, %State{channel: %Channel{} = channel} = state) do
+    Logger.warn(fn ->
+      "#{__MODULE__} cannot connect to RabbitMQ for #{inspect channel}" <>
+      "due to #{inspect error}"
     end)
     {:backoff, 5_000, state}
   end
 
   @doc false
-  def disconnected(
-    %State{channel: %Channel{name: {exchange, routing_key}}} = state
-  ) do
-    metadata = [channel: {exchange, routing_key}]
-    Logger.debug(fn ->
-      "Disconnected from RabbitMQ #{inspect metadata}"
+  def disconnected(%State{channel: %Channel{} = channel} = state) do
+    Logger.warn(fn ->
+      "#{__MODULE__} disconnected from RabbitMQ #{inspect channel}"
     end)
     {:backoff, 5_000, state}
   end
 
   @doc false
-  def terminated(
-    reason,
-    %State{channel: %Channel{name: {exchange, routing_key}}}
-  ) do
-    metadata = [channel: {exchange, routing_key}, error: reason]
+  def terminated(:normal, %Channel{} = channel) do
     Logger.debug(fn ->
-      "Terminated RabbitMQ connection #{inspect metadata}"
+      "Stopped #{__MODULE__} for #{inspect channel}"
     end)
-    :ok
+  end
+  def terminated(reason, %State{channel: %Channel{} = channel}) do
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+    end)
   end
 end

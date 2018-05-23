@@ -5,50 +5,36 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: "redis_channel",
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Redis
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(2)> channel = %Yggdrasil.Channel{name: "redis_channel", adapter: :redis}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: "redis_channel", (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: "redis_channel",
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Redis
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: "redis_channel", (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: "redis_channel", adapter: :redis}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"}
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "redis_channel", (...)}}
+  ```
   """
   use GenServer
 
@@ -62,8 +48,8 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
   defstruct [:publisher, :channel, :conn]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a Redis distributor adapter in a `channel` with some distributor
@@ -81,8 +67,8 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
     GenServer.stop(pid)
   end
 
-  #############################################################################
-  # GenServer callbacks.
+  #####################
+  # GenServer callbacks
 
   @doc false
   def init(%State{channel: %Channel{name: name} = channel} = state) do
@@ -90,16 +76,17 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
     {:ok, conn} = Redix.PubSub.start_link(options)
     state = %State{state | conn: conn}
     :ok = Redix.PubSub.psubscribe(conn, name, self())
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:ok, state}
   end
 
   @doc false
   def handle_info(
     {:redix_pubsub, _, :psubscribed, %{pattern: _}},
-    %State{channel: %Channel{name: name} = channel} = state
+    %State{channel: %Channel{} = channel} = state
   ) do
     Logger.debug(fn ->
-      "Connected to Redis #{inspect [channel: name]}"
+      "#{__MODULE__} connected to Redis #{inspect channel}"
     end)
     Backend.connected(channel)
     {:noreply, state}
@@ -119,13 +106,23 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
   end
 
   @doc false
-  def terminate(_reason, %State{conn: conn}) do
+  def terminate(:normal, %State{channel: channel, conn: conn}) do
     Redix.PubSub.stop(conn)
-    :ok
+    Backend.disconnected(channel)
+    Logger.debug(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel}"
+    end)
+  end
+  def terminate(reason, %State{channel: channel, conn: conn}) do
+    Redix.PubSub.stop(conn)
+    Backend.disconnected(channel)
+    Logger.debug(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+    end)
   end
 
-  #############################################################################
-  # Helpers.
+  #########
+  # Helpers
 
   @doc false
   def redis_options(%Channel{namespace: namespace}) do

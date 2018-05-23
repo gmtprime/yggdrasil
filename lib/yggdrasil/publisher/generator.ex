@@ -10,8 +10,8 @@ defmodule Yggdrasil.Publisher.Generator do
   @publisher Yggdrasil.Publisher
   @registry Settings.registry()
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a publisher generator with `Supervisor` `options`.
@@ -55,8 +55,8 @@ defmodule Yggdrasil.Publisher.Generator do
     end
   end
 
-  #############################################################################
-  # Supervisor callback.
+  #####################
+  # Supervisor callback
 
   @doc false
   def init(_) do

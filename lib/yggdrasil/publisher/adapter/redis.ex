@@ -5,50 +5,36 @@ defmodule Yggdrasil.Publisher.Adapter.Redis do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: "redis_channel",
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Redis
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(1)> channel = %Yggdrasil.Channel{name: "redis_channel", adapter: :redis}
+  iex(2)> Yggdrasil.subscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
+  iex(3)> flush()
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: "redis_channel", (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: "redis_channel",
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Redis
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(4)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"}
+  ```
+  iex(5)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: "redis_channel", (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: "redis_channel", adapter: :redis}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(6)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "redis_channel", (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: "redis_channel", (...)}, "message"}
+  iex(7)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "redis_channel", (...)}}
+  ```
   """
   use GenServer
 
@@ -58,8 +44,8 @@ defmodule Yggdrasil.Publisher.Adapter.Redis do
   defstruct [:conn, :namespace]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a Redis publisher with a `namespace`. Additianally you can add
@@ -97,8 +83,8 @@ defmodule Yggdrasil.Publisher.Adapter.Redis do
     GenServer.call(publisher, {:publish, channel, message})
   end
 
-  #############################################################################
-  # GenServer callback.
+  ####################
+  # GenServer callback
 
   @doc false
   def init(namespace) do

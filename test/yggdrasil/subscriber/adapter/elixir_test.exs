@@ -38,5 +38,6 @@ defmodule Yggdrasil.Distributor.Adapter.ElixirTest do
     assert :ok = Basic.stop(adapter)
     assert :ok = Publisher.stop(publisher)
     Backend.unsubscribe(channel)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
   end
 end

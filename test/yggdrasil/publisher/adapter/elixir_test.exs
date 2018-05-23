@@ -11,7 +11,7 @@ defmodule Yggdrasil.Publisher.Adapter.ElixirTest do
       adapter: Yggdrasil.Subscriber.Adapter.Elixir
     }
     :ok = Yggdrasil.subscribe(sub_channel)
-    
+
     assert_receive {:Y_CONNECTED, ^sub_channel}, 500
     pub_channel = %Channel{
       name: name,
@@ -23,5 +23,6 @@ defmodule Yggdrasil.Publisher.Adapter.ElixirTest do
     assert :ok = Basic.stop(adapter)
 
     :ok = Yggdrasil.unsubscribe(sub_channel)
+    assert_receive {:Y_DISCONNECTED, ^sub_channel}, 500
   end
 end

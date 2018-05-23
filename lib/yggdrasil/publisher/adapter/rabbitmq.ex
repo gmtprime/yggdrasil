@@ -6,50 +6,36 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: {"amq.topic", "r_key"},
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(1)> name = {"amq.topic", "channel"}
+  iex(2)> channel = %Yggdrasil.Channel{name: name, adapter: :rabbitmq}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: {"amp.topic", "r_key"},
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.RabbitMQ
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: {"amq.topic", "r_key"}, adapter: :rabbitmq}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {"amq.topic", "r_key"}, (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {"amq.topic", "r_key"}, (...)}, "message"}
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
   """
   use Connection
@@ -62,8 +48,8 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   defstruct [:conn, :chan, :namespace]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a RabbitMQ publisher with a `namespace`. Additianally you can add
@@ -102,13 +88,14 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     Connection.call(publisher, {:publish, channel, message, options})
   end
 
-  #############################################################################
-  # GenServer callback.
+  ####################
+  # GenServer callback
 
   @doc false
   def init(namespace) do
     Process.flag(:trap_exit, true)
     state = %State{namespace: namespace}
+    Logger.debug(fn -> "Started #{__MODULE__} for #{namespace}" end)
     {:connect, :init, state}
   end
 
@@ -129,16 +116,19 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     end
   end
 
-  defp backoff(error, %State{} = state) do
-    metadata = [error: error]
-    Logger.error(fn ->
-      "Cannot connect to RabbitMQ #{inspect metadata}"
+  defp backoff(error, %State{namespace: namespace} = state) do
+    Logger.warn(fn ->
+      "#{__MODULE__} cannot connect to RabbitMQ for #{namespace}" <>
+      "due to #{inspect error}"
     end)
     {:backoff, 5000, state}
   end
 
-  defp connected(conn, chan, %State{} = state) do
+  defp connected(conn, chan, %State{namespace: namespace} = state) do
     Process.monitor(conn.pid)
+    Logger.debug(fn ->
+      "#{__MODULE__} connected to RabbitMQ for #{namespace}"
+    end)
     {:ok, %State{state | conn: conn, chan: chan}}
   end
 
@@ -151,8 +141,10 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     disconnect(info, %State{state | conn: nil, chan: nil})
   end
 
-  defp disconnected(%State{} = state) do
-    Logger.debug(fn -> "Disconnected from RabbitMQ" end)
+  defp disconnected(%State{namespace: namespace} = state) do
+    Logger.warn(fn ->
+      "#{__MODULE__} disconnected from RabbitMQ for #{namespace}"
+    end)
     {:backoff, 5000, state}
   end
 
@@ -196,11 +188,14 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     terminate(reason, %State{state | conn: nil, chan: nil})
   end
 
-  defp terminated(reason, %State{} = _state) do
-    metadata = [error: reason]
+  defp terminated(:normal, %State{namespace: namespace} = _state) do
     Logger.debug(fn ->
-      "Terminated RabbitMQ connection #{inspect metadata}"
+      "Stopped #{__MODULE__} for #{inspect namespace}"
     end)
-    :ok
+  end
+  defp terminated(reason, %State{namespace: namespace} = _state) do
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect namespace} due to #{inspect reason}"
+    end)
   end
 end

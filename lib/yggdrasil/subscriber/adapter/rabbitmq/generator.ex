@@ -59,6 +59,13 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
     Pool.open_channel(namespace)
   end
 
+  @doc """
+  Closes a RabbitMQ channel for a `namespace`.
+  """
+  def close_channel(namespace, channel) do
+    Pool.close_channel(namespace, channel)
+  end
+
   #####################
   # Supervisor callback
 

@@ -42,5 +42,6 @@ defmodule Yggdrasil.Distributor.Adapter.RedisTest do
     :ok = Redis.stop(adapter)
     :ok = Publisher.stop(publisher)
     Backend.unsubscribe(channel)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
   end
 end

@@ -30,4 +30,22 @@ defmodule Yggdrasil.Distributor.BackendTest do
     assert_receive {:Y_CONNECTED, ^channel}, 500
     assert :ok = Backend.unsubscribe(channel)
   end
+
+  test "disconnected broadcast" do
+    name = UUID.uuid4()
+    channel = %Channel{name: name}
+    assert :ok = Backend.subscribe(channel)
+    assert :ok = Backend.disconnected(channel)
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
+    assert :ok = Backend.unsubscribe(channel)
+  end
+
+  test "disconnected single" do
+    name = UUID.uuid4()
+    channel = %Channel{name: name}
+    assert :ok = Backend.subscribe(channel)
+    assert :ok = Backend.disconnected(channel, self())
+    assert_receive {:Y_DISCONNECTED, ^channel}, 500
+    assert :ok = Backend.unsubscribe(channel)
+  end
 end

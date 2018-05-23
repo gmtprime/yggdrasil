@@ -40,7 +40,7 @@ defmodule Yggdrasil.Distributor.Publisher do
 
   @doc false
   def init(%Channel{} = channel) do
-    Logger.debug(fn -> "Started publisher for #{inspect channel}" end)
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:ok, channel}
   end
 
@@ -58,5 +58,15 @@ defmodule Yggdrasil.Distributor.Publisher do
   end
   def handle_call(_msg, _from, %Channel{} = channel) do
     {:noreply, channel}
+  end
+
+  @doc false
+  def terminate(:normal, %Channel{} = channel) do
+    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect channel}" end)
+  end
+  def terminate(reason, %Channel{} = channel) do
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+    end)
   end
 end

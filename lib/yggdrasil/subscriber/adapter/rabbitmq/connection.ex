@@ -39,6 +39,13 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     Connection.call(pid, :open)
   end
 
+  @doc """
+  Closes a RabbitMQ `channel` in the connection process identified by a `pid`.
+  """
+  def close_channel(pid, channel) do
+    Connection.call(pid, {:close, channel})
+  end
+
   ######################
   # Connection callbacks
 
@@ -53,12 +60,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     options = rabbitmq_options(namespace)
     {:ok, conn} = AMQP.Connection.open(options)
     connected(conn, state)
-  catch
-    _, reason ->
-      backoff(reason, state)
   rescue
     error ->
       backoff(error, state)
+  catch
+    _, reason ->
+      backoff(reason, state)
   end
 
   @doc false
@@ -71,7 +78,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   end
 
   @doc false
-  def handle_call(:open, _from, %State{conn: nil} = state) do
+  def handle_call(_, _from, %State{conn: nil} = state) do
     {:reply, {:error, "Not connected"}, state}
   end
   def handle_call(:open, _from, %State{conn: conn} = state) do
@@ -82,6 +89,17 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   else
     {:ok, _} = channel ->
       {:reply, channel, state}
+    error ->
+      {:reply, error, state}
+  end
+  def handle_call({:close, chan}, _from, %State{} = state) do
+    AMQP.Channel.close(chan)
+  catch
+    _, _ ->
+      {:reply, :ok, state}
+  else
+    {:ok, _} ->
+      {:reply, :ok, state}
     error ->
       {:reply, error, state}
   end
@@ -200,9 +218,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   @doc false
   def connected(conn, %State{namespace: namespace} = state) do
     Process.monitor(conn.pid)
-    metadata = [namespace: namespace]
     Logger.debug(fn ->
-      "Opened a connection with RabbitMQ #{inspect metadata}"
+      "#{__MODULE__} opened a connection with RabbitMQ #{inspect namespace}"
     end)
     new_state = %State{state | conn: conn}
     {:ok, new_state}
@@ -210,36 +227,31 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
 
   @doc false
   def backoff(error, %State{namespace: namespace} = state) do
-    metadata = [namespace: namespace, error: error]
-    Logger.error(fn ->
-      "Cannot open connection to RabbitMQ #{inspect metadata}"
+    Logger.warn(fn ->
+      "#{__MODULE__} cannot open connection to RabbitMQ" <>
+      " for #{inspect namespace} due to #{inspect error}"
     end)
     {:backoff, 5_000, state}
   end
 
   @doc false
   def disconnected(%State{namespace: namespace} = state) do
-    metadata = [namespace: namespace]
-    Logger.debug(fn ->
-      "Disconnected from RabbitMQ #{inspect metadata}"
+    Logger.warn(fn ->
+      "#{__MODULE__} disconnected from RabbitMQ for #{inspect namespace}"
     end)
     {:backoff, 5_000, state}
   end
 
   @doc false
   def terminated(:normal, %State{namespace: namespace}) do
-    metadata = [namespace: namespace]
     Logger.debug(fn ->
-      "Terminated RabbitMQ connection #{inspect metadata}"
+      "Stopped #{__MODULE__} for #{inspect namespace}"
     end)
-    :ok
   end
   def terminated(reason, %State{namespace: namespace}) do
-    metadata = [namespace: namespace, reason: reason]
-    Logger.debug(fn ->
-      "Terminated RabbitMQ connection #{inspect metadata}" <>
-      " with #{inspect reason}"
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect namespace}" <>
+      " due to #{inspect reason}"
     end)
-    :ok
   end
 end

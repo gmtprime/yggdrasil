@@ -5,50 +5,35 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: {:test, "elixir_channel"},
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Elixir
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(2)> channel = %Yggdrasil.Channel{name: "elixir_channel"}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {:test, "elixir_channel"}, (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: {:test, "elixir_channel"},
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Elixir
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: "elixir_channel", (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: {:test, "elixir_channel"}, adapter: :elixir}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: {:test, "elixir_channel"}, (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: {:test, "elixir_channel"}, (...)}, "message"} 
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
   ```
   """
   use GenServer
@@ -62,8 +47,8 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   defstruct [:publisher, :channel, :conn]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a Elixir subscriber adapter in a `channel` with some subscriber
@@ -81,14 +66,15 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     GenServer.stop(pid)
   end
 
-  #############################################################################
-  # GenServer callback.
+  ####################
+  # GenServer callback
 
   @doc false
   def init(%State{channel: %Channel{name: name} = channel} = state) do
     conn = %Channel{channel | name: {:elixir, name}}
     Backend.subscribe(conn)
     Backend.connected(channel)
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:ok, %State{state | conn: conn}}
   end
 
@@ -105,8 +91,16 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   end
 
   @doc false
-  def terminate(_, %State{conn: conn}) do
+  def terminate(:normal, %State{channel: channel, conn: conn}) do
     Backend.unsubscribe(conn)
-    :ok
+    Backend.disconnected(channel)
+    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect channel}" end)
+  end
+  def terminate(reason, %State{channel: channel, conn: conn}) do
+    Backend.unsubscribe(conn)
+    Backend.disconnected(channel)
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+    end)
   end
 end

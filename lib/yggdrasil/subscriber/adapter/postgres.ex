@@ -5,50 +5,35 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
 
   Subscription to channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> sub_channel = %Channel{
-  ...(2)>   name: "postgres_channel",
-  ...(2)>   adapter: Yggdrasil.Subscriber.Adapter.Postgres
-  ...(2)> }
-  iex(3)> Yggdrasil.subscribe(sub_channel)
+  ```
+  iex(2)> channel = %Yggdrasil.Channel{name: "pg_channel", adapter: :postgres}
+  iex(3)> Yggdrasil.subscribe(channel)
   :ok
   iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
+  {:Y_CONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
 
   Publishing message:
 
-  ```elixir
-  iex(5)> pub_channel = %Channel{
-  ...(5)>   name: "postgres_channel",
-  ...(5)>   adapter: Yggdrasil.Publisher.Adapter.Postgres
-  ...(5)> }
-  iex(6)> Yggdrasil.publish(pub_channel, "message")
+  ```
+  iex(5)> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
   Subscriber receiving message:
 
-  ```elixir
-  iex(7)> flush()
-  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
+  ```
+  iex(6)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{name: "pg_channel", (...)}, "foo"}
   ```
 
-  Instead of having `sub_channel` and `pub_channel`, the hibrid channel can be
-  used. For the previous example we can do the following:
+  The subscriber can also unsubscribe from the channel:
 
-  ```elixir
-  iex(1)> alias Yggdrasil.Channel
-  iex(2)> channel = %Channel{name: "postgres_channel", adapter: :postgres}
-  iex(3)> Yggdrasil.subscribe(channel)
+  ```
+  iex(7)> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Channel{name: "postgres_channel", (...)}}
-  iex(5)> Yggdrasil.publish(channel, "message")
-  :ok
-  iex(6)> flush()
-  {:Y_EVENT, %Channel{name: "postgres_channel", (...)}, "message"}
+  iex(8)> flush()
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
   """
   use Connection
@@ -63,8 +48,8 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   defstruct [:publisher, :channel, :conn, :ref]
   alias __MODULE__, as: State
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a Postgres distributor adapter in a `channel` with some distributor
@@ -82,12 +67,13 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     GenServer.stop(pid)
   end
 
-  #############################################################################
-  # Connection callbacks.
+  ######################
+  # Connection callbacks
 
   @doc false
-  def init(%State{} = state) do
+  def init(%State{channel: %Channel{} = channel} = state) do
     Process.flag(:trap_exit, true)
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:connect, :init, state}
   end
 
@@ -113,25 +99,20 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
 
   ##
   # Backoff.
-  defp backoff(error, %State{channel: %Channel{name: name}} = state) do
-    metadata = [channel: name, error: error]
-    Logger.error(fn ->
-      "Cannot connect to Postgres #{inspect metadata}"
+  defp backoff(error, %State{channel: %Channel{} = channel} = state) do
+    Logger.warn(fn ->
+      "#{__MODULE__} cannot connect to Postgres #{inspect channel}" <>
+      "due to #{inspect error}"
     end)
     {:backoff, 5000, state}
   end
 
   ##
   # Connected.
-  defp connected(
-    conn,
-    ref,
-    %State{channel: %Channel{name: name} = channel} = state
-  ) do
+  defp connected(conn, ref, %State{channel: %Channel{} = channel} = state) do
     Process.monitor(conn)
-    metadata = [channel: name]
     Logger.debug(fn ->
-      "Connected to Postgres #{inspect metadata}"
+      "#{__MODULE__} connected to Postgres #{inspect channel}"
     end)
     new_state = %State{state | conn: conn, ref: ref}
     Backend.connected(channel)
@@ -150,11 +131,11 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
 
   ##
   # Disconnected.
-  defp disconnected(%State{channel: %Channel{name: name}} = state) do
-    metadata = [channel: name]
+  defp disconnected(%State{channel: %Channel{} = channel} = state) do
     Logger.debug(fn ->
-      "Disconnected from Postgres #{inspect metadata}"
+      "#{__MODULE__} disconnected from Postgres #{inspect channel}"
     end)
+    Backend.disconnected(channel)
     {:backoff, 5000, state}
   end
 
@@ -182,24 +163,31 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   def terminate(reason, %State{conn: nil, ref: nil} = state) do
     terminated(reason, state)
   end
-  def terminate(reason, %State{conn: conn, ref: ref} = state) do
+  def terminate(
+    reason,
+    %State{channel: channel, conn: conn, ref: ref} = state
+  ) do
     Postgrex.Notifications.unlisten(conn, ref)
     GenServer.stop(conn)
+    Backend.disconnected(channel)
     terminate(reason, %State{state | conn: nil, ref: nil})
   end
 
   ##
   # Terminated.
-  defp terminated(reason, %State{channel: %Channel{name: name}}) do
-    metadata = [channel: name, reason: reason]
+  defp terminated(:normal, %State{channel: %Channel{} = channel}) do
     Logger.debug(fn ->
-      "Terminated Postgres connection #{inspect metadata}"
+      "Stopped #{__MODULE__} for #{inspect channel}"
     end)
-    :ok
+  end
+  defp terminated(reason, %State{channel: %Channel{} = channel}) do
+    Logger.warn(fn ->
+      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+    end)
   end
 
-  #############################################################################
-  # Helpers.
+  #########
+  # Helpers
 
   @doc false
   def postgres_options(%Channel{namespace: namespace}) do
