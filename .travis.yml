@@ -1,17 +1,17 @@
 language: elixir
 elixir:
-  - 1.3.4
-  - 1.5.1
+  - 1.4.5
+  - 1.6.5
 otp_release:
-  - 18.3
-  - 20.0
+  - 19.3.6
+  - 20.3.6
 matrix:
     # We are only interested on the newest/oldest pair.
     exclude:
-        - elixir: 1.5.1
-          otp_release: 18.3
-        - elixir: 1.3.4
-          otp_release: 20.0
+        - elixir: 1.6.5
+          otp_release: 19.3.6
+        - elixir: 1.4.5
+          otp_release: 20.3.6
 services:
   - rabbitmq
   - redis-server

@@ -81,7 +81,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Redis hostname. Defaults to `"localhost"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_REDIS_HOSTNAME`.
@@ -104,7 +104,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Redis port. Defaults to `6379`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_REDIS_PORT`.
@@ -127,7 +127,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Redis password. Defaults to `nil`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_REDIS_PASSWORD`.
@@ -149,7 +149,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Redis database. Defaults to `0`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_REDIS_DATABASE`.
@@ -175,7 +175,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   RabbitMQ hostname. Defaults to `"localhost"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_RABBITMQ_HOSTNAME`.
@@ -198,7 +198,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   RabbitMQ port. Defaults to `5672`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_RABBITMQ_PORT`.
@@ -221,7 +221,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   RabbitMQ username. Defaults to `"guest"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_RABBITMQ_USERNAME`.
@@ -244,7 +244,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   RabbitMQ password. Defaults to `"guest"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_RABBITMQ_PASSWORD`.
@@ -267,7 +267,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   RabbitMQ virtual host. Defaults to `"/"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_RABBITMQ_VIRTUAL_HOST`.
@@ -306,7 +306,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Postgres hostname. Defaults to `"localhost"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_POSTGRES_HOSTNAME`.
@@ -329,7 +329,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Postgres port. Defaults to `5432`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_POSTGRES_PORT`.
@@ -352,7 +352,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Postgres username. Defaults to `"postgres"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_POSTGRES_USERNAME`.
@@ -375,7 +375,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Postgres password. Defaults to `"postgres"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_POSTGRES_PASSWORD`.
@@ -398,7 +398,7 @@ defmodule Yggdrasil.Settings do
 
   @doc """
   Postgres database. Defaults to `"postgres"`.
-  
+
   It looks for the value following this order:
 
     1. The OS environment variable `$YGGDRASIL_POSTGRES_DATABASE`.
