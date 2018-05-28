@@ -102,17 +102,17 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   @doc false
   def connect(_info, %State{namespace: namespace} = state) do
     options = Conn.rabbitmq_options(namespace)
-    {:ok, conn} = AMQP.Connection.open(options)
     try do
-      AMQP.Channel.open(conn)
+      with {:ok, conn} <- AMQP.Connection.open(options),
+           {:ok, chan} <- AMQP.Channel.open(conn) do
+        connected(conn, chan, state)
+      else
+        error ->
+          backoff(error, state)
+      end
     catch
       _, reason ->
         backoff(reason, state)
-    else
-      {:ok, chan} ->
-        connected(conn, chan, state)
-      error ->
-        backoff(error, state)
     end
   end
 
