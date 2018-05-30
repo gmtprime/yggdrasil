@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "3.3.0"
+  @version "3.3.1"
 
   def project do
     [app: :yggdrasil,
@@ -30,7 +30,7 @@ defmodule Yggdrasil.Mixfile do
      {:postgrex, "~> 0.13"},
      {:connection, "~> 1.0"},
      {:jason, "~> 1.0"},
-     {:skogsra, "~> 0.1"},
+     {:skogsra, "~> 0.2"},
      {:uuid, "~> 1.1", only: [:dev, :test]},
      {:ex_doc, "~> 0.18", only: :dev},
      {:credo, "~> 0.9", only: [:dev, :docs]}]
