@@ -209,7 +209,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
 
   @doc false
-  def terminated(:normal, %Channel{} = channel) do
+  def terminated(:normal, %State{channel: %Channel{} = channel}) do
     Logger.debug(fn ->
       "Stopped #{__MODULE__} for #{inspect channel}"
     end)
