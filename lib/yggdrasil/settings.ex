@@ -94,7 +94,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     redis: [hostname: "localhost"]
   ```
   """
@@ -117,7 +117,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     redis: [port: 6379]
   ```
   """
@@ -140,7 +140,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     redis: [password: nil]
   ```
   """
@@ -162,7 +162,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     redis: [database: 0]
   ```
   """
@@ -188,7 +188,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [hostname: "localhost"]
   ```
   """
@@ -211,7 +211,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [port: 5672]
   ```
   """
@@ -234,7 +234,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [username: "guest"]
   ```
   """
@@ -257,7 +257,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [password: "guest"]
   ```
   """
@@ -280,7 +280,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [virtual_host: "/"]
   ```
   """
@@ -289,11 +289,64 @@ defmodule Yggdrasil.Settings do
     domain: :rabbitmq
 
   @doc """
+  RabbitMQ max retries for the backoff algorithm. Defaults to `12`.
+
+  It looks for the value following this order.
+
+    1. The OS environment variable `$YGGDRASIL_RABBITMQ_MAX_RETRIES`.
+    2. The configuration file.
+    3. The default value `12`.
+
+  If the max retries are defined using a namespace, then the name of the OS
+  variable should be `$<NAMESPACE>_YGGDRASIL_RABBITMQ_MAX_RETRIES` where
+  `NAMESPACE` is the snake case version of the actual namespace e.g.
+  `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
+
+  ```
+  config :yggdrasil, <NAMESPACE>,
+    rabbitmq: [max_retries: 12]
+  ```
+
+  The backoff algorithm is exponential:
+  ```
+  backoff_time = pow(2, retries) * random(1, slot) ms
+  ```
+  when `retries <= MAX_RETRIES` and `slot` is given by the configuration
+  variable `YGGDRASIL_RABBITMQ_SLOT_SIZE` (defaults to `100` ms).
+  """
+  app_env :yggdrasil_rabbitmq_max_retries, :yggdrasil, :max_retries,
+    default: 12,
+    domain: :rabbitmq
+
+  @doc """
+  RabbitMQ slot size for the backoff algorithm. Defaults to `100`.
+
+  It looks for the value following this order.
+
+    1. The OS environment variable `$YGGDRASIL_RABBITMQ_SLOT_SIZE`.
+    2. The configuration file.
+    3. The default value `100`.
+
+  If slot sizes is defined using a namespace, then the name of the OS
+  variable should be `$<NAMESPACE>_YGGDRASIL_RABBITMQ_SLOT_SIZE` where
+  `NAMESPACE` is the snake case version of the actual namespace e.g.
+  `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
+
+  ```
+  config :yggdrasil, <NAMESPACE>,
+    rabbitmq: [slot_size: 100]
+  ```
+  """
+  app_env :yggdrasil_rabbitmq_slot_size, :yggdrasil, :slot_size,
+    default: 100,
+    domain: :rabbitmq
+
+  @doc """
   RabbitMQ subscriber options. They are options for `:poolboy`. Defaults to
   `[size: 5, max_overflow: 10].`
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     rabbitmq: [subscriber_options: [size: 5, max_overflow: 10]]
   ```
   """
@@ -319,7 +372,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     potgres: [hostname: "localhost"]
   ```
   """
@@ -342,7 +395,7 @@ defmodule Yggdrasil.Settings do
   be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     postgres: [port: 5432]
   ```
   """
@@ -365,7 +418,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     postgres: [username: "postgres"]
   ```
   """
@@ -388,7 +441,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     postgres: [password: "postgres"]
   ```
   """
@@ -411,7 +464,7 @@ defmodule Yggdrasil.Settings do
   `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
 
   ```
-  config :yggdrasil, [NAMESPACE]
+  config :yggdrasil, <NAMESPACE>
     postgres: [database: "postgres"]
   ```
   """

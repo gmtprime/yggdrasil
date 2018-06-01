@@ -8,29 +8,21 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.ConnectionTest do
     assert :ok = Conn.stop(pid)
   end
 
-  test "open_channel/1" do
+  test "get_connection/1" do
     assert {:ok, pid} = Conn.start_link(Yggdrasil)
-    assert {:ok, chan} = Conn.open_channel(pid)
-    assert Process.alive?(chan.conn.pid)
-    assert Process.alive?(chan.pid)
+    assert {:ok, conn} = Conn.get_connection(pid)
+    assert Process.alive?(conn.pid)
     assert :ok = Conn.stop(pid)
   end
 
-  test "open_channel/1 twice" do
-    assert {:ok, pid} = Conn.start_link(Yggdrasil)
-    assert {:ok, chan0} = Conn.open_channel(pid)
-    assert {:ok, chan1} = Conn.open_channel(pid)
-    assert chan0 != chan1
-    assert :ok = Conn.stop(pid)
-  end
+  test "calculate_backoff/1" do
+    current = :os.system_time(:millisecond)
+    retries = 3
+    state = %Conn{namespace: Yggdrasil, retries: retries}
 
-  test "close_channel" do
-    assert {:ok, pid} = Conn.start_link(Yggdrasil)
-    assert {:ok, chan} = Conn.open_channel(pid)
-    ref = Process.monitor(chan.pid)
-    assert :ok = Conn.close_channel(pid, chan)
-    assert Process.alive?(chan.conn.pid)
-    assert_receive {:DOWN, ^ref, :process, _, :normal}
-    assert :ok = Conn.stop(pid)
+    assert {backoff, new_state} = Conn.calculate_backoff(state)
+    assert backoff <= 3200 && backoff >= 32
+    assert new_state.retries == retries + 1
+    assert new_state.backoff >= current
   end
 end

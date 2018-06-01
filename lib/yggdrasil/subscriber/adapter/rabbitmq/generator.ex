@@ -6,6 +6,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool
   alias Yggdrasil.Settings
 
+  alias AMQP.Channel
+
   @registry Settings.registry()
 
   ############
@@ -42,7 +44,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
 
   @doc false
   def connect(generator, namespace) do
-    name = {RabbitMQ.Pool, namespace}
+    name = {Pool, namespace}
     case @registry.whereis_name(name) do
       :undefined ->
         via_tuple = {:via, @registry, name}
@@ -56,14 +58,16 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   Opens a RabbitMQ channel for a `namespace`.
   """
   def open_channel(namespace) do
-    Pool.open_channel(namespace)
+    with {:ok, conn} <- Pool.get_connection(namespace) do
+      Channel.open(conn)
+    end
   end
 
   @doc """
-  Closes a RabbitMQ channel for a `namespace`.
+  Closes a RabbitMQ `channel`.
   """
-  def close_channel(namespace, channel) do
-    Pool.close_channel(namespace, channel)
+  def close_channel(channel) do
+    Channel.close(channel)
   end
 
   #####################

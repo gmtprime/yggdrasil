@@ -33,22 +33,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
   end
 
   @doc """
-  Opens a RabbitMQ channel for a `namespace`.
+  Gets a RabbitMQ connection for a `namespace`.
   """
-  def open_channel(namespace) do
+  def get_connection(namespace) do
     via_tuple = {:via, @registry, {RabbitMQ.Poolboy, namespace}}
     :poolboy.transaction(via_tuple, fn worker ->
-      Conn.open_channel(worker)
-    end)
-  end
-
-  @doc """
-  Closes a RabbitMQ channel for a `namespace`.
-  """
-  def close_channel(namespace, channel) do
-    via_tuple = {:via, @registry, {RabbitMQ.Poolboy, namespace}}
-    :poolboy.transaction(via_tuple, fn worker ->
-      Conn.close_channel(worker, channel)
+      Conn.get_connection(worker)
     end)
   end
 

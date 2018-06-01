@@ -1,3 +1,15 @@
+# Changelog for 3.3.3
+
+## Highlights
+
+## v3.3.3
+
+### Enhancements
+
+  * [Yggdrasil.Subscriber.Adapter.RabbitMQ] Exponential backoff on connection
+  retries.
+  * Improved disconnection handling.
+
 # Changelog for v3.3.0
 
 ## Highlights

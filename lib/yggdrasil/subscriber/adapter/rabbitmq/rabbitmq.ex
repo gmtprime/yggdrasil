@@ -48,7 +48,10 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
 
-  defstruct [:publisher, :channel, :chan]
+  alias AMQP.Queue
+  alias AMQP.Basic
+
+  defstruct [:publisher, :channel, :chan, :queue]
   alias __MODULE__, as: State
 
   ############
@@ -83,13 +86,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   @doc false
   def connect(_, %State{channel: %Channel{namespace: namespace}} = state) do
     with {:ok, _} <- Generator.connect(namespace),
-         {:ok, chan} <- Generator.open_channel(namespace) do
-      try do
-        connected(chan, state)
-      catch
-        _, reason ->
-          backoff(reason, state)
-      end
+         {:ok, new_state} <- open_channel(state) do
+      connected(new_state)
     else
       error ->
         backoff(error, state)
@@ -102,10 +100,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
   def disconnect(
     info,
-    %State{chan: chan, channel: %Channel{namespace: namespace} = channel} = state
+    %State{chan: chan, channel: %Channel{} = channel} = state
   ) do
     Backend.disconnected(channel)
-    Generator.close_channel(namespace, chan)
+    if Process.alive?(chan.pid) do
+      Generator.close_channel(chan)
+    end
     disconnect(info, %State{state | chan: nil})
   end
 
@@ -153,10 +153,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
   def terminate(
     reason,
-    %State{chan: chan, channel: %Channel{namespace: namespace} = channel} = state
+    %State{chan: chan, channel: %Channel{} = channel} = state
   ) do
     Backend.disconnected(channel)
-    Generator.close_channel(namespace, chan)
+    if Process.alive?(chan.pid) do
+      Generator.close_channel(chan)
+    end
     terminate(reason, %State{state | chan: nil})
   end
 
@@ -169,35 +171,93 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   end
 
   @doc false
-  def connected(chan, %State{channel: %Channel{} = channel} = state) do
-    Process.monitor(chan.pid)
-    {:ok, new_state} = consume(chan, state)
-    Logger.debug(fn ->
-      "#{__MODULE__} connected to RabbitMQ #{inspect channel}"
-    end)
-    Backend.connected(channel)
-    {:ok, new_state}
+  def connected(%State{channel: %Channel{} = channel} = state) do
+    try do
+      with {:ok, new_state} <- declare_queue(state),
+           :ok <- consume(new_state) do
+        Logger.debug(fn ->
+          "#{__MODULE__} connected to RabbitMQ #{inspect channel}"
+        end)
+        Backend.connected(channel)
+        {:ok, new_state}
+      else
+        error ->
+          backoff(error, state)
+      end
+    catch
+      :error, error ->
+        backoff({:error, error}, state)
+      error, reason ->
+        backoff({:error, {error, reason}}, state)
+    end
+  end
+
+  @doc false
+  def open_channel(
+    %State{channel: %Channel{namespace: namespace}, chan: nil} = state
+  ) do
+    with {:ok, chan} <- Generator.open_channel(namespace) do
+      _ = Process.monitor(chan.pid)
+      new_state = %State{state | chan: chan}
+      {:ok, new_state}
+    end
+  end
+  def open_channel(%State{chan: chan} = state) do
+    if Process.alive?(chan.pid) do
+      Generator.close_channel(chan)
+    end
+    open_channel(%State{state | chan: nil})
+  end
+
+  @doc false
+  def declare_queue(%State{chan: chan} = state) do
+    with {:ok, %{queue: queue}} <- Queue.declare(chan, "", exclusive: true) do
+      new_state = %State{state | queue: queue}
+      {:ok, new_state}
+    end
   end
 
   @doc false
   def consume(
-    chan,
-    %State{channel: %Channel{name: {exchange, routing_key}}} = state
+    %State{
+      chan: chan,
+      queue: queue,
+      channel: %Channel{name: {exchange, routing_key}}
+    }
   ) do
-    {:ok, %{queue: queue}} = AMQP.Queue.declare(chan, "", exclusive: true)
-    :ok = AMQP.Queue.bind(chan, queue, exchange, routing_key: routing_key)
-    {:ok, _} = AMQP.Basic.consume(chan, queue)
-    new_state = %State{state | chan: chan}
-    {:ok, new_state}
+    with :ok <- Queue.bind(chan, queue, exchange, routing_key: routing_key),
+         {:ok, _} <- Basic.consume(chan, queue) do
+      :ok
+    end
   end
 
   @doc false
-  def backoff(error, %State{channel: %Channel{} = channel} = state) do
+  def backoff(
+    {:backoff, new_backoff},
+    %State{chan: nil, channel: %Channel{} = channel} = state
+  ) do
     Logger.warn(fn ->
       "#{__MODULE__} cannot connect to RabbitMQ for #{inspect channel}" <>
-      "due to #{inspect error}"
+      " waiting backoff of #{inspect new_backoff} ms"
+    end)
+    {:backoff, new_backoff, state}
+  end
+  def backoff(
+    error,
+    %State{chan: nil, channel: %Channel{} = channel} = state
+  ) do
+    Logger.warn(fn ->
+      "#{__MODULE__} cannot connect to RabbitMQ for #{inspect channel}" <>
+      " due to #{inspect error}"
     end)
     {:backoff, 5_000, state}
+  end
+  def backoff(error, %State{chan: chan} = state) do
+    if Process.alive?(chan.pid) do
+      Generator.close_channel(chan)
+    end
+    new_state = %State{state | chan: nil}
+    backoff(error, new_state)
   end
 
   @doc false

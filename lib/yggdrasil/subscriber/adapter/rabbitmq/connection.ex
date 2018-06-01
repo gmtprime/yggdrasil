@@ -3,13 +3,16 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   This module defines a RabbitMQ connection handler. It does not connect until
   a process request a connection.
   """
+  use Bitwise
   use Connection
 
   require Logger
 
   alias Yggdrasil.Settings
 
-  defstruct [:namespace, :conn]
+  alias AMQP.Connection, as: Conn
+
+  defstruct [:namespace, :conn, :backoff, :retries]
   alias __MODULE__, as: State
 
   ############
@@ -20,7 +23,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   to connect to RabbitMQ. Additionally, `GenServer` `options` can be provided.
   """
   def start_link(namespace, options  \\ []) do
-    state = %State{namespace: namespace}
+    state = %State{namespace: namespace, retries: 0}
     Connection.start_link(__MODULE__, state, options)
   end
 
@@ -33,17 +36,10 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   end
 
   @doc """
-  Opens a RabbitMQ channel in the connection process identified by a `pid`.
+  Gets the RabbitMQ connection from the process identified by a `pid`.
   """
-  def open_channel(pid) do
-    Connection.call(pid, :open)
-  end
-
-  @doc """
-  Closes a RabbitMQ `channel` in the connection process identified by a `pid`.
-  """
-  def close_channel(pid, channel) do
-    Connection.call(pid, {:close, channel})
+  def get_connection(pid) do
+    Connection.call(pid, :get)
   end
 
   ######################
@@ -58,14 +54,25 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   @doc false
   def connect(_, %State{namespace: namespace, conn: nil} = state) do
     options = rabbitmq_options(namespace)
-    {:ok, conn} = AMQP.Connection.open(options)
-    connected(conn, state)
-  rescue
-    error ->
-      backoff(error, state)
-  catch
-    _, reason ->
-      backoff(reason, state)
+    try do
+      with {:ok, conn} <- Conn.open(options) do
+        Process.monitor(conn.pid)
+        Logger.debug(fn ->
+          "#{__MODULE__} opened a connection with RabbitMQ" <>
+          " #{inspect namespace}"
+        end)
+        new_state = %State{state | conn: conn, retries: 0, backoff: nil}
+        {:ok, new_state}
+      else
+        error ->
+          backoff(error, state)
+      end
+    catch
+      :error, reason ->
+        backoff({:error, reason}, state)
+      error, reason ->
+        backoff({:error, {error, reason}}, state)
+    end
   end
 
   @doc false
@@ -73,35 +80,18 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     disconnected(state)
   end
   def disconnect(info, %State{conn: conn} = state) do
-    AMQP.Connection.close(conn)
+    Conn.close(conn)
     disconnect(info, %State{state | conn: nil})
   end
 
   @doc false
-  def handle_call(_, _from, %State{conn: nil} = state) do
-    {:reply, {:error, "Not connected"}, state}
+  def handle_call(_, _from, %State{conn: nil, backoff: until} = state) do
+    new_backoff = until - :os.system_time(:millisecond)
+    new_backoff = if new_backoff < 0, do: 0, else: new_backoff
+    {:reply, {:backoff, new_backoff}, state}
   end
-  def handle_call(:open, _from, %State{conn: conn} = state) do
-    AMQP.Channel.open(conn)
-  catch
-    _, reason ->
-      {:reply, {:ok, reason}, state}
-  else
-    {:ok, _} = channel ->
-      {:reply, channel, state}
-    error ->
-      {:reply, error, state}
-  end
-  def handle_call({:close, chan}, _from, %State{} = state) do
-    AMQP.Channel.close(chan)
-  catch
-    _, _ ->
-      {:reply, :ok, state}
-  else
-    {:ok, _} ->
-      {:reply, :ok, state}
-    error ->
-      {:reply, error, state}
+  def handle_call(:get, _from, %State{conn: conn} = state) do
+    {:reply, {:ok, conn}, state}
   end
   def handle_call(_msg, _from, %State{} = state) do
     {:noreply, state}
@@ -125,7 +115,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     terminated(reason, state)
   end
   def terminate(reason, %State{conn: conn} = state) do
-    AMQP.Connection.close(conn)
+    Conn.close(conn)
     terminate(reason, %State{state | conn: nil})
   end
 
@@ -212,26 +202,50 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     get_value(namespace, :virtual_host, Settings.yggdrasil_rabbitmq_virtual_host())
   end
 
+  @doc false
+  def get_max_retries(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_max_retries()
+  end
+  def get_max_retries(namespace) do
+    get_value(namespace, :max_retries, Settings.yggdrasil_rabbitmq_max_retries())
+  end
+
+  @doc false
+  def get_slot_size(Yggdrasil) do
+    Settings.yggdrasil_rabbitmq_slot_size()
+  end
+  def get_slot_size(namespace) do
+    get_value(namespace, :slot_size, Settings.yggdrasil_rabbitmq_slot_size())
+  end
+
   #########
   # Helpers
 
   @doc false
-  def connected(conn, %State{namespace: namespace} = state) do
-    Process.monitor(conn.pid)
-    Logger.debug(fn ->
-      "#{__MODULE__} opened a connection with RabbitMQ #{inspect namespace}"
-    end)
-    new_state = %State{state | conn: conn}
-    {:ok, new_state}
+  def calculate_backoff(
+    %State{namespace: namespace, retries: retries} = state
+  ) do
+    max_retries = get_max_retries(namespace)
+    new_retries = if retries == max_retries, do: retries, else: retries + 1
+
+    slot_size = get_slot_size(namespace)
+    new_backoff = (2 <<< new_retries) * Enum.random(1..slot_size) # ms
+
+    until = :os.system_time(:millisecond) + new_backoff
+    new_state = %State{state | backoff: until, retries: new_retries}
+
+    {new_backoff, new_state}
   end
 
   @doc false
   def backoff(error, %State{namespace: namespace} = state) do
+    {new_backoff, new_state} = calculate_backoff(state)
     Logger.warn(fn ->
       "#{__MODULE__} cannot open connection to RabbitMQ" <>
       " for #{inspect namespace} due to #{inspect error}"
     end)
-    {:backoff, 5_000, state}
+
+    {:backoff, new_backoff, new_state}
   end
 
   @doc false
@@ -239,7 +253,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     Logger.warn(fn ->
       "#{__MODULE__} disconnected from RabbitMQ for #{inspect namespace}"
     end)
-    {:backoff, 5_000, state}
+    backoff(:disconnected, state)
   end
 
   @doc false
