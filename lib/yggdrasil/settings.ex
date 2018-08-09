@@ -471,4 +471,57 @@ defmodule Yggdrasil.Settings do
   app_env :yggdrasil_postgres_database, :yggdrasil, :database,
     default: "postgres",
     domain: :postgres
+
+  @doc """
+  Postgres max retries for the backoff algorithm. Defaults to `12`.
+
+  It looks for the value following this order.
+
+    1. The OS environment variable `$YGGDRASIL_POSTGRES_MAX_RETRIES`.
+    2. The configuration file.
+    3. The default value `12`.
+
+  If the max retries are defined using a namespace, then the name of the OS
+  variable should be `$<NAMESPACE>_YGGDRASIL_POSTGRES_MAX_RETRIES` where
+  `NAMESPACE` is the snake case version of the actual namespace e.g.
+  `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
+
+  ```
+  config :yggdrasil, <NAMESPACE>,
+    postgres: [max_retries: 12]
+  ```
+
+  The backoff algorithm is exponential:
+  ```
+  backoff_time = pow(2, retries) * random(1, slot) ms
+  ```
+  when `retries <= MAX_RETRIES` and `slot` is given by the configuration
+  variable `YGGDRASIL_POSTGRES_SLOT_SIZE` (defaults to `100` ms).
+  """
+  app_env :yggdrasil_postgres_max_retries, :yggdrasil, :max_retries,
+    default: 12,
+    domain: :postgres
+
+  @doc """
+  Postgres slot size for the backoff algorithm. Defaults to `100`.
+
+  It looks for the value following this order.
+
+    1. The OS environment variable `$YGGDRASIL_POSTGRES_SLOT_SIZE`.
+    2. The configuration file.
+    3. The default value `100`.
+
+  If slot sizes is defined using a namespace, then the name of the OS
+  variable should be `$<NAMESPACE>_YGGDRASIL_POSTGRES_SLOT_SIZE` where
+  `NAMESPACE` is the snake case version of the actual namespace e.g.
+  `MyApp.Namespace` would be `MYAPP_NAMESPACE`.
+
+  ```
+  config :yggdrasil, <NAMESPACE>,
+    postgres: [slot_size: 100]
+  ```
+  """
+  app_env :yggdrasil_postgres_slot_size, :yggdrasil, :slot_size,
+    default: 100,
+    domain: :postgres
 end

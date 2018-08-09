@@ -36,6 +36,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
   """
+  use Bitwise
   use Connection
 
   require Logger
@@ -45,7 +46,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   alias Yggdrasil.Distributor.Backend
   alias Yggdrasil.Settings
 
-  defstruct [:publisher, :channel, :conn, :ref]
+  defstruct [:publisher, :channel, :conn, :ref, :retries]
   alias __MODULE__, as: State
 
   ############
@@ -56,7 +57,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   `publisher` and optionally `GenServer` `options`.
   """
   def start_link(%Channel{} = channel, publisher, options \\ []) do
-    state = %State{publisher: publisher, channel: channel}
+    state = %State{publisher: publisher, channel: channel, retries: 0}
     Connection.start_link(__MODULE__, state, options)
   end
 
@@ -100,11 +101,12 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   ##
   # Backoff.
   defp backoff(error, %State{channel: %Channel{} = channel} = state) do
+    {backoff, new_state} = calculate_backoff(state)
     Logger.warn(fn ->
       "#{__MODULE__} cannot connect to Postgres #{inspect channel}" <>
-      "due to #{inspect error}"
+      " due to #{inspect error}. Backing off for #{inspect backoff} ms"
     end)
-    {:backoff, 5000, state}
+    {:backoff, backoff, new_state}
   end
 
   ##
@@ -114,29 +116,31 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     Logger.debug(fn ->
       "#{__MODULE__} connected to Postgres #{inspect channel}"
     end)
-    new_state = %State{state | conn: conn, ref: ref}
+    new_state = %State{state | conn: conn, ref: ref, retries: 0}
     Backend.connected(channel)
     {:ok, new_state}
   end
 
   @doc false
-  def disconnect(_info, %State{ref: nil, conn: nil} = state) do
+  def disconnect(_info, %State{conn: nil, ref: nil} = state) do
     disconnected(state)
   end
-  def disconnect(info, %State{conn: conn, ref: ref} = state) do
-    Postgrex.Notifications.unlisten(conn, ref)
-    GenServer.stop(conn)
-    disconnect(info, %State{state | conn: nil, ref: nil})
+  def disconnect(:down, %State{channel: channel} = state) do
+    Backend.disconnected(channel)
+    disconnect(:down, %State{state | conn: nil, ref: nil})
+  end
+  def disconnect(:exit, %State{channel: channel} = state) do
+    Backend.disconnected(channel)
+    disconnect(:exit, %State{state | conn: nil, ref: nil})
   end
 
   ##
   # Disconnected.
   defp disconnected(%State{channel: %Channel{} = channel} = state) do
-    Logger.debug(fn ->
+    Logger.warn(fn ->
       "#{__MODULE__} disconnected from Postgres #{inspect channel}"
     end)
-    Backend.disconnected(channel)
-    {:backoff, 5000, state}
+    backoff(:disconnected, state)
   end
 
   @doc false
@@ -148,12 +152,10 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     {:noreply, state}
   end
   def handle_info({:DOWN, _, :process, _, _}, %State{} = state) do
-    new_state = %State{state | conn: nil, ref: nil}
-    {:disconnect, :down, new_state}
+    {:disconnect, :down, state}
   end
   def handle_info({:EXIT, _, _}, %State{} = state) do
-    new_state = %State{state | conn: nil, ref: nil}
-    {:disconnect, :exit, new_state}
+    {:disconnect, :exit, state}
   end
   def handle_info(_, %State{} = state) do
     {:noreply, state}
@@ -188,6 +190,21 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
 
   #########
   # Helpers
+
+  @doc false
+  def calculate_backoff(
+    %State{channel: %Channel{namespace: namespace}, retries: retries} = state
+  ) do
+    max_retries = get_max_retries(namespace)
+    new_retries = if retries == max_retries, do: retries, else: retries + 1
+
+    slot_size = get_slot_size(namespace)
+    new_backoff = (2 <<< new_retries) * Enum.random(1..slot_size) # ms
+
+    new_state = %State{state | retries: new_retries}
+
+    {new_backoff, new_state}
+  end
 
   @doc false
   def postgres_options(%Channel{namespace: namespace}) do
@@ -261,5 +278,25 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   end
   def get_database(namespace) do
     get_value(namespace, :database, Settings.yggdrasil_postgres_database())
+  end
+
+  @doc false
+  def get_max_retries(Yggdrasil) do
+    Settings.yggdrasil_postgres_max_retries()
+  end
+  def get_max_retries(namespace) do
+    get_value(
+      namespace,
+      :max_retries,
+      Settings.yggdrasil_postgres_max_retries()
+    )
+  end
+
+  @doc false
+  def get_slot_size(Yggdrasil) do
+    Settings.yggdrasil_postgres_slot_size()
+  end
+  def get_slot_size(namespace) do
+    get_value(namespace, :slot_size, Settings.yggdrasil_postgres_slot_size())
   end
 end

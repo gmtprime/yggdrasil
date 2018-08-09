@@ -1,3 +1,19 @@
+# Changelog for 3.3.4
+
+## Highlights
+
+## v3.3.4
+
+### Enhancements
+
+  * [Yggdrasil.Subscriber.Adapter.Postgres] Exponential backoff on connection
+  retries.
+
+### Bug fixes
+  * Fixed bug in Redis and Postgres adapters that didn't publish the
+    disconnection message correctly. Closes #6 and #7.
+  * Improved disconnection handling.
+
 # Changelog for 3.3.3
 
 ## Highlights
