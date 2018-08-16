@@ -7,8 +7,9 @@ defmodule Yggdrasil.Channel do
     + `name` - Name of the channel.
     + `transformer` - Module where the encoding or decoding function is
     defined.
-    + `adapter` - Module where the adapter is defined.
+    + `adapter` - Module where the adapter is defined or identifier.
     + `namespace` - Namespace of the adapter.
+    + `backend` - Distributor backend.
   """
 
   @doc """
@@ -17,12 +18,14 @@ defmodule Yggdrasil.Channel do
   defstruct name: nil,
             adapter: :elixir,
             transformer: Yggdrasil.Transformer.Default,
-            namespace: Yggdrasil
+            namespace: Yggdrasil,
+            backend: Yggdrasil.Distributor.Backend
 
   @type t :: %__MODULE__{
     name: any(),
     adapter: module(),
     transformer: module(),
-    namespace: atom()
+    namespace: atom(),
+    backend: module()
   }
 end
