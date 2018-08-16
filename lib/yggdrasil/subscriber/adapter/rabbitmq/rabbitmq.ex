@@ -211,7 +211,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
 
   @doc false
   def declare_queue(%State{chan: chan} = state) do
-    with {:ok, %{queue: queue}} <- Queue.declare(chan, "", exclusive: true) do
+    with {:ok, %{queue: queue}} <- Queue.declare(chan, "", auto_delete: true) do
       new_state = %State{state | queue: queue}
       {:ok, new_state}
     end
