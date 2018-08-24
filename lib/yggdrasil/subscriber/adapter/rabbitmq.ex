@@ -38,13 +38,14 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
   """
+  use Yggdrasil.Subscriber.Adapter
   use Connection
 
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Backend
+  alias Yggdrasil.Subscriber.Publisher
+  alias Yggdrasil.Backend
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
 
@@ -57,33 +58,26 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
   ############
   # Client API
 
-  @doc """
-  Starts a RabbitMQ distributor adapter in a `channel` with some distributor
-  `publisher` and optionally `GenServer` `options`.
-  """
-  def start_link(%Channel{} = channel, publisher, options \\ []) do
-    state = %State{publisher: publisher, channel: channel}
-    Connection.start_link(__MODULE__, state, options)
-  end
+  @impl true
+  def start_link(channel, publisher, options \\ [])
 
-  @doc """
-  Stops the RabbitMQ adapter with its `pid`.
-  """
-  def stop(pid) do
-    GenServer.stop(pid)
+  def start_link(%Channel{} = channel, publisher, options) do
+    arguments = %{publisher: publisher, channel: channel}
+    Connection.start_link(__MODULE__, arguments, options)
   end
 
   ######################
   # Connection callbacks
 
-  @doc false
-  def init(%State{channel: %Channel{name: {_, _}} = channel} = state) do
+  @impl true
+  def init(%{channel: %Channel{name: {_, _}} = channel} = arguments) do
+    state = struct(State, arguments)
     Process.flag(:trap_exit, true)
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:connect, :init, state}
   end
 
-  @doc false
+  @impl true
   def connect(_, %State{channel: %Channel{namespace: namespace}} = state) do
     with {:ok, _} <- Generator.connect(namespace),
          {:ok, new_state} <- open_channel(state) do
@@ -94,7 +88,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
     end
   end
 
-  @doc false
+  @impl true
   def disconnect(_info, %State{chan: nil} = state) do
     disconnected(state)
   end
@@ -109,7 +103,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
     disconnect(info, %State{state | chan: nil})
   end
 
-  @doc false
+  @impl true
   def handle_info({:basic_consume_ok, _}, %State{} = state) do
     {:noreply, state}
   end
@@ -147,7 +141,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(reason, %State{chan: nil} = state) do
     terminated(reason, state)
   end

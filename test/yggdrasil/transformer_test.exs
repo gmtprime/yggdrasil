@@ -2,30 +2,42 @@ defmodule Yggdrasil.TransformerTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Registry
+  alias Yggdrasil.Transformer
 
-  defmodule TransformerTest do
-    use Yggdrasil.Transformer
-
-    def decode(channel, message) do
-      {:ok, {channel, message}}
+  describe "Default transformer" do
+    setup do
+      {:ok, channel} =
+        %Channel{name: "subscription cycle"}
+        |> Registry.get_full_channel()
+      {:ok, channel: channel}
     end
 
-    def encode(channel, message) do
-      {:ok, "#{inspect channel} - #{message}"}
+    test "decode does nothing to the message", %{channel: channel} do
+      assert {:ok, "message"} = Transformer.decode(channel, "message")
+    end
+
+    test "encode does nothing to the message", %{channel: channel} do
+      assert {:ok, "message"} = Transformer.encode(channel, "message")
     end
   end
 
-  test "decode behaviour" do
-    name = UUID.uuid4()
-    channel = %Channel{name: name}
-    decoded = {channel, "message"}
-    assert {:ok, ^decoded} = TransformerTest.decode(channel, "message")
-  end
+  describe "Json transformer" do
+    setup do
+      {:ok, channel} =
+        %Channel{name: "subscription cycle", transformer: :json}
+        |> Registry.get_full_channel()
+      json = "{\"hello\":\"world\"}"
+      message = %{"hello" => "world"}
+      {:ok, channel: channel, json: json, message: message}
+    end
 
-  test "encode behaviour" do
-    name = UUID.uuid4()
-    channel = %Channel{name: name}
-    encoded = "#{inspect channel} - message"
-    assert {:ok, ^encoded} = TransformerTest.encode(channel, "message")
+    test "decodes a JSON", %{channel: channel, json: json, message: message} do
+      assert {:ok, ^message} = Transformer.decode(channel, json)
+    end
+
+    test "encodes a JSON", %{channel: channel, json: json, message: message} do
+      assert {:ok, ^json} = Transformer.encode(channel, message)
+    end
   end
 end

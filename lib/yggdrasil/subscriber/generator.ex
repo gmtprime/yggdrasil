@@ -1,14 +1,15 @@
-defmodule Yggdrasil.Distributor.Generator do
+defmodule Yggdrasil.Subscriber.Generator do
   @moduledoc """
   Supervisor to generate distributors on demand.
   """
-  use Supervisor
+  use DynamicSupervisor
+
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
-  alias Yggdrasil.Distributor
-  alias Yggdrasil.Distributor.Manager
+  alias Yggdrasil.Subscriber.Distributor
+  alias Yggdrasil.Subscriber.Manager
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   ############
   # Client API
@@ -19,7 +20,7 @@ defmodule Yggdrasil.Distributor.Generator do
   @spec start_link() :: Supervisor.on_start()
   @spec start_link(Supervisor.options()) :: Supervisor.on_start()
   def start_link(options \\ []) do
-    Supervisor.start_link(__MODULE__, nil, options)
+    DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
 
   @doc """
@@ -65,8 +66,12 @@ defmodule Yggdrasil.Distributor.Generator do
   def start_distributor(generator, %Channel{} = channel, pid) do
     name = {Distributor, channel}
     via_tuple = {:via, @registry, name}
-    args = [channel, pid, [name: via_tuple]]
-    with {:ok, _} <- Supervisor.start_child(generator, args) do
+    spec = %{
+      id: via_tuple,
+      start: {Distributor, :start_link, [channel, pid, [name: via_tuple]]},
+      restart: :transient
+    }
+    with {:ok, _} <- DynamicSupervisor.start_child(generator, spec) do
       :ok
     else
       _ ->
@@ -121,11 +126,6 @@ defmodule Yggdrasil.Distributor.Generator do
 
   @doc false
   def init(_) do
-    import Supervisor.Spec
-
-    children = [
-      supervisor(Distributor, [], restart: :transient)
-    ]
-    supervise(children, strategy: :simple_one_for_one)
+    DynamicSupervisor.init(strategy: :one_for_one)
   end
 end

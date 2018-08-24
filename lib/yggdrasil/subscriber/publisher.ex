@@ -1,11 +1,12 @@
-defmodule Yggdrasil.Distributor.Publisher do
+defmodule Yggdrasil.Subscriber.Publisher do
   @moduledoc """
   A server to distribute the messages.
   """
   use GenServer
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Backend
+  alias Yggdrasil.Backend
+  alias Yggdrasil.Transformer
 
   require Logger
 
@@ -38,29 +39,30 @@ defmodule Yggdrasil.Distributor.Publisher do
   #############################################################################
   # GenServer callbacks.
 
-  @doc false
+  @impl true
   def init(%Channel{} = channel) do
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:ok, channel}
   end
 
-  @doc false
+  @impl true
   def handle_call(
     {:notify, channel_name, message},
     _from,
-    %Channel{transformer: transformer_module} = channel
+    %Channel{} = channel
   ) do
     real_channel = %Channel{channel | name: channel_name}
     result =
-      with {:ok, decoded} <- transformer_module.decode(real_channel, message),
-           do: Backend.publish(channel, decoded)
+      with {:ok, decoded} <- Transformer.decode(real_channel, message) do
+        Backend.publish(real_channel, decoded)
+      end
     {:reply, result, channel}
   end
   def handle_call(_msg, _from, %Channel{} = channel) do
     {:noreply, channel}
   end
 
-  @doc false
+  @impl true
   def terminate(:normal, %Channel{} = channel) do
     Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect channel}" end)
   end

@@ -36,41 +36,24 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
   ```
   """
+  use Yggdrasil.Subscriber.Adapter
   use GenServer
 
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Backend
+  alias Yggdrasil.Subscriber.Publisher
+  alias Yggdrasil.Backend
 
   defstruct [:publisher, :channel, :conn]
   alias __MODULE__, as: State
 
-  ############
-  # Client API
-
-  @doc """
-  Starts a Elixir subscriber adapter in a `channel` with some subscriber
-  `publisher` and optionally `GenServer` `options`.
-  """
-  def start_link(%Channel{} = channel, publisher, options \\ []) do
-    state = %State{publisher: publisher, channel: channel}
-    GenServer.start_link(__MODULE__, state, options)
-  end
-
-  @doc """
-  Stops the Elixir adapter with its `pid`.
-  """
-  def stop(pid) do
-    GenServer.stop(pid)
-  end
-
   ####################
   # GenServer callback
 
-  @doc false
-  def init(%State{channel: %Channel{name: name} = channel} = state) do
+  @impl true
+  def init(%{channel: %Channel{name: name} = channel} = arguments) do
+    state = struct(State, arguments)
     conn = %Channel{channel | name: {:elixir, name}}
     Backend.subscribe(conn)
     Backend.connected(channel)
@@ -78,7 +61,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     {:ok, %State{state | conn: conn}}
   end
 
-  @doc false
+  @impl true
   def handle_info(
     {:Y_EVENT, _, message},
     %State{publisher: publisher, channel: %Channel{name: name}} = state
@@ -90,7 +73,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(:normal, %State{channel: channel, conn: conn}) do
     Backend.unsubscribe(conn)
     Backend.disconnected(channel)

@@ -1,16 +1,17 @@
-defmodule Yggdrasil.Distributor do
+defmodule Yggdrasil.Subscriber.Distributor do
   @moduledoc """
-  Supervisor for `Yggdrasil.Distributor.Manager`,
-  `Yggdrasil.Distributor.Adapter` and `Yggdrasil.Distributor.Publisher`.
+  Supervisor for `Yggdrasil.Subscriber.Manager`,
+  `Yggdrasil.Subscriber.Adapter` and `Yggdrasil.Subscriber.Publisher`.
   """
   use Supervisor
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
-  alias Yggdrasil.Distributor.Manager
-  alias Yggdrasil.Distributor.Publisher
+  alias Yggdrasil.Subscriber.Manager
+  alias Yggdrasil.Subscriber.Publisher
+  alias Yggdrasil.Subscriber.Adapter
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   #############################################################################
   # Client API.
@@ -42,30 +43,32 @@ defmodule Yggdrasil.Distributor do
   # Supervisor callback.
 
   @doc false
-  def init([%Channel{adapter: adapter_module} = channel, pid]) do
-    import Supervisor.Spec
-
+  def init([%Channel{} = channel, pid]) do
     manager_name = {:via, @registry, {Manager, channel}}
     publisher_name = {:via, @registry, {Publisher, channel}}
-    adapter_name = {:via, @registry, {adapter_module, channel}}
+    adapter_name = {:via, @registry, {Adapter, channel}}
 
     children = [
-      worker(
-        Manager,
-        [channel, pid, [name: manager_name]],
+      %{
+        id: Manager,
+        start: {Manager, :start_link, [channel, pid, [name: manager_name]]},
         restart: :transient
-      ),
-      worker(
-        Publisher,
-        [channel, [name: publisher_name]],
+      },
+      %{
+        id: Publisher,
+        start: {Publisher, :start_link, [channel, [name: publisher_name]]},
         restart: :transient
-      ),
-      worker(
-        adapter_module,
-        [channel, publisher_name, [name: adapter_name]],
+      },
+      %{
+        id: Adapter,
+        start: {
+          Adapter,
+          :start_link,
+          [channel, publisher_name, [name: adapter_name]]
+        },
         restart: :transient
-      )
+      },
     ]
-    supervise(children, strategy: :rest_for_one)
+    Supervisor.init(children, strategy: :rest_for_one)
   end
 end

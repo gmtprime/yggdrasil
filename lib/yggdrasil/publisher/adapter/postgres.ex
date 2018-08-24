@@ -36,11 +36,13 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
   """
+  use Yggdrasil.Publisher.Adapter
   use Connection
 
   require Logger
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Transformer
   alias Yggdrasil.Subscriber.Adapter.Postgres
 
   defstruct [:conn, :namespace]
@@ -55,6 +57,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
   """
   @spec start_link(term()) :: GenServer.on_start()
   @spec start_link(term(), GenServer.options()) :: GenServer.on_start()
+  @impl true
   def start_link(namespace, options \\ [])
 
   def start_link(namespace, options) do
@@ -79,6 +82,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     :ok | {:error, term()}
   @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
     :ok | {:error, term()}
+  @impl true
   def publish(publisher, channel, message, options \\ [])
 
   def publish(publisher, %Channel{} = channel, message, _options) do
@@ -88,21 +92,21 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
   ####################
   # GenServer callback
 
-  @doc false
+  @impl true
   def init(namespace) do
     Process.flag(:trap_exit, true)
     state = %State{namespace: namespace}
     {:connect, :init, state}
   end
 
-  @doc false
+  @impl true
   def connect(_info, %State{namespace: namespace} = state) do
     options = Postgres.postgres_options(%Channel{namespace: namespace})
     {:ok, conn} = Postgrex.start_link(options)
     {:ok, %State{state | conn: conn}}
   end
 
-  @doc false
+  @impl true
   def disconnect(_info, %State{conn: nil} = state) do
     {:backoff, 5000, state}
   end
@@ -111,7 +115,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     disconnect(info, %State{state | conn: nil})
   end
 
-  @doc false
+  @impl true
   def handle_call(
     {:publish, _, _},
     _from,
@@ -120,12 +124,12 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     {:reply, {:error, "Disconnected"}, state}
   end
   def handle_call(
-    {:publish, %Channel{name: name, transformer: encoder} = channel, message},
+    {:publish, %Channel{name: name} = channel, message},
     _from,
     %State{conn: conn} = state
   ) do
     result =
-      with {:ok, encoded} <- encoder.encode(channel, message),
+      with {:ok, encoded} <- Transformer.encode(channel, message),
            {:ok, _} <- Postgrex.query(conn, "NOTIFY #{name}, '#{encoded}'", []),
            do: :ok
     {:reply, result, state}
@@ -134,7 +138,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def handle_info({:DOWN, _, :process, _pid, _reason}, %State{} = state) do
     new_state = %State{state | conn: nil}
     {:disconnect, :down, new_state}
@@ -144,7 +148,7 @@ defmodule Yggdrasil.Publisher.Adapter.Postgres do
     {:disconnect, :exit, new_state}
   end
 
-  @doc false
+  @impl true
   def terminate(reason, %State{conn: nil} = state) do
     terminated(reason, state)
   end

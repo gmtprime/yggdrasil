@@ -1,3 +1,15 @@
+# Changelog for 4.0.0-rc.0
+
+## Highlights
+
+## v4.0.0-rc.0
+
+### Enhancements
+
+  * Added a way to add new adapters easily to Yggdrasil.
+  * Added a way to implement different backends.
+  * Updated the code to follow the new Supervisor child specs.
+
 # Changelog for 3.3.4
 
 ## Highlights

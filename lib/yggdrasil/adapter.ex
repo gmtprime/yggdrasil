@@ -71,7 +71,7 @@ defmodule Yggdrasil.Adapter do
       alias Yggdrasil.Registry, as: Reg
 
       @doc false
-      def start_link do
+      def start_link(_) do
         Task.start_link(__MODULE__, :register, [])
       end
 

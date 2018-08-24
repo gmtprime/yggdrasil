@@ -13,5 +13,5 @@ defmodule Yggdrasil.Backend.Default do
     - `{:Y_EVENT, Channel.t(), message()} when message: term()`: When a
     subscriber gets a new messages from the adapter. See `publish/2` function.
   """
-  use Yggdrasil.Transformer, name: :default
+  use Yggdrasil.Backend, name: :default
 end

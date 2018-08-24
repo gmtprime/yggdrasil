@@ -1,4 +1,4 @@
-defmodule Yggdrasil.Publisher.Adapter.RedisTest do
+defmodule Yggdrasil.Publisher.AdapterTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Channel
@@ -6,8 +6,7 @@ defmodule Yggdrasil.Publisher.Adapter.RedisTest do
   alias Yggdrasil.Publisher.Adapter
 
   test "publish" do
-    channel = %Channel{name: UUID.uuid4(), adapter: :redis}
-    {:ok, channel} = Registry.get_full_channel(channel)
+    {:ok, channel} = Registry.get_full_channel(%Channel{name: UUID.uuid4()})
     :ok = Yggdrasil.subscribe(channel)
 
     assert_receive {:Y_CONNECTED, _}, 500

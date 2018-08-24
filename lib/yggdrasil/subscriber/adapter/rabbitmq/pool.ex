@@ -3,10 +3,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
   This module defines a RabbitMQ connection pool identified by a namespace.
   """
   use Supervisor
-  alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
-  alias Yggdrasil.Settings
 
-  @registry Settings.registry()
+  alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
+  alias Yggdrasil.Settings, as: GlobalSettings
+  alias Yggdrasil.Settings.RabbitMQ, as: Settings
+
+  @registry GlobalSettings.yggdrasil_process_registry()
 
   ############
   # Client API
@@ -45,21 +47,24 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool do
   #####################
   # Supervisor callback
 
-  @doc false
+  @impl true
   def init(namespace) do
-    import Supervisor.Spec
-
     via_tuple = {:via, @registry, {RabbitMQ.Poolboy, namespace}}
-    poolargs = [
-      name: via_tuple,
-      worker_module: Conn
-    ] ++ subscriber_options(namespace)
+
+    poolargs =
+      namespace
+      |> subscriber_options()
+      |> Keyword.put(:name, via_tuple)
+      |> Keyword.put(:worker_module, Conn)
 
     children = [
-      :poolboy.child_spec(via_tuple, poolargs, namespace)
+      %{
+        id: via_tuple,
+        start: {:poolboy, :start_link, [poolargs, namespace]}
+      }
     ]
 
-    supervise(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_one)
   end
 
   #########

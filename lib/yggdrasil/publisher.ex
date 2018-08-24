@@ -6,8 +6,9 @@ defmodule Yggdrasil.Publisher do
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
+  alias Yggdrasil.Publisher.Adapter
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   ############
   # Client API
@@ -47,31 +48,35 @@ defmodule Yggdrasil.Publisher do
   @spec publish(Channel.t(), term(), Keyword.t()) :: :ok | {:error, term()}
   def publish(channel, message, options \\ [])
 
-  def publish(%Channel{adapter: adapter} = channel, message, options) do
+  def publish(%Channel{} = channel, message, options) do
     base = %Channel{channel | name: nil}
     pool_name = {:via, @registry, {Poolboy, base}}
     :poolboy.transaction(pool_name, fn worker ->
-      adapter.publish(worker, channel, message, options)
+      Adapter.publish(worker, channel, message, options)
     end)
   end
 
   #####################
   # Supervisor callback
 
-  @doc false
-  def init(%Channel{adapter: adapter, namespace: namespace} = channel) do
-    import Supervisor.Spec
-
+  @impl true
+  def init(%Channel{} = channel) do
     via_tuple = {:via, @registry, {Poolboy, channel}}
-    poolargs = [
-      name: via_tuple,
-      worker_module: adapter,
-    ] ++ publisher_options(channel)
+
+    poolargs =
+      channel
+      |> publisher_options()
+      |> Keyword.put(:name, via_tuple)
+      |> Keyword.put(:worker_module, Adapter)
 
     children = [
-      :poolboy.child_spec(via_tuple, poolargs, namespace)
+      %{
+        id: via_tuple,
+        start: {:poolboy, :start_link, [poolargs, channel]}
+      }
     ]
-    supervise(children, strategy: :one_for_one)
+
+    Supervisor.init(children, strategy: :one_for_one)
   end
 
   #########

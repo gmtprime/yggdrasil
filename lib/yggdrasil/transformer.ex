@@ -94,7 +94,7 @@ defmodule Yggdrasil.Transformer do
       use Task, restart: :transient
 
       @doc false
-      def start_link do
+      def start_link(_) do
         Task.start_link(__MODULE__, :register, [])
       end
 

@@ -21,6 +21,16 @@ defmodule Yggdrasil.Subscriber.Adapter do
   defmacro __using__(_) do
     quote do
       @behaviour Yggdrasil.Subscriber.Adapter
+
+      @doc false
+      def start_link(channel, publisher, options \\ [])
+
+      def start_link(%Channel{} = channel, publisher, options) do
+        arguments = %{publisher: publisher, channel: channel}
+        GenServer.start_link(__MODULE__, arguments, options)
+      end
+
+      defoverridable [start_link: 2, start_link: 3]
     end
   end
 

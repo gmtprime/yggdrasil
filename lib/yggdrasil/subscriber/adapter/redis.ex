@@ -36,42 +36,26 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "redis_channel", (...)}}
   ```
   """
+  use Yggdrasil.Subscriber.Adapter
   use GenServer
 
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Backend
-  alias Yggdrasil.Settings
+  alias Yggdrasil.Backend
+  alias Yggdrasil.Subscriber.Publisher
+  alias Yggdrasil.Settings, as: GlobalSettings
+  alias Yggdrasil.Settings.Redis, as: Settings
 
   defstruct [:publisher, :channel, :conn]
   alias __MODULE__, as: State
 
-  ############
-  # Client API
-
-  @doc """
-  Starts a Redis distributor adapter in a `channel` with some distributor
-  `publisher` and optionally `GenServer` `options`.
-  """
-  def start_link(%Channel{} = channel, publisher, options \\ []) do
-    state = %State{publisher: publisher, channel: channel}
-    GenServer.start_link(__MODULE__, state, options)
-  end
-
-  @doc """
-  Stops the Redis adapter with its `pid`.
-  """
-  def stop(pid) do
-    GenServer.stop(pid)
-  end
-
   #####################
   # GenServer callbacks
 
-  @doc false
-  def init(%State{channel: %Channel{} = channel} = state) do
+  @impl true
+  def init(%{channel: %Channel{} = channel} = arguments) do
+    state = struct(State, arguments)
     options = redis_options(channel)
     {:ok, conn} = Redix.PubSub.start_link(options)
     state = %State{state | conn: conn}
@@ -79,7 +63,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
     {:ok, state, 0}
   end
 
-  @doc false
+  @impl true
   def handle_info(
     :timeout,
     %State{conn: conn, channel: %Channel{name: name}} = state
@@ -127,7 +111,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(:normal, %State{channel: channel, conn: conn}) do
     Redix.PubSub.stop(conn)
     Backend.disconnected(channel)
@@ -171,7 +155,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Redis do
 
   @doc false
   def get_value(namespace, key, default) do
-    name = Settings.gen_env_name(namespace, key, "_YGGDRASIL_REDIS_")
+    name = GlobalSettings.gen_env_name(namespace, key, "_YGGDRASIL_REDIS_")
     Skogsra.get_app_env(:yggdrasil, key,
       domain: [namespace, :redis],
       default: default,

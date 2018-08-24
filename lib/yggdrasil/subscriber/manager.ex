@@ -1,4 +1,4 @@
-defmodule Yggdrasil.Distributor.Manager do
+defmodule Yggdrasil.Subscriber.Manager do
   @moduledoc """
   Manages subscription to a channel.
   """
@@ -8,9 +8,9 @@ defmodule Yggdrasil.Distributor.Manager do
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
-  alias Yggdrasil.Distributor.Generator, as: DistributorGen
+  alias Yggdrasil.Subscriber.Generator
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   defstruct [:channel, :cache]
   alias __MODULE__, as: State
@@ -95,7 +95,7 @@ defmodule Yggdrasil.Distributor.Manager do
   #####################
   # GenServer callbacks
 
-  @doc false
+  @impl true
   def init([%Channel{} = channel, pid]) do
     state = %State{cache: :ets.new(:monitored, [:set]), channel: channel}
     members = get_members(state)
@@ -108,7 +108,7 @@ defmodule Yggdrasil.Distributor.Manager do
     end
   end
 
-  @doc false
+  @impl true
   def handle_call({:add, pid}, _from, %State{} = state) do
     join(pid, state)
     {:reply, :ok, state}
@@ -124,7 +124,7 @@ defmodule Yggdrasil.Distributor.Manager do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def handle_info({:DOWN, _, _, pid, _}, %State{} = state) do
     if leave(pid, state) > 0 do
       {:noreply, state}
@@ -136,10 +136,10 @@ defmodule Yggdrasil.Distributor.Manager do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(:normal, %State{channel: name}) do
     :pg2.delete(name)
-    DistributorGen.stop_distributor(name)
+    Generator.stop_distributor(name)
     Logger.debug(fn ->
       "Stopped #{__MODULE__} for #{inspect name}"
     end)

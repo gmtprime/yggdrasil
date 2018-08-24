@@ -4,7 +4,10 @@ defmodule Yggdrasil.Registry do
   """
   use Agent
 
-  @registry :yggdrasil_registry
+  alias Yggdrasil.Channel
+  alias Yggdrasil.Settings
+
+  @registry Settings.yggdrasil_module_registry()
 
   @doc """
   Starts a registry with some optional `options`
@@ -12,13 +15,20 @@ defmodule Yggdrasil.Registry do
   @spec start_link() :: Agent.on_start()
   @spec start_link(Agent.options()) :: Agent.on_start()
   def start_link(options \\ []) do
-    start_link(@registry, options)
+    opts = [
+      :set,
+      :named_table,
+      :public,
+      write_concurrency: true,
+      read_concurrency: true
+    ]
+    start_link(@registry, opts, options)
   end
 
   @doc """
   Stops a `registry` with optionals `reason` and `timeout`.
   """
-  defdelegate stop, to: Agent, as: :stop
+  defdelegate stop(agent), to: Agent, as: :stop
 
   @doc """
   Registers a transformer `module` as a `name`.
@@ -94,19 +104,22 @@ defmodule Yggdrasil.Registry do
     get_adapter_module(@registry, name)
   end
 
+  @doc """
+  Gets full channel from the current `channel`.
+  """
+  @spec get_full_channel(
+    channel :: Channel.t()
+  ) :: {:ok, Channel.t} | {:error, term()}
+  def get_full_channel(channel) do
+    get_full_channel(@registry, channel)
+  end
+
   #########
   # Helpers
 
   @doc false
-  def start_link(table, options) do
-    opts = [
-      :set,
-      :named_table,
-      :public,
-      write_concurrency: true,
-      read_concurrency: true
-    ]
-    Agent.start_link(fn -> :ets.new(table, opts) end, options)
+  def start_link(table, table_opts, options) do
+    Agent.start_link(fn -> :ets.new(table, table_opts) end, options)
   end
 
   @doc false
@@ -156,7 +169,7 @@ defmodule Yggdrasil.Registry do
   end
 
   @doc false
-  def register(table, key, name, module)
+  def register(table, key, name, module) do
     with true <- :ets.insert_new(table, {{key, name}, module}),
          true <- :ets.insert_new(table, {{key, module}, module}) do
       :ok
@@ -205,6 +218,19 @@ defmodule Yggdrasil.Registry do
         {:error, "Yggdrasil #{key} :#{name} not found"}
       [{_, module} | _] ->
         {:ok, module}
+    end
+  end
+
+  @doc false
+  def get_full_channel(table, %Channel{adapter: adapter_name} = channel) do
+    with {:ok, adapter} <- get_adapter_module(table, adapter_name) do
+      transformer = Map.get(channel, :transformer, adapter.get_transformer())
+      backend = Map.get(channel, :backend, adapter.get_backend())
+      full_channel = %Channel{channel |
+        transformer: transformer,
+        backend: backend
+      }
+      {:ok, full_channel}
     end
   end
 end

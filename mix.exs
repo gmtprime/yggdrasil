@@ -1,12 +1,12 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "3.3.4"
+  @version "4.0.0-rc.0"
 
   def project do
     [app: :yggdrasil,
      version: @version,
-     elixir: "~> 1.4",
+     elixir: "~> 1.6",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      description: description(),
@@ -16,9 +16,10 @@ defmodule Yggdrasil.Mixfile do
   end
 
   def application do
-    [applications: [:lager, :logger, :poolboy, :phoenix_pubsub, :redix_pubsub,
-                    :amqp, :postgrex],
-     mod: {Yggdrasil, []}]
+    [
+      extra_applications: [:logger],
+      mod: {Yggdrasil.Application, []}
+    ]
   end
 
   defp deps do
@@ -32,8 +33,8 @@ defmodule Yggdrasil.Mixfile do
      {:jason, "~> 1.0"},
      {:skogsra, "~> 0.2"},
      {:uuid, "~> 1.1", only: [:dev, :test]},
-     {:ex_doc, "~> 0.18", only: :dev},
-     {:credo, "~> 0.9", only: [:dev, :docs]}]
+     {:ex_doc, "~> 0.18.4", only: :dev},
+     {:credo, "~> 0.10", only: :dev}]
   end
 
   defp docs do
@@ -44,8 +45,8 @@ defmodule Yggdrasil.Mixfile do
 
   defp description do
     """
-    Yggdrasil is an agnostic publisher/subscriber for Redis, RabbitMQ and
-    PostgreSQL.
+    Yggdrasil is an agnostic publisher/subscriber for Redis, RabbitMQ,
+    PostgreSQL and more.
     """
   end
 

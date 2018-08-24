@@ -2,13 +2,14 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   @moduledoc """
   Generator of RabbitMQ connection pools.
   """
-  use Supervisor
+  use DynamicSupervisor
+
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Pool
   alias Yggdrasil.Settings
 
   alias AMQP.Channel
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   ############
   # Client API
@@ -18,7 +19,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   `options`.
   """
   def start_link(options \\ []) do
-    Supervisor.start_link(__MODULE__, nil, options)
+    DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
 
   @doc """
@@ -48,7 +49,12 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
     case @registry.whereis_name(name) do
       :undefined ->
         via_tuple = {:via, @registry, name}
-        Supervisor.start_child(generator, [namespace, [name: via_tuple]])
+        spec = %{
+          id: via_tuple,
+          start: {Pool, :start_link, [namespace, [name: via_tuple]]},
+          restart: :transient
+        }
+        DynamicSupervisor.start_child(generator, spec)
       pid ->
         {:ok, pid}
     end
@@ -73,13 +79,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator do
   #####################
   # Supervisor callback
 
-  @doc false
+  @impl true
   def init(_) do
-    import Supervisor.Spec
-
-    children = [
-      supervisor(Pool, [], restart: :transient)
-    ]
-    supervise(children, strategy: :simple_one_for_one)
+    DynamicSupervisor.init(strategy: :one_for_one)
   end
 end

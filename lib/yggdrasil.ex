@@ -298,15 +298,13 @@ defmodule Yggdrasil do
   end
   ```
   """
-  use Application
-
-  alias Yggdrasil.Settings
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Backend
+  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Backend
   alias Yggdrasil.Publisher
+
+  alias Yggdrasil.Subscriber.Generator, as: SubscriberGen
   alias Yggdrasil.Publisher.Generator, as: PublisherGen
-  alias Yggdrasil.Distributor.Generator, as: DistributorGen
-  alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator, as: RabbitGen
 
   ######################
   # Subscriber functions
@@ -318,9 +316,9 @@ defmodule Yggdrasil do
   def subscribe(channel)
 
   def subscribe(%Channel{} = channel) do
-    channel = transform_channel(:subscriber, channel)
-    with :ok <- Backend.subscribe(channel) do
-      DistributorGen.subscribe(channel)
+    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+         :ok <- Backend.subscribe(full_channel) do
+      SubscriberGen.subscribe(full_channel)
     end
   end
 
@@ -331,9 +329,9 @@ defmodule Yggdrasil do
   def unsubscribe(channel)
 
   def unsubscribe(%Channel{} = channel) do
-    channel = transform_channel(:subscriber, channel)
-    with :ok <- Backend.unsubscribe(channel) do
-      DistributorGen.unsubscribe(channel)
+    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+         :ok <- Backend.unsubscribe(full_channel) do
+      SubscriberGen.unsubscribe(full_channel)
     end
   end
 
@@ -348,81 +346,9 @@ defmodule Yggdrasil do
   def publish(channel, message, options \\ [])
 
   def publish(%Channel{} = channel, message, options) do
-    channel = transform_channel(:publisher, channel)
-    with {:ok, _} <- PublisherGen.start_publisher(PublisherGen, channel) do
-      Publisher.publish(channel, message, options)
+    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+         {:ok, _} <- PublisherGen.start_publisher(PublisherGen, full_channel) do
+      Publisher.publish(full_channel, message, options)
     end
-  end
-
-  #########
-  # Helpers
-
-  @doc false
-  def transform_channel(type, %Channel{} = channel) do
-    type
-    |> transform_name(channel)
-    |> transform_transformer()
-  end
-
-  @doc false
-  def transform_name(:publisher, %Channel{adapter: :elixir} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Elixir}
-  end
-  def transform_name(:publisher, %Channel{adapter: :redis} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Redis}
-  end
-  def transform_name(:publisher, %Channel{adapter: :rabbitmq} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.RabbitMQ}
-  end
-  def transform_name(:publisher, %Channel{adapter: :postgres} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Publisher.Adapter.Postgres}
-  end
-  def transform_name(:subscriber, %Channel{adapter: :elixir} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Elixir}
-  end
-  def transform_name(:subscriber, %Channel{adapter: :redis} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Redis}
-  end
-  def transform_name(:subscriber, %Channel{adapter: :rabbitmq} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.RabbitMQ}
-  end
-  def transform_name(:subscriber, %Channel{adapter: :postgres} = channel) do
-    %Channel{channel | adapter: Yggdrasil.Subscriber.Adapter.Postgres}
-  end
-  def transform_name(_, %Channel{} = channel) do
-    channel
-  end
-
-  @doc false
-  def transform_transformer(%Channel{transformer: :default} = channel) do
-    %Channel{channel | transformer: Yggdrasil.Transformer.Default}
-  end
-  def transform_transformer(%Channel{transformer: :json} = channel) do
-    %Channel{channel | transformer: Yggdrasil.Transformer.Json}
-  end
-  def transform_transformer(%Channel{} = channel) do
-    channel
-  end
-
-  ###################
-  # Application start
-
-  @doc false
-  def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
-    adapter = Settings.pubsub_adapter()
-    name = Settings.pubsub_name()
-    options = Settings.pubsub_options()
-
-    children = [
-      supervisor(adapter, [name, options]),
-      supervisor(PublisherGen, [[name: PublisherGen]]),
-      supervisor(DistributorGen, [[name: DistributorGen]]),
-      supervisor(RabbitGen, [[name: RabbitGen]])
-    ]
-
-    opts = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]
-    Supervisor.start_link(children, opts)
   end
 end

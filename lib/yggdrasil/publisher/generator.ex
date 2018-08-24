@@ -2,13 +2,13 @@ defmodule Yggdrasil.Publisher.Generator do
   @moduledoc """
   Generator of publisher pools.
   """
-  use Supervisor
+  use DynamicSupervisor
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
+  alias Yggdrasil.Publisher
 
-  @publisher Yggdrasil.Publisher
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   ############
   # Client API
@@ -17,7 +17,7 @@ defmodule Yggdrasil.Publisher.Generator do
   Starts a publisher generator with `Supervisor` `options`.
   """
   def start_link(options \\ []) do
-    Supervisor.start_link(__MODULE__, nil, options)
+    DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
 
   @doc """
@@ -26,7 +26,7 @@ defmodule Yggdrasil.Publisher.Generator do
   def stop(generator) do
     for {_, pid, _, _} <- Supervisor.which_children(generator) do
       try do
-        @publisher.stop(pid)
+        Publisher.stop(pid)
       catch
         _, _ -> :ok
       end
@@ -40,15 +40,20 @@ defmodule Yggdrasil.Publisher.Generator do
   """
   def start_publisher(generator, %Channel{} = channel) do
     channel = %Channel{channel | name: nil}
-    name = {@publisher, channel}
+    name = {Publisher, channel}
     case @registry.whereis_name(name) do
       :undefined ->
         via_tuple = {:via, @registry, name}
-        case Supervisor.start_child(generator, [channel, [name: via_tuple]]) do
+        spec = %{
+          id: via_tuple,
+          start: {Publisher, :start_link, [channel, [name: via_tuple]]},
+          restart: :transient
+        }
+        case DynamicSupervisor.start_child(generator, spec) do
           {:error, {:already_started, pid}} ->
             {:ok, {:already_connected, pid}}
-          {:error, _} = error -> error
-          ok -> ok
+          other ->
+            other
         end
       pid ->
         {:ok, {:already_connected, pid}}
@@ -58,13 +63,8 @@ defmodule Yggdrasil.Publisher.Generator do
   #####################
   # Supervisor callback
 
-  @doc false
+  @impl true
   def init(_) do
-    import Supervisor.Spec
-
-    children = [
-      supervisor(@publisher, [], restart: :transient)
-    ]
-    supervise(children, strategy: :simple_one_for_one)
+    DynamicSupervisor.init(strategy: :one_for_one)
   end
 end

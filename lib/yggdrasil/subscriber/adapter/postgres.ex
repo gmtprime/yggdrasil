@@ -36,15 +36,17 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "pg_channel", (...)}}
   ```
   """
+  use Yggdrasil.Subscriber.Adapter
   use Bitwise
   use Connection
 
   require Logger
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Publisher
-  alias Yggdrasil.Distributor.Backend
-  alias Yggdrasil.Settings
+  alias Yggdrasil.Subscriber.Publisher
+  alias Yggdrasil.Backend
+  alias Yggdrasil.Settings, as: GlobalSettings
+  alias Yggdrasil.Settings.Postgres, as: Settings
 
   defstruct [:publisher, :channel, :conn, :ref, :retries]
   alias __MODULE__, as: State
@@ -52,33 +54,27 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
   ############
   # Client API
 
-  @doc """
-  Starts a Postgres distributor adapter in a `channel` with some distributor
-  `publisher` and optionally `GenServer` `options`.
-  """
-  def start_link(%Channel{} = channel, publisher, options \\ []) do
-    state = %State{publisher: publisher, channel: channel, retries: 0}
-    Connection.start_link(__MODULE__, state, options)
-  end
+  @impl true
+  def start_link(channel, publisher, options \\ [])
 
-  @doc """
-  Stops the Postgres adapter with its `pid`.
-  """
-  def stop(pid) do
-    GenServer.stop(pid)
+  def start_link(%Channel{} = channel, publisher, options) do
+    arguments = %{publisher: publisher, channel: channel}
+    Connection.start_link(__MODULE__, arguments, options)
   end
 
   ######################
   # Connection callbacks
 
-  @doc false
-  def init(%State{channel: %Channel{} = channel} = state) do
+  @impl true
+  def init(%{channel: %Channel{} = channel} = arguments) do
+    new_arguments = Map.put(arguments, :retries, 0)
+    state = struct(State, new_arguments)
     Process.flag(:trap_exit, true)
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:connect, :init, state}
   end
 
-  @doc false
+  @impl true
   def connect(
     _info,
     %State{channel: %Channel{name: name} = channel} = state
@@ -121,7 +117,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     {:ok, new_state}
   end
 
-  @doc false
+  @impl true
   def disconnect(_info, %State{conn: nil, ref: nil} = state) do
     disconnected(state)
   end
@@ -143,7 +139,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     backoff(:disconnected, state)
   end
 
-  @doc false
+  @impl true
   def handle_info(
     {:notification, _, _, channel, message},
     %State{publisher: publisher} = state
@@ -161,7 +157,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(reason, %State{conn: nil, ref: nil} = state) do
     terminated(reason, state)
   end
@@ -232,7 +228,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Postgres do
 
   @doc false
   def get_value(namespace, key, default) do
-    name = Settings.gen_env_name(namespace, key, "_YGGDRASIL_POSTGRES_")
+    name = GlobalSettings.gen_env_name(namespace, key, "_YGGDRASIL_POSTGRES_")
     Skogsra.get_app_env(:yggdrasil, key,
       domain: [namespace, :postgres],
       default: default,

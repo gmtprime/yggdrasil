@@ -8,7 +8,8 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
 
   require Logger
 
-  alias Yggdrasil.Settings
+  alias Yggdrasil.Settings, as: GlobalSettings
+  alias Yggdrasil.Settings.RabbitMQ, as: Settings
 
   alias AMQP.Connection, as: Conn
 
@@ -45,13 +46,13 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
   ######################
   # Connection callbacks
 
-  @doc false
+  @impl true
   def init(%State{} = state) do
     Process.flag(:trap_exit, true)
     {:connect, :init, state}
   end
 
-  @doc false
+  @impl true
   def connect(_, %State{namespace: namespace, conn: nil} = state) do
     options = rabbitmq_options(namespace)
     try do
@@ -75,7 +76,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     end
   end
 
-  @doc false
+  @impl true
   def disconnect(_, %State{conn: nil} = state) do
     disconnected(state)
   end
@@ -84,7 +85,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     disconnect(info, %State{state | conn: nil})
   end
 
-  @doc false
+  @impl true
   def handle_call(_, _from, %State{conn: nil, backoff: until} = state) do
     new_backoff = until - :os.system_time(:millisecond)
     new_backoff = if new_backoff < 0, do: 0, else: new_backoff
@@ -97,7 +98,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def handle_info({:DOWN, _, _, pid, _}, %State{conn: %{pid: pid}} = state) do
     new_state = %State{state | conn: nil}
     {:disconnect, :down, new_state}
@@ -110,7 +111,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def terminate(reason, %State{conn: nil} = state) do
     terminated(reason, state)
   end
@@ -154,7 +155,7 @@ defmodule Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection do
 
   @doc false
   def get_value(namespace, key, default) do
-    name = Settings.gen_env_name(namespace, key, "_YGGDRASIL_RABBIT_")
+    name = GlobalSettings.gen_env_name(namespace, key, "_YGGDRASIL_RABBIT_")
     Skogsra.get_app_env(:yggdrasil, key,
       domain: [namespace, :rabbitmq],
       default: default,

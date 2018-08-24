@@ -1,11 +1,11 @@
-defmodule Yggdrasil.Distributor.ManagerTest do
+defmodule Yggdrasil.Subscriber.ManagerTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Distributor.Manager
+  alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Settings
 
-  @registry Settings.registry()
+  @registry Settings.yggdrasil_process_registry()
 
   test "gets members of an unexistent channel" do
     channel = %Channel{name: UUID.uuid4()}

@@ -38,11 +38,13 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   {:Y_DISCONNECTED, %Yggdrasil.Channel{name: {"amq.topic", "channel"}, (...)}}
   ```
   """
+  use Yggdrasil.Publisher.Adapter
   use Connection
 
   require Logger
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Transformer
   alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Connection, as: Conn
 
   defstruct [:conn, :chan, :namespace]
@@ -57,6 +59,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   """
   @spec start_link(term()) :: GenServer.on_start()
   @spec start_link(term(), GenServer.options()) :: GenServer.on_start()
+  @impl true
   def start_link(namespace, options \\ [])
 
   def start_link(namespace, options) do
@@ -82,6 +85,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     :ok | {:error, term()}
   @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
     :ok | {:error, term()}
+  @impl true
   def publish(publisher, channel, message, options \\ [])
 
   def publish(publisher, %Channel{} = channel, message, options) do
@@ -91,7 +95,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
   ####################
   # GenServer callback
 
-  @doc false
+  @impl true
   def init(namespace) do
     Process.flag(:trap_exit, true)
     state = %State{namespace: namespace}
@@ -99,7 +103,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     {:connect, :init, state}
   end
 
-  @doc false
+  @impl true
   def connect(_info, %State{namespace: namespace} = state) do
     options = Conn.rabbitmq_options(namespace)
     try do
@@ -132,7 +136,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     {:ok, %State{state | conn: conn, chan: chan}}
   end
 
-  @doc false
+  @impl true
   def disconnect(_info, %State{conn: nil} = state) do
     disconnected(state)
   end
@@ -148,20 +152,20 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     {:backoff, 5000, state}
   end
 
-  @doc false
+  @impl true
   def handle_call({:publish, _, _, _}, _from, %State{chan: nil} = state) do
     {:reply, {:error, "Disconnected"}, state}
   end
   def handle_call(
     {:publish,
-     %Channel{name: {exchange, routing_key}, transformer: encoder} = channel,
+     %Channel{name: {exchange, routing_key}} = channel,
      message,
      options},
     _from,
     %State{chan: chan} = state
   ) do
     result =
-      with {:ok, encoded} <- encoder.encode(channel, message),
+      with {:ok, encoded} <- Transformer.encode(channel, message),
            do: AMQP.Basic.publish(chan, exchange, routing_key, encoded, options)
     {:reply, result, state}
   end
@@ -169,7 +173,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     {:noreply, state}
   end
 
-  @doc false
+  @impl true
   def handle_info({:DOWN, _, :process, _pid, _reason}, %State{} = state) do
     new_state = %State{state | conn: nil, chan: nil}
     {:disconnect, :down, new_state}
@@ -179,7 +183,7 @@ defmodule Yggdrasil.Publisher.Adapter.RabbitMQ do
     {:disconnect, :exit, new_state}
   end
 
-  @doc false
+  @impl true
   def terminate(reason, %State{conn: nil} = state) do
     terminated(reason, state)
   end
