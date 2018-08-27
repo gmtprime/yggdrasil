@@ -322,16 +322,9 @@ $ mix test
   * [`ExReg`](https://github.com/gmtprime/exreg): rich process name registry.
   * [`Poolboy`](https://github.com/devinus/poolboy): A hunky Erlang worker pool
   factory.
-  * [`Redix.PubSub`](https://github.com/whatyouhide/redix_pubsub): Redis pubsub.
-  * [`AMQP`](https://github.com/pma/amqp): RabbitMQ pubsub.
-  * [`Postgrex`](https://github.com/elixir-ecto/postgrex): PostgreSQL pubsub.
-  * [`Connection`](https://github.com/fishcakez/connection): wrapper over
-  `GenServer` to handle connections.
   * [`Jason`](https://github.com/michalmuskala/jason): JSON parsing library.
   * [`Credo`](https://github.com/rrrene/credo): static code analysis tool for
   the Elixir language.
-  * [`InchEx`](https://github.com/rrrene/inch_ex): Mix task that gives you
-  hints where to improve your inline docs.
 
 ## Author
 

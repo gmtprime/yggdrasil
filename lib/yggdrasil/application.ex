@@ -33,15 +33,6 @@ defmodule Yggdrasil.Application do
       Supervisor.child_spec({Yggdrasil.Transformer.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Json, []}, []),
       Supervisor.child_spec({Yggdrasil.Adapter.Elixir, []}, []),
-
-      # RabbitMQ
-      Supervisor.child_spec({Yggdrasil.Adapter.RabbitMQ, []}, []),
-      Supervisor.child_spec(
-        { Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator,
-          [name: Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator]
-        },
-        type: :supervisor
-      )
     ]
 
     options = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]

@@ -1,25 +1,9 @@
 language: elixir
 elixir:
   - 1.6.5
-  - 1.7.2
 otp_release:
-  - 20.3.8
   - 21.0.5
-matrix:
-    # We are only interested on the newest/oldest pair.
-    exclude:
-        - elixir: 1.7.2
-          otp_release: 20.3.8
-        - elixir: 1.6.5
-          otp_release: 21.0.5
-services:
-  - rabbitmq
-  - redis-server
-  - postgresql
-env:
-  - TEST_YGGDRASIL_POSTGRES_DATABASE="travis_ci_test"
 before_script:
-  - psql -c "CREATE DATABASE $TEST_YGGDRASIL_POSTGRES_DATABASE" -U postgres
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
   - MIX_ENV=test mix compile
