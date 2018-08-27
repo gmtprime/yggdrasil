@@ -26,7 +26,6 @@ defmodule Yggdrasil.Mixfile do
     [{:exreg, "~> 0.0.3"},
      {:phoenix_pubsub, "~> 1.0"},
      {:poolboy, "~> 1.5"},
-     {:redix_pubsub, "~> 0.4"},
      {:amqp, "~> 1.0"},
      {:postgrex, "~> 0.13"},
      {:connection, "~> 1.0"},
