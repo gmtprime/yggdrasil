@@ -5,7 +5,6 @@ defmodule Yggdrasil.Application do
   use Application
 
   alias Yggdrasil.Settings
-  # alias Yggdrasil.Subscriber.Adapter.RabbitMQ.Generator, as: RabbitGen
 
   @impl true
   def start(_type, _args) do
@@ -34,9 +33,6 @@ defmodule Yggdrasil.Application do
       Supervisor.child_spec({Yggdrasil.Transformer.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Json, []}, []),
       Supervisor.child_spec({Yggdrasil.Adapter.Elixir, []}, []),
-
-      # Redis
-      Supervisor.child_spec({Yggdrasil.Adapter.Redis, []}, []),
 
       # Postgres
       Supervisor.child_spec({Yggdrasil.Adapter.Postgres, []}, []),
