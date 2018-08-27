@@ -34,9 +34,6 @@ defmodule Yggdrasil.Application do
       Supervisor.child_spec({Yggdrasil.Transformer.Json, []}, []),
       Supervisor.child_spec({Yggdrasil.Adapter.Elixir, []}, []),
 
-      # Postgres
-      Supervisor.child_spec({Yggdrasil.Adapter.Postgres, []}, []),
-
       # RabbitMQ
       Supervisor.child_spec({Yggdrasil.Adapter.RabbitMQ, []}, []),
       Supervisor.child_spec(
