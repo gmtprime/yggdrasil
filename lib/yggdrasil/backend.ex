@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Backend do
   @moduledoc """
-  Backend behaviour. Defines how to subscribe, unsubscribe and publish as well
-  as send messages of connection and disconnection to subscribers.
+  Backend behaviour that defines how to subscribe, unsubscribe and publish as
+  well as send messages of connection and disconnection to subscribers.
 
   By default, the implementation uses `Phoenix.PubSub` as backend.
 
@@ -74,6 +74,10 @@ defmodule Yggdrasil.Backend do
   ) :: :ok | {:error, term()}
 
   @doc """
+  Macro for using `Yggdrasil.Backend`.
+
+  The following are the available options:
+  - `:name` - Name of the backend. Must be an atom.
   """
   defmacro __using__(options) do
     backend_alias = Keyword.get(options, :name)

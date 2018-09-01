@@ -5,7 +5,17 @@
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
-`Yggdrasil` is an agnostic publisher/subscriber.
+`Yggdrasil` is an agnostic publisher/subscriber. Some of the available adapters
+are the following:
+
+  * [Redis](https://github.com/gmtprime/yggdrasil_redis)
+  (adapter's name `:redis`).
+  * [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
+  (adapter's name `:rabbitmq`).
+  * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
+  (adapter's name `:postgres`).
+
+For more information on how to use them, check the respective repository.
 
 ![demo](https://raw.githubusercontent.com/gmtprime/yggdrasil/master/images/demo.gif)
 
@@ -70,6 +80,9 @@ available adapters:
   message distribution among subscribers. The name of the adapter is
   `:postgres`.
 
+For more information on how to use them, check the corresponding repository
+documentation.
+
 ## Transformers
 
 A transformer is the implementation of the behaviour `Yggdrasil.Transformer`.
@@ -87,16 +100,16 @@ In essence implements two functions:
 ## Backends
 
 A backend is the implementation of the behaviour `Yggdrasil.Backend`. The
-module is in charge of distributing the messages and their format inside
-`Yggdrasil`. Currently, there is only one backend: `:default` and it is used
-by the provided adapter `:elixir` and the previously mentioned adapters
+module is in charge of distributing the messages with a certain format inside
+`Yggdrasil`. Currently, there is only one backend, `:default`, and it is used
+by default in `:elixir` adapter and the previously mentioned adapters
 `:rabbitmq`, `:redis` and `:postgres`.
 
 The messages received by the subscribers when using `:default` backend are:
 
   * `{:Y_CONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
   adapter is established.
-  * `{:Y_EVENT, %Yggdrasil.Channel{(...)}, (...)}` when a message is received
+  * `{:Y_EVENT, %Yggdrasil.Channel{(...)}, term()}` when a message is received
   from the adapter.
   * `{:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
   adapter is finished due to disconnection or unsubscription.
@@ -118,7 +131,7 @@ The rest of the options are for configuring the publishers and process name
 registry:
 
   * `publisher_options` - `Poolboy` options for publishing. Controls the amount
-    of connections established with the service (defaults to
+    of connections established with the adapter service (defaults to
     `[size: 5, max_overflow: 10]`).
   * `registry` - Process name registry (defaults to`ExReg`).
 

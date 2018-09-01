@@ -21,13 +21,21 @@ defmodule Yggdrasil.Subscriber.Distributor do
   identificator for the supervision tree. It also receives the `pid` of
   the first subscriber. Additionally it can receive `Supervisor` `options`.
   """
-  def start_link(%Channel{} = channel, pid, options \\ []) do
+  @spec start_link(
+    Channel.t(),
+    pid(),
+    Supervisor.options()
+  ) :: Supervisor.on_start()
+  def start_link(channel, pid, options \\ [])
+
+  def start_link(%Channel{} = channel, pid, options) do
     Supervisor.start_link(__MODULE__, [channel, pid], options)
   end
 
   @doc """
   Stops the `supervisor`.
   """
+  @spec stop(Supervisor.name()) :: :ok
   def stop(supervisor) do
     for {module, child, _, _} <- Supervisor.which_children(supervisor) do
       try do
@@ -42,7 +50,7 @@ defmodule Yggdrasil.Subscriber.Distributor do
   #############################################################################
   # Supervisor callback.
 
-  @doc false
+  @impl true
   def init([%Channel{} = channel, pid]) do
     manager_name = {:via, @registry, {Manager, channel}}
     publisher_name = {:via, @registry, {Publisher, channel}}

@@ -17,13 +17,20 @@ defmodule Yggdrasil.Subscriber.Publisher do
   Starts a server to distribute messages in a `channel`. Additionally can
   receive `GenServer` `options`.
   """
-  def start_link(%Channel{} = channel, options \\ []) do
+  @spec start_link(Channel.t()) :: GenServer.on_start()
+  @spec start_link(Channel.t(), GenServer.options()) :: GenServer.on_start()
+  def start_link(channel, options \\ [])
+
+  def start_link(%Channel{} = channel, options) do
     GenServer.start_link(__MODULE__, channel, options)
   end
 
   @doc """
   Stops a `publisher`.
   """
+  @spec stop(GenServer.name()) :: :ok
+  def stop(publisher)
+
   def stop(publisher) do
     GenServer.stop(publisher)
   end
@@ -32,6 +39,11 @@ defmodule Yggdrasil.Subscriber.Publisher do
   Notifies synchronously of a new `message` coming from a `channel_name` to a
   `publisher`.
   """
+  @spec notify(
+    publisher :: GenServer.name(),
+    channel_name :: term(),
+    message :: term()
+  ) :: :ok | {:error, term()}
   def notify(publisher, channel_name, message) do
     GenServer.call(publisher, {:notify, channel_name, message})
   end

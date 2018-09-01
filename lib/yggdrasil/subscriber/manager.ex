@@ -26,9 +26,14 @@ defmodule Yggdrasil.Subscriber.Manager do
   Starts a manager with an initial `pid` and a `channel`.
   """
   @spec start_link(Channel.t(), pid()) :: GenServer.on_start()
-  @spec start_link(Channel.t(), pid(), GenServer.options())
-    :: GenServer.on_start()
-  def start_link(%Channel{} = channel, pid, options \\ []) do
+  @spec start_link(
+    Channel.t(),
+    pid(),
+    GenServer.options()
+  ) :: GenServer.on_start()
+  def start_link(channel, pid, options \\ [])
+
+  def start_link(%Channel{} = channel, pid, options) do
     GenServer.start_link(__MODULE__, [channel, pid], options)
   end
 
@@ -37,7 +42,9 @@ defmodule Yggdrasil.Subscriber.Manager do
   """
   @spec stop(GenServer.name()) :: :ok
   @spec stop(GenServer.name(), term()) :: :ok
-  def stop(manager, reason \\ :normal) do
+  def stop(manager, reason \\ :normal)
+
+  def stop(manager, reason) do
     GenServer.stop(manager, reason)
   end
 

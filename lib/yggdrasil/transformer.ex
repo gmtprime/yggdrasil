@@ -1,6 +1,6 @@
 defmodule Yggdrasil.Transformer do
   @moduledoc """
-  Transformer behaviour. Defines how to decode and encode messages from a
+  Transformer behaviour that defines how to decode and encode messages from a
   `Yggdrasil.Channel`.
 
   ## Small example
@@ -73,17 +73,27 @@ defmodule Yggdrasil.Transformer do
   alias Yggdrasil.Registry, as: Reg
 
   @doc """
-  Callback to define how to decode the messages coming from a distributor
-  adapter.
+  Callback to define how to decode the `message`s coming from a `channel`.
   """
-  @callback decode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
+  @callback decode(
+    channel :: Channel.t(),
+    message :: term()
+  ) :: {:ok, term()} | {:error, term()}
 
   @doc """
-  Callback to define how to encode the messages coming from a publisher
-  adapter.
+  Callback to define how to encode the `message`s going to a `channel`.
   """
-  @callback encode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
+  @callback encode(
+    channel :: Channel.t(),
+    message :: term()
+  ) :: {:ok, term()} | {:error, term()}
 
+  @doc """
+  Macro for using `Yggdrasil.Transformer`.
+
+  The following are the available options:
+  - `:name` - Name of the transformer. Must be an atom.
+  """
   defmacro __using__(options) do
     transformer_alias = Keyword.get(options, :name)
 

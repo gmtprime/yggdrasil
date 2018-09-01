@@ -124,7 +124,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   #####################
   # Supervisor callback
 
-  @doc false
+  @impl true
   def init(_) do
     DynamicSupervisor.init(strategy: :one_for_one)
   end

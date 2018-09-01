@@ -16,10 +16,7 @@ defmodule Yggdrasil.Adapter do
 
   ```
   defmodule Yggdrasil.Adapter.MyAdapter do
-    use Yggdrasil.Adapter,
-      name: :my_adapter,
-      subscriber: Yggdrasil.Subscriber.Adapter.MyAdapter,
-      publisher: Yggdrasil.Publisher.Adapter.MyAdapter
+    use Yggdrasil.Adapter, name: :my_adapter
   end
   ```
 
@@ -41,7 +38,7 @@ defmodule Yggdrasil.Adapter do
   """
 
   @doc """
-  Macro for using the adapter module.
+  Macro for using `Yggdrasil.Adapter`.
 
   The following are the available options:
   - `:name` - Name of the adapter. Must be an atom.

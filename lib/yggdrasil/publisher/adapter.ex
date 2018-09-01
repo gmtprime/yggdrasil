@@ -15,13 +15,23 @@ defmodule Yggdrasil.Publisher.Adapter do
   ) :: GenServer.on_start()
 
   @doc """
-  Publishes a `message` in a `channel` using a `publisher` and optional and
-  unused `options`.
+  Publishes a `message` in a `channel` using a `publisher`.
   """
-  @callback publish(GenServer.server(), Channel.t(), term()) ::
-    :ok | {:error, term()}
-  @callback publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
-    :ok | {:error, term()}
+  @callback publish(
+    publisher :: GenServer.server(),
+    channel :: Channel.t(),
+    message :: term()
+  ) :: :ok | {:error, term()}
+
+  @doc """
+  Publishes a `message` in a `channel` using a `publisher` and some `options`.
+  """
+  @callback publish(
+    publisher :: GenServer.server(),
+    channel :: Channel.t(),
+    message :: term(),
+    options :: Keyword.t()
+  ) :: :ok | {:error, term()}
 
   @doc """
   Use to implement `Yggdrasil.Publisher.Adapter` behaviour.

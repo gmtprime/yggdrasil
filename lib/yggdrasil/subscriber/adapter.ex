@@ -10,7 +10,7 @@ defmodule Yggdrasil.Subscriber.Adapter do
   `GenServer` `options`.
   """
   @callback start_link(
-    Channel.t() :: atom(),
+    channel :: Channel.t(),
     publisher :: term(),
     options :: GenServer.options()
   ) :: GenServer.on_start()
