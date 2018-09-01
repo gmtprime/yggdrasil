@@ -2,12 +2,15 @@
 
 ## Highlights
 
-## v4.0.0-rc.0
+## v4.0.0
 
 ### Enhancements
 
-  * Added a way to add new adapters easily to Yggdrasil.
-  * Added a way to implement different backends.
+  * Added behaviour to add adapters easily.
+  * Added behaviour to add backends easily.
+  * Improved the transformer behaviour.
+  * Separated Redis, RabbitMQ and PostgreSQL adapters to three other
+  repositories. This makes Yggdrasil really agnostic.
   * Updated the code to follow the new Supervisor child specs.
 
 # Changelog for 3.3.4
