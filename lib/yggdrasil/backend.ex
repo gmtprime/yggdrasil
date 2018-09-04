@@ -124,7 +124,6 @@ defmodule Yggdrasil.Backend do
           pubsub = Settings.yggdrasil_pubsub_name()
           channel_name = Yggdrasil.Backend.transform_name(channel)
           PubSub.unsubscribe(pubsub, channel_name)
-          disconnected(channel, self())
         else
           :ok
         end

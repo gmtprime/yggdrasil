@@ -1,4 +1,21 @@
-# Changelog for 4.0.0-rc.0
+# Changelog for 4.1.0
+
+## Highlights
+
+## v4.1.0
+
+### Bug fixes
+
+  * Fixed connection messages. They weren't reliable.
+
+### Enhancements
+
+  * [`Yggdrasil.Subscriber.Adapter`] Simplified the subscriber adapter
+  behaviour.
+  * [`Yggdrasil.Subscriber.Manager`] Improved subscriber manager to distribute
+  connection and disconnection messages from the adapters.
+
+# Changelog for 4.0.0
 
 ## Highlights
 
@@ -6,10 +23,11 @@
 
 ### Enhancements
 
-  * Added behaviour to add adapters easily.
-  * Added behaviour to add backends easily.
-  * Improved the transformer behaviour.
-  * Separated Redis, RabbitMQ and PostgreSQL adapters to three other
+  * [`Yggdrasil.Adapter`] Added behaviour to add adapters easily.
+  * [`Yggdrasil.Backend`] Added behaviour to add backends easily.
+  * [`Yggdrasil.Transformer`] Improved the transformer behaviour.
+  * [`:yggdrasil_redis`, `:yggdrasil_rabbitmq`, `:yggdrasil_postgres`]
+  Separated Redis, RabbitMQ and PostgreSQL adapters to three other
   repositories. This makes Yggdrasil really agnostic.
   * Updated the code to follow the new Supervisor child specs.
 
@@ -19,15 +37,16 @@
 
 ## v3.3.4
 
-### Enhancements
-
-  * [Yggdrasil.Subscriber.Adapter.Postgres] Exponential backoff on connection
-  retries.
-
 ### Bug fixes
+
   * Fixed bug in Redis and Postgres adapters that didn't publish the
     disconnection message correctly. Closes #6 and #7.
   * Improved disconnection handling.
+
+### Enhancements
+
+  * [`Yggdrasil.Subscriber.Adapter.Postgres`] Exponential backoff on connection
+  retries.
 
 # Changelog for 3.3.3
 
@@ -37,7 +56,7 @@
 
 ### Enhancements
 
-  * [Yggdrasil.Subscriber.Adapter.RabbitMQ] Exponential backoff on connection
+  * [`Yggdrasil.Subscriber.Adapter.RabbitMQ`] Exponential backoff on connection
   retries.
   * Improved disconnection handling.
 
@@ -49,14 +68,14 @@
 
 ### Bug fixes
 
-  * [Yggdrasil.Subscriber.Adapter.RabbitMQ] Now properly closes the open
+  * [`Yggdrasil.Subscriber.Adapter.RabbitMQ`] Now properly closes the open
     channels when the client unsubscribes.
 
 ### Enhancements
 
-  * [Yggdrasil.Distributor] Now the subscriptions to channels are managed by
+  * [`Yggdrasil.Distributor`] Now the subscriptions to channels are managed by
   the subscription process tree instead of a process outside of this tree.
-  * [Yggdrasil] On unsubscription or disconnection, a new message is sent to
+  * [`Yggdrasil`] On unsubscription or disconnection, a new message is sent to
   subscribers: `{:Y_DISCONNECTED, Yggdrasil.Channel.t()}`.
   * Improved documentation.
   * Updated dependencies.
@@ -78,14 +97,14 @@
 
 ### Enhancements
 
-  * [Yggdrasil.Subscriber.Adapter.RabbitMQ] For the adapter configuration, the
+  * [`Yggdrasil.Subscriber.Adapter.RabbitMQ`] For the adapter configuration,
+  the `host` is now set as `hostname`.
+  * [`Yggdrasil.Subscriber.Adapter.Redis`] For the adapter configuration, the
   `host` is now set as `hostname`.
-  * [Yggdrasil.Subscriber.Adapter.Redis] For the adapter configuration, the
-  `host` is now set as `hostname`.
-  * [Yggdrasil.Settings] Added this module to handle the application
-    configuration using `Skogsra`. This allows Yggdrasil to be configured by
-    using OS environment variables. Also, this module has all the configuration
-    settings properly documented.
+  * [`Yggdrasil.Settings`] Added this module to handle the application
+  configuration using `Skogsra`. This allows Yggdrasil to be configured by
+  using OS environment variables. Also, this module has all the configuration
+  settings properly documented.
 
 ### Changes
 

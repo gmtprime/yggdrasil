@@ -7,8 +7,11 @@ defmodule Yggdrasil.Subscriber.Publisher do
   alias Yggdrasil.Channel
   alias Yggdrasil.Backend
   alias Yggdrasil.Transformer
+  alias Yggdrasil.Settings
 
   require Logger
+
+  @registry Settings.yggdrasil_process_registry()
 
   #############################################################################
   # Client API.
@@ -33,6 +36,18 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   def stop(publisher) do
     GenServer.stop(publisher)
+  end
+
+  @doc """
+  Notifies synchronously of a new `message` coming from a `channel`.
+  """
+  @spec notify(
+    channel :: Channel.t(),
+    message :: term()
+  ) :: :ok | {:error, term()}
+  def notify(%Channel{name: name} = channel, message) do
+    publisher = {:via, @registry, {__MODULE__, channel}}
+    notify(publisher, name, message)
   end
 
   @doc """

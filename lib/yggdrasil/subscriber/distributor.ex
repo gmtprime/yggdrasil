@@ -59,7 +59,12 @@ defmodule Yggdrasil.Subscriber.Distributor do
     children = [
       %{
         id: Manager,
-        start: {Manager, :start_link, [channel, pid, [name: manager_name]]},
+        start: {Manager, :start_link, [channel, [name: manager_name]]},
+        restart: :transient
+      },
+      %{
+        id: Task,
+        start: {Task, :start_link, [fn -> Manager.add(channel, pid) end]},
         restart: :transient
       },
       %{
@@ -69,11 +74,7 @@ defmodule Yggdrasil.Subscriber.Distributor do
       },
       %{
         id: Adapter,
-        start: {
-          Adapter,
-          :start_link,
-          [channel, publisher_name, [name: adapter_name]]
-        },
+        start: {Adapter, :start_link, [channel, [name: adapter_name]]},
         restart: :transient
       },
     ]

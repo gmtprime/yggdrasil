@@ -42,10 +42,11 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   require Logger
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
   alias Yggdrasil.Backend
 
-  defstruct [:publisher, :channel, :conn]
+  defstruct [:channel, :conn]
   alias __MODULE__, as: State
 
   ####################
@@ -56,7 +57,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     state = struct(State, arguments)
     conn = %Channel{channel | name: {:elixir, name}}
     Backend.subscribe(conn)
-    Backend.connected(channel)
+    Manager.connected(channel)
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
     {:ok, %State{state | conn: conn}}
   end
@@ -64,9 +65,9 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   @impl true
   def handle_info(
     {:Y_EVENT, _, message},
-    %State{publisher: publisher, channel: %Channel{name: name}} = state
+    %State{channel: %Channel{} = channel} = state
   ) do
-    Publisher.notify(publisher, name, message)
+    Publisher.notify(channel, message)
     {:noreply, state}
   end
   def handle_info(_, state) do
@@ -76,12 +77,12 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   @impl true
   def terminate(:normal, %State{channel: channel, conn: conn}) do
     Backend.unsubscribe(conn)
-    Backend.disconnected(channel)
+    Manager.disconnected(channel)
     Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect channel}" end)
   end
   def terminate(reason, %State{channel: channel, conn: conn}) do
     Backend.unsubscribe(conn)
-    Backend.disconnected(channel)
+    Manager.disconnected(channel)
     Logger.warn(fn ->
       "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
     end)

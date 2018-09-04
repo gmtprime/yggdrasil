@@ -145,7 +145,7 @@ defmodule Yggdrasil do
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 4.0"}]
+    [{:yggdrasil, "~> 4.1"}]
   end
   ```
   """

@@ -74,6 +74,8 @@ defmodule Yggdrasil.Subscriber.Generator do
     with {:ok, _} <- DynamicSupervisor.start_child(generator, spec) do
       :ok
     else
+      {:error, {:already_started, _}} ->
+        do_subscribe(channel, pid)
       _ ->
         {:error, "Cannot subscribe to #{inspect channel}"}
     end
