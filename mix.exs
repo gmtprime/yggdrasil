@@ -2,18 +2,23 @@ defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
   @version "4.1.0"
+  @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
-    [app: :yggdrasil,
-     version: @version,
-     elixir: "~> 1.6",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     description: description(),
-     package: package(),
-     docs: docs(),
-     deps: deps()]
+    [
+      app: :yggdrasil,
+      version: @version,
+      elixir: "~> 1.6",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      package: package(),
+      deps: deps(),
+      docs: docs()
+    ]
   end
+
+  #############
+  # Application
 
   def application do
     [
@@ -33,22 +38,74 @@ defmodule Yggdrasil.Mixfile do
      {:credo, "~> 0.10", only: :dev}]
   end
 
-  defp docs do
-    [source_url: "https://github.com/gmtprime/yggdrasil",
-     source_ref: "v#{@version}",
-     main: Yggdrasil]
-  end
-
-  defp description do
-    """
-    Yggdrasil is an agnostic publisher/subscriber for Redis, RabbitMQ,
-    PostgreSQL and more.
-    """
-  end
+  #########
+  # Package
 
   defp package do
-    [maintainers: ["Alexander de Sousa"],
-     licenses: ["MIT"],
-     links: %{"Github" => "https://github.com/gmtprime/yggdrasil"}]
+    [
+      description: "Agnostic pub/sub with Redis, RabbitMQ and Postgres support",
+      files: ["lib", "mix.exs", "images", "README.md", "CHANGELOG.md"],
+      maintainers: ["Alexander de Sousa"],
+      licenses: ["MIT"],
+      links: %{
+        "Changelog" => "#{@root}/blob/master/CHANGELOG.md",
+        "Github" => @root
+      }
+    ]
+  end
+
+  ###############
+  # Documentation
+
+  defp docs do
+    [
+      source_url: @root,
+      source_ref: "v#{@version}",
+      main: Yggdrasil,
+      formatters: ["html"],
+      groups_for_modules: groups_for_modules(),
+    ]
+  end
+
+  defp groups_for_modules do
+    [
+      "Application": [
+        Yggdrasil.Settings,
+        Yggdrasil.Application
+      ],
+      "Channels": [
+        Yggdrasil.Channel,
+        Yggdrasil.Registry
+      ],
+      "Adapters": [
+        Yggdrasil.Adapter,
+        Yggdrasil.Adapter.Elixir
+      ],
+      "Subscriber adapters": [
+        Yggdrasil.Subscriber.Adapter,
+        Yggdrasil.Subscriber.Adapter.Elixir
+      ],
+      "Publisher adapters": [
+        Yggdrasil.Publisher.Adapter,
+        Yggdrasil.Publisher.Adapter.Elixir
+      ],
+      "Backends": [
+        Yggdrasil.Backend,
+        Yggdrasil.Backend.Default
+      ],
+      "Transformers": [
+        Yggdrasil.Transformer,
+        Yggdrasil.Transformer.Default,
+        Yggdrasil.Transformer.Json
+      ],
+      "Message distribution": [
+        Yggdrasil.Publisher,
+        Yggdrasil.Publisher.Generator,
+        Yggdrasil.Subscriber.Generator,
+        Yggdrasil.Subscriber.Distributor,
+        Yggdrasil.Subscriber.Manager,
+        Yggdrasil.Subscriber.Publisher
+      ]
+    ]
   end
 end
