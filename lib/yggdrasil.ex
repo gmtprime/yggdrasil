@@ -14,6 +14,10 @@ defmodule Yggdrasil do
     (adapter's name `:rabbitmq`).
     * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
     (adapter's name `:postgres`).
+    * [Ethereum](https://github.com/etherharvest/yggdrasil_ethereum)
+    (adapter's name `:ethereum`).
+    * [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
+    (adapter's name `:graphql`).
 
   For more information on how to use them, check the respective repository.
 
@@ -77,6 +81,12 @@ defmodule Yggdrasil do
     Fault-tolerant Postgres adapter that handles channel subscriptions and
     message distribution among subscribers. The name of the adapter is
     `:postgres`.
+    * [Ethereum adapter](https://github.com/etherharvest/yggdrasil_ethereum):
+    Fault-tolerant Ethereum adapter that handles channel subscriptions to
+    Solidity contracts. The name of the adapter is `:ethereum`.
+    * [GraphQL adapter](https://github.com/etherharvest/yggdrasil_graphql):
+    Fault-tolerant adapter that bridges GraphQL subscriptions with Yggdrasil
+    subscriptions in any adapter. The name of the adapter is `:graphql`.
 
   For more information on how to use them, check the corresponding repository
   documentation.
