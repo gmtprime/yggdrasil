@@ -1,11 +1,11 @@
 defmodule Yggdrasil.Subscriber.GeneratorTest do
   use ExUnit.Case, async: true
 
+  alias Yggdrasil.Backend
   alias Yggdrasil.Channel
   alias Yggdrasil.Registry
-  alias Yggdrasil.Backend
-  alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Generator
+  alias Yggdrasil.Subscriber.Manager
 
   test "start and stop distributor" do
     assert {:ok, generator} = Generator.start_link()

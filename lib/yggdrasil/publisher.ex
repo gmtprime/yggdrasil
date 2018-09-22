@@ -5,8 +5,8 @@ defmodule Yggdrasil.Publisher do
   use Supervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Publisher.Adapter
+  alias Yggdrasil.Settings
 
   @registry Settings.yggdrasil_process_registry()
 

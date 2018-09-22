@@ -84,10 +84,11 @@ defmodule Yggdrasil.Backend do
     quote do
       @behaviour Yggdrasil.Backend
       alias Phoenix.PubSub
+      alias Yggdrasil.Backend
       alias Yggdrasil.Channel
+      alias Yggdrasil.Registry, as: Reg
       alias Yggdrasil.Settings
       alias Yggdrasil.Subscriber.Manager
-      alias Yggdrasil.Registry, as: Reg
 
       use Task, restart: :transient
 
@@ -109,12 +110,12 @@ defmodule Yggdrasil.Backend do
 
       @doc false
       def subscribe(%Channel{} = channel) do
-        if not Manager.subscribed?(channel) do
-          pubsub = Settings.yggdrasil_pubsub_name()
-          channel_name = Yggdrasil.Backend.transform_name(channel)
-          PubSub.subscribe(pubsub, channel_name)
-        else
+        if Manager.subscribed?(channel) do
           :ok
+        else
+          pubsub = Settings.yggdrasil_pubsub_name()
+          channel_name = Backend.transform_name(channel)
+          PubSub.subscribe(pubsub, channel_name)
         end
       end
 
@@ -122,7 +123,7 @@ defmodule Yggdrasil.Backend do
       def unsubscribe(%Channel{} = channel) do
         if Manager.subscribed?(channel) do
           pubsub = Settings.yggdrasil_pubsub_name()
-          channel_name = Yggdrasil.Backend.transform_name(channel)
+          channel_name = Backend.transform_name(channel)
           PubSub.unsubscribe(pubsub, channel_name)
         else
           :ok
@@ -133,7 +134,7 @@ defmodule Yggdrasil.Backend do
       def connected(%Channel{} = channel, nil) do
         pubsub = Settings.yggdrasil_pubsub_name()
         real_message = {:Y_CONNECTED, channel}
-        channel_name = Yggdrasil.Backend.transform_name(channel)
+        channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
       def connected(%Channel{} = channel, pid) do
@@ -146,7 +147,7 @@ defmodule Yggdrasil.Backend do
       def disconnected(%Channel{} = channel, nil) do
         pubsub = Settings.yggdrasil_pubsub_name()
         real_message = {:Y_DISCONNECTED, channel}
-        channel_name = Yggdrasil.Backend.transform_name(channel)
+        channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
       def disconnected(%Channel{} = channel, pid) do
@@ -159,7 +160,7 @@ defmodule Yggdrasil.Backend do
       def publish(%Channel{} = channel, message) do
         pubsub = Settings.yggdrasil_pubsub_name()
         real_message = {:Y_EVENT, channel, message}
-        channel_name = Yggdrasil.Backend.transform_name(channel)
+        channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
 

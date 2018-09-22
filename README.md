@@ -1,4 +1,4 @@
-# Yggdrasil
+![yggdrasil logo](https://raw.githubusercontent.com/gmtprime/yggdrasil/master/priv/static/yggdrasil.png)
 
 [![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil)
 
@@ -16,8 +16,6 @@ are the following:
   (adapter's name `:postgres`).
 
 For more information on how to use them, check the respective repository.
-
-![demo](https://raw.githubusercontent.com/gmtprime/yggdrasil/master/images/demo.gif)
 
 ## Small Example
 

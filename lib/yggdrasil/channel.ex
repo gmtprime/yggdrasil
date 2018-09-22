@@ -17,9 +17,9 @@ defmodule Yggdrasil.Channel do
   """
   defstruct name: nil,
             adapter: :elixir,
-            transformer: :default,
+            transformer: nil,
             namespace: Yggdrasil,
-            backend: :default
+            backend: nil
 
   @type t :: %__MODULE__{
     name: any(),

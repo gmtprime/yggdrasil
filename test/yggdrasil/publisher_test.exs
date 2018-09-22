@@ -2,8 +2,8 @@ defmodule Yggdrasil.PublisherTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Registry
   alias Yggdrasil.Publisher
+  alias Yggdrasil.Registry
 
   test "publish message" do
     {:ok, channel} = Registry.get_full_channel(

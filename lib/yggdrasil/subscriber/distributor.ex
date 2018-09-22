@@ -7,9 +7,9 @@ defmodule Yggdrasil.Subscriber.Distributor do
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
+  alias Yggdrasil.Subscriber.Adapter
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
-  alias Yggdrasil.Subscriber.Adapter
 
   @registry Settings.yggdrasil_process_registry()
 

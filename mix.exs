@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "4.1.0"
+  @version "4.1.1"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
@@ -11,6 +11,7 @@ defmodule Yggdrasil.Mixfile do
       elixir: "~> 1.6",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
+      name: "Yggdrasil",
       package: package(),
       deps: deps(),
       docs: docs()
@@ -61,6 +62,7 @@ defmodule Yggdrasil.Mixfile do
     [
       source_url: @root,
       source_ref: "v#{@version}",
+      logo: "logo.png",
       main: Yggdrasil,
       formatters: ["html"],
       groups_for_modules: groups_for_modules(),

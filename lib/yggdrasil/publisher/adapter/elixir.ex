@@ -39,8 +39,8 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   use Yggdrasil.Publisher.Adapter
   use GenServer
 
-  alias Yggdrasil.Channel
   alias Yggdrasil.Backend
+  alias Yggdrasil.Channel
   alias Yggdrasil.Transformer
 
   ####################

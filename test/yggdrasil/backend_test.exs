@@ -2,8 +2,8 @@ defmodule Yggdrasil.BackendTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Backend
-  alias Yggdrasil.Registry
   alias Yggdrasil.Channel
+  alias Yggdrasil.Registry
 
   describe "Default subscription cycle:" do
     setup do

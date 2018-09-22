@@ -1,12 +1,11 @@
 defmodule Yggdrasil.Subscriber.PublisherTest do
   use ExUnit.Case, async: true
 
-  alias Yggdrasil.Channel
   alias Yggdrasil.Backend
   alias Yggdrasil.Subscriber.Publisher
 
   test "starts and stops the process correctly" do
-    channel = %Channel{name: UUID.uuid4()}
+    {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
 
     assert {:ok, publisher} = Publisher.start_link(channel)
     ref = Process.monitor(publisher)
@@ -17,7 +16,7 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
 
   test "Forwards a messages to the subscribers" do
     name = UUID.uuid4()
-    channel = %Channel{name: name}
+    {:ok, channel} = Yggdrasil.gen_channel(name: name)
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)
 

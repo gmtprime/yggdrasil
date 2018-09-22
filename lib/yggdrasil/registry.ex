@@ -143,7 +143,7 @@ defmodule Yggdrasil.Registry do
     publisher = module.get_publisher_module()
 
     with :ok <- register_subscriber(table, name, subscriber),
-         :ok <-register_publisher(table, name, publisher) do
+         :ok <- register_publisher(table, name, publisher) do
       register(table, :adapter, name, module)
     end
   end
@@ -224,8 +224,8 @@ defmodule Yggdrasil.Registry do
   @doc false
   def get_full_channel(table, %Channel{adapter: adapter_name} = channel) do
     with {:ok, adapter} <- get_adapter_module(table, adapter_name) do
-      transformer = Map.get(channel, :transformer, adapter.get_transformer())
-      backend = Map.get(channel, :backend, adapter.get_backend())
+      transformer = channel.transformer || adapter.get_transformer()
+      backend = channel.backend || adapter.get_backend()
       full_channel = %Channel{channel |
         transformer: transformer,
         backend: backend

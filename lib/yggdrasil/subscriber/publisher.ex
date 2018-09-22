@@ -4,10 +4,10 @@ defmodule Yggdrasil.Subscriber.Publisher do
   """
   use GenServer
 
-  alias Yggdrasil.Channel
   alias Yggdrasil.Backend
-  alias Yggdrasil.Transformer
+  alias Yggdrasil.Channel
   alias Yggdrasil.Settings
+  alias Yggdrasil.Transformer
 
   require Logger
 

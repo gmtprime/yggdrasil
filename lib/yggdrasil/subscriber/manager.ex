@@ -6,9 +6,9 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   require Logger
 
+  alias Yggdrasil.Backend
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
-  alias Yggdrasil.Backend
   alias Yggdrasil.Subscriber.Generator
 
   @registry Settings.yggdrasil_process_registry()

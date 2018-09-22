@@ -1,3 +1,20 @@
+# Changelog for 4.1.1
+
+## Highlights
+
+## v4.1.1
+
+### Bug fixes
+
+  * Fixed channel defaults
+
+### Enhancements
+
+  * [`Yggdrasil`] Now `subscribe/1`, `unsubscribe/1` and `publish/3` can
+  receive a map or a `Keyword` list as channel as well as the
+  `Yggdrasil.Channel` struct.
+  * Added Yggdrasil logo.
+
 # Changelog for 4.1.0
 
 ## Highlights

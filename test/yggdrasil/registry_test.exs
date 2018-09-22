@@ -1,8 +1,8 @@
 defmodule Yggdrasil.RegistryTest do
   use ExUnit.Case, async: true
 
-  alias Yggdrasil.Registry
   alias Yggdrasil.Channel
+  alias Yggdrasil.Registry
 
   defmodule TestAdapter do
     use Yggdrasil.Adapter,

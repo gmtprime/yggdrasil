@@ -84,12 +84,10 @@ defmodule Yggdrasil.Subscriber.Generator do
   @doc false
   @spec do_subscribe(Channel.t(), pid()) :: :ok | {:error, term()}
   def do_subscribe(%Channel{} = channel, pid) do
-    try do
-      Manager.add(channel, pid)
-    catch
-      :exit, {:timeout, _} ->
-        {:error, "Manager is not available for subscriptions"}
-    end
+    Manager.add(channel, pid)
+  catch
+    :exit, {:timeout, _} ->
+    {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """
@@ -103,12 +101,10 @@ defmodule Yggdrasil.Subscriber.Generator do
     unsubscribe(channel, self())
   end
   def unsubscribe(%Channel{} = channel, pid) when is_pid(pid) do
-    try do
-      Manager.remove(channel, pid)
-    catch
-      :exit, {:timeout, _} ->
-        {:error, "Manager not available for unsubscriptions"}
-    end
+    Manager.remove(channel, pid)
+  catch
+    :exit, {:timeout, _} ->
+    {:error, "Manager not available for unsubscriptions"}
   end
 
   @doc false

@@ -17,8 +17,6 @@ defmodule Yggdrasil do
 
   For more information on how to use them, check the respective repository.
 
-  ![demo](https://raw.githubusercontent.com/gmtprime/yggdrasil/master/images/demo.gif)
-
   ## Small Example
 
   The following example uses the Elixir distribution to send the messages:
@@ -149,13 +147,12 @@ defmodule Yggdrasil do
   end
   ```
   """
-  alias Yggdrasil.Channel
-  alias Yggdrasil.Registry, as: Reg
   alias Yggdrasil.Backend
+  alias Yggdrasil.Channel
   alias Yggdrasil.Publisher
-
-  alias Yggdrasil.Subscriber.Generator, as: SubscriberGen
   alias Yggdrasil.Publisher.Generator, as: PublisherGen
+  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Subscriber.Generator, as: SubscriberGen
 
   ######################
   # Subscriber functions
@@ -163,11 +160,11 @@ defmodule Yggdrasil do
   @doc """
   Subscribes to a `channel`.
   """
-  @spec subscribe(Channel.t()) :: :ok | {:error, term()}
+  @spec subscribe(map() | Keyword.t() | Channel.t()) :: :ok | {:error, term()}
   def subscribe(channel)
 
-  def subscribe(%Channel{} = channel) do
-    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+  def subscribe(channel) do
+    with {:ok, full_channel} <- gen_channel(channel),
          :ok <- Backend.subscribe(full_channel) do
       SubscriberGen.subscribe(full_channel)
     end
@@ -176,11 +173,12 @@ defmodule Yggdrasil do
   @doc """
   Unsubscribes from a `channel`.
   """
-  @spec unsubscribe(Channel.t()) :: :ok | {:error, term()}
+  @spec unsubscribe(map() | Keyword.t() | Channel.t())
+          :: :ok | {:error, term()}
   def unsubscribe(channel)
 
-  def unsubscribe(%Channel{} = channel) do
-    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+  def unsubscribe(channel) do
+    with {:ok, full_channel} <- gen_channel(channel),
          :ok <- Backend.unsubscribe(full_channel) do
       SubscriberGen.unsubscribe(full_channel)
     end
@@ -192,14 +190,38 @@ defmodule Yggdrasil do
   @doc """
   Publishes a `message` in a `channel` with some optional `options`.
   """
-  @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
-  @spec publish(Channel.t(), term(), Keyword.t()) :: :ok | {:error, term()}
+  @spec publish(map() | Keyword.t() | Channel.t(), term())
+          :: :ok | {:error, term()}
+  @spec publish(map() | Keyword.t() | Channel.t(), term(), Keyword.t())
+          :: :ok | {:error, term()}
   def publish(channel, message, options \\ [])
 
-  def publish(%Channel{} = channel, message, options) do
-    with {:ok, full_channel} <- Reg.get_full_channel(channel),
+  def publish(channel, message, options) do
+    with {:ok, full_channel} <- gen_channel(channel),
          {:ok, _} <- PublisherGen.start_publisher(PublisherGen, full_channel) do
       Publisher.publish(full_channel, message, options)
     end
+  end
+
+  ###################
+  # Channel functions
+
+  @doc """
+  Creates a channel from `data` where data is a map or a `Keyword` list.
+  """
+  @spec gen_channel(map() | Keyword.t() | Channel.t())
+          :: {:ok, Channel.t()} | {:error, term()}
+  def gen_channel(data)
+
+  def gen_channel(%Channel{} = channel) do
+    Reg.get_full_channel(channel)
+  end
+  def gen_channel(data) when is_list(data) or is_map(data) do
+    Channel
+    |> struct(data)
+    |> gen_channel()
+  end
+  def gen_channel(_) do
+    {:error, "Bad channel"}
   end
 end

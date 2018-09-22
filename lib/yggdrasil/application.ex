@@ -17,13 +17,15 @@ defmodule Yggdrasil.Application do
       # Core
       Supervisor.child_spec({adapter, options}, type: :supervisor),
       Supervisor.child_spec(
-        { Yggdrasil.Publisher.Generator,
+        {
+          Yggdrasil.Publisher.Generator,
           [name: Yggdrasil.Publisher.Generator]
         },
         type: :supervisor
       ),
       Supervisor.child_spec(
-        { Yggdrasil.Subscriber.Generator,
+        {
+          Yggdrasil.Subscriber.Generator,
           [name: Yggdrasil.Subscriber.Generator]
         },
         type: :supervisor

@@ -41,10 +41,10 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
 
   require Logger
 
+  alias Yggdrasil.Backend
   alias Yggdrasil.Channel
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
-  alias Yggdrasil.Backend
 
   defstruct [:channel, :conn]
   alias __MODULE__, as: State

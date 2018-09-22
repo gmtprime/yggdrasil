@@ -1,9 +1,9 @@
 defmodule Yggdrasil.Subscriber.DistributorTest do
   use ExUnit.Case, async: true
 
+  alias Yggdrasil.Backend
   alias Yggdrasil.Channel
   alias Yggdrasil.Registry
-  alias Yggdrasil.Backend
   alias Yggdrasil.Subscriber.Distributor
 
   test "start - stop" do

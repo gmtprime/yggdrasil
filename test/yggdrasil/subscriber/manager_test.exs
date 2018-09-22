@@ -1,15 +1,14 @@
 defmodule Yggdrasil.Subscriber.ManagerTest do
   use ExUnit.Case, async: true
 
-  alias Yggdrasil.Channel
-  alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Settings
+  alias Yggdrasil.Subscriber.Manager
 
   @registry Settings.yggdrasil_process_registry()
 
   describe "join/2" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
 
       :pg2.create({:connected, channel})
@@ -91,7 +90,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "leave/2" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
 
       :pg2.create({:connected, channel})
@@ -193,7 +192,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "do_connected/1" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
       state = %Manager{
         channel: channel,
@@ -227,7 +226,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "do_disconnected/1" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
       state = %Manager{
         channel: channel,
@@ -263,7 +262,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "check_subscribers/1" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
 
       :pg2.create({:connected, channel})
@@ -324,7 +323,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "subscribed?/3" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
 
       :pg2.create({:connected, channel})
@@ -391,7 +390,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "start/stop" do
     test "starts and stops a manager" do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       assert {:ok, pid} = Manager.start_link(channel)
       assert :ok = Manager.stop(pid)
     end
@@ -399,7 +398,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
 
   describe "add/2" do
     setup do
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       via_tuple = {:via, @registry, {Manager, channel}}
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       {:ok, %{channel: channel}}
@@ -427,7 +426,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   describe "remove/2" do
     setup do
       pid = self()
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       via_tuple = {:via, @registry, {Manager, channel}}
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
@@ -455,7 +454,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   describe "connected/1" do
     setup do
       pid = self()
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       via_tuple = {:via, @registry, {Manager, channel}}
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
@@ -474,7 +473,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   describe "disconnected/1" do
     setup do
       pid = self()
-      channel = %Channel{name: UUID.uuid4()}
+      {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       via_tuple = {:via, @registry, {Manager, channel}}
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
