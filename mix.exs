@@ -45,7 +45,7 @@ defmodule Yggdrasil.Mixfile do
   defp package do
     [
       description: "Agnostic pub/sub with Redis, RabbitMQ and Postgres support",
-      files: ["lib", "mix.exs", "images", "README.md", "CHANGELOG.md"],
+      files: ["lib", "priv", "mix.exs", "README.md", "CHANGELOG.md"],
       maintainers: ["Alexander de Sousa"],
       licenses: ["MIT"],
       links: %{
