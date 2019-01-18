@@ -10,7 +10,7 @@ matrix:
         - elixir: 1.6.6
           otp_release: 21.2.3
         - elixir: 1.8.0
-          otp_release: 19.3.6
+          otp_release: 20.3.8
 before_script:
   - MIX_ENV=test mix deps.get
   - MIX_ENV=test mix deps.compile
