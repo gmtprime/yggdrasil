@@ -6,11 +6,10 @@ otp_release:
   - 19.3.6
   - 21.2.3
 matrix:
-    # We are only interested on the newest/oldest pair.
     exclude:
-        - elixir: 1.8.0
-          otp_release: 21.2.3
         - elixir: 1.6.6
+          otp_release: 21.2.3
+        - elixir: 1.8.0
           otp_release: 19.3.6
 before_script:
   - MIX_ENV=test mix deps.get
