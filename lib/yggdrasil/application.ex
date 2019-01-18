@@ -8,10 +8,11 @@ defmodule Yggdrasil.Application do
 
   @impl true
   def start(_type, _args) do
-    adapter = Settings.yggdrasil_pubsub_adapter()
+    adapter = Settings.yggdrasil_pubsub_adapter!()
+
     options =
-      Settings.yggdrasil_pubsub_options()
-      |> Keyword.put(:name, Settings.yggdrasil_pubsub_name())
+      Settings.yggdrasil_pubsub_options!()
+      |> Keyword.put(:name, Settings.yggdrasil_pubsub_name!())
 
     children = [
       # Core
@@ -34,7 +35,7 @@ defmodule Yggdrasil.Application do
       Supervisor.child_spec({Yggdrasil.Backend.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Json, []}, []),
-      Supervisor.child_spec({Yggdrasil.Adapter.Elixir, []}, []),
+      Supervisor.child_spec({Yggdrasil.Adapter.Elixir, []}, [])
     ]
 
     options = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]

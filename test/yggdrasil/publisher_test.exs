@@ -6,9 +6,12 @@ defmodule Yggdrasil.PublisherTest do
   alias Yggdrasil.Registry
 
   test "publish message" do
-    {:ok, channel} = Registry.get_full_channel(
-      %Channel{name: UUID.uuid4(), namespace: PublisherTest}
-    )
+    {:ok, channel} =
+      Registry.get_full_channel(%Channel{
+        name: UUID.uuid4(),
+        namespace: PublisherTest
+      })
+
     Yggdrasil.subscribe(channel)
 
     assert_receive {:Y_CONNECTED, _}, 500

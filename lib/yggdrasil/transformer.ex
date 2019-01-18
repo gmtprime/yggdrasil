@@ -76,17 +76,17 @@ defmodule Yggdrasil.Transformer do
   Callback to define how to decode the `message`s coming from a `channel`.
   """
   @callback decode(
-    channel :: Channel.t(),
-    message :: term()
-  ) :: {:ok, term()} | {:error, term()}
+              channel :: Channel.t(),
+              message :: term()
+            ) :: {:ok, term()} | {:error, term()}
 
   @doc """
   Callback to define how to encode the `message`s going to a `channel`.
   """
   @callback encode(
-    channel :: Channel.t(),
-    message :: term()
-  ) :: {:ok, term()} | {:error, term()}
+              channel :: Channel.t(),
+              message :: term()
+            ) :: {:ok, term()} | {:error, term()}
 
   @doc """
   Macro for using `Yggdrasil.Transformer`.
@@ -111,6 +111,7 @@ defmodule Yggdrasil.Transformer do
       @doc false
       def register do
         name = unquote(transformer_alias)
+
         with :ok <- Reg.register_transformer(name, __MODULE__) do
           :ok
         else
@@ -129,7 +130,7 @@ defmodule Yggdrasil.Transformer do
         {:ok, message}
       end
 
-      defoverridable [decode: 2, encode: 2]
+      defoverridable decode: 2, encode: 2
     end
   end
 

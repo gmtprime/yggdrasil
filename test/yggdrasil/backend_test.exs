@@ -10,10 +10,11 @@ defmodule Yggdrasil.BackendTest do
       {:ok, channel} =
         %Channel{name: "subscription cycle"}
         |> Registry.get_full_channel()
+
       {:ok, channel: channel}
     end
 
-    test "channel transformation is binary", %{channel: channel}do
+    test "channel transformation is binary", %{channel: channel} do
       assert is_binary(Backend.transform_name(channel))
     end
 

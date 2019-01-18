@@ -54,12 +54,15 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   @impl true
   def handle_call({:publish, %Channel{name: name} = channel, message}, _, _) do
     stream = %Channel{channel | name: {:elixir, name}}
+
     result =
       with {:ok, encoded} <- Transformer.encode(stream, message) do
         Backend.publish(stream, encoded)
       end
+
     {:reply, result, nil}
   end
+
   def handle_call(_, _, _) do
     {:noreply, nil}
   end

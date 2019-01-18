@@ -9,7 +9,7 @@ defmodule Yggdrasil.Subscriber.AdapterTest do
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   test "start and stop" do
     {:ok, channel} = Registry.get_full_channel(%Channel{name: UUID.uuid4()})

@@ -11,7 +11,7 @@ defmodule Yggdrasil.Subscriber.Distributor do
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   #############################################################################
   # Client API.
@@ -22,10 +22,10 @@ defmodule Yggdrasil.Subscriber.Distributor do
   the first subscriber. Additionally it can receive `Supervisor` `options`.
   """
   @spec start_link(
-    Channel.t(),
-    pid(),
-    Supervisor.options()
-  ) :: Supervisor.on_start()
+          Channel.t(),
+          pid(),
+          Supervisor.options()
+        ) :: Supervisor.on_start()
   def start_link(channel, pid, options \\ [])
 
   def start_link(%Channel{} = channel, pid, options) do
@@ -44,6 +44,7 @@ defmodule Yggdrasil.Subscriber.Distributor do
         _, _ -> :ok
       end
     end
+
     Supervisor.stop(supervisor)
   end
 
@@ -76,8 +77,9 @@ defmodule Yggdrasil.Subscriber.Distributor do
         id: Adapter,
         start: {Adapter, :start_link, [channel, [name: adapter_name]]},
         restart: :transient
-      },
+      }
     ]
+
     Supervisor.init(children, strategy: :rest_for_one)
   end
 end

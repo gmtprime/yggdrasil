@@ -41,12 +41,11 @@ defmodule Yggdrasil.AdapterTest do
 
     test "gets subscriber module" do
       assert Yggdrasil.Subscriber.Adapter.Elixir =
-             Default.get_subscriber_module()
+               Default.get_subscriber_module()
     end
 
     test "gets publisher module" do
-      assert Yggdrasil.Publisher.Adapter.Elixir =
-             Default.get_publisher_module()
+      assert Yggdrasil.Publisher.Adapter.Elixir = Default.get_publisher_module()
     end
   end
 end

@@ -7,7 +7,7 @@ defmodule Yggdrasil.Registry do
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
 
-  @registry Settings.yggdrasil_module_registry()
+  @registry Settings.yggdrasil_module_registry!()
 
   @doc """
   Starts a registry with some optional `options`
@@ -22,6 +22,7 @@ defmodule Yggdrasil.Registry do
       write_concurrency: true,
       read_concurrency: true
     ]
+
     start_link(@registry, opts, options)
   end
 
@@ -57,9 +58,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets the transformer module for a `name`.
   """
-  @spec get_transformer_module(
-    atom() | module()
-  ) :: {:ok, module()} | {:error, term()}
+  @spec get_transformer_module(atom() | module()) ::
+          {:ok, module()} | {:error, term()}
   def get_transformer_module(name) do
     get_transformer_module(@registry, name)
   end
@@ -67,9 +67,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets the backend module for a `name`.
   """
-  @spec get_backend_module(
-    atom() | module()
-  ) :: {:ok, module()} | {:error, term()}
+  @spec get_backend_module(atom() | module()) ::
+          {:ok, module()} | {:error, term()}
   def get_backend_module(name) do
     get_backend_module(@registry, name)
   end
@@ -77,9 +76,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets the subscriber module for a `name`.
   """
-  @spec get_subscriber_module(
-    atom() | module()
-  ) :: {:ok, module()} | {:error, term()}
+  @spec get_subscriber_module(atom() | module()) ::
+          {:ok, module()} | {:error, term()}
   def get_subscriber_module(name) do
     get_subscriber_module(@registry, name)
   end
@@ -87,9 +85,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets the publisher module for a `name`.
   """
-  @spec get_publisher_module(
-    atom() | module()
-  ) :: {:ok, module()} | {:error, term()}
+  @spec get_publisher_module(atom() | module()) ::
+          {:ok, module()} | {:error, term()}
   def get_publisher_module(name) do
     get_publisher_module(@registry, name)
   end
@@ -97,9 +94,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets the adapter module for a `name`.
   """
-  @spec get_adapter_module(
-    atom() | module()
-  ) :: {:ok, module()} | {:error, term()}
+  @spec get_adapter_module(atom() | module()) ::
+          {:ok, module()} | {:error, term()}
   def get_adapter_module(name) do
     get_adapter_module(@registry, name)
   end
@@ -107,9 +103,8 @@ defmodule Yggdrasil.Registry do
   @doc """
   Gets full channel from the current `channel`.
   """
-  @spec get_full_channel(
-    channel :: Channel.t()
-  ) :: {:ok, Channel.t} | {:error, term()}
+  @spec get_full_channel(channel :: Channel.t()) ::
+          {:ok, Channel.t()} | {:error, term()}
   def get_full_channel(channel) do
     get_full_channel(@registry, channel)
   end
@@ -153,6 +148,7 @@ defmodule Yggdrasil.Registry do
     case :ets.lookup(table, {:subscriber, subscriber}) do
       [] ->
         register(table, :subscriber, name, subscriber)
+
       [{_, module} | _] ->
         register(table, :subscriber, name, module)
     end
@@ -163,6 +159,7 @@ defmodule Yggdrasil.Registry do
     case :ets.lookup(table, {:publisher, publisher}) do
       [] ->
         register(table, :publisher, name, publisher)
+
       [{_, module} | _] ->
         register(table, :publisher, name, module)
     end
@@ -178,8 +175,10 @@ defmodule Yggdrasil.Registry do
         case :ets.lookup(table, {key, name}) do
           [{_, ^module} | _] ->
             :ok
+
           [{_, _} | _] ->
             :error
+
           _ ->
             :error
         end
@@ -216,6 +215,7 @@ defmodule Yggdrasil.Registry do
     case :ets.lookup(table, {key, name}) do
       [] ->
         {:error, "Yggdrasil #{key} :#{name} not found"}
+
       [{_, module} | _] ->
         {:ok, module}
     end
@@ -226,10 +226,13 @@ defmodule Yggdrasil.Registry do
     with {:ok, adapter} <- get_adapter_module(table, adapter_name) do
       transformer = channel.transformer || adapter.get_transformer()
       backend = channel.backend || adapter.get_backend()
-      full_channel = %Channel{channel |
-        transformer: transformer,
-        backend: backend
+
+      full_channel = %Channel{
+        channel
+        | transformer: transformer,
+          backend: backend
       }
+
       {:ok, full_channel}
     end
   end

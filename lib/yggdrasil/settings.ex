@@ -16,6 +16,7 @@ defmodule Yggdrasil.Settings do
       |> String.upcase()
       |> String.split(".")
       |> Enum.join("_")
+
     name = key |> Atom.to_string() |> String.upcase()
     prefix <> default <> name
   end
@@ -28,11 +29,16 @@ defmodule Yggdrasil.Settings do
 
   ```
   config :yggdrasil,
-    registry: ExReg
+    process_registry: ExReg
   ```
   """
-  app_env :yggdrasil_process_registry, :yggdrasil, :process_registry,
+  app_env(
+    :yggdrasil_process_registry,
+    :yggdrasil,
+    :process_registry,
+    skip_system: true,
     default: ExReg
+  )
 
   ############################
   # Yggdrasil registry options
@@ -45,8 +51,13 @@ defmodule Yggdrasil.Settings do
     module_registry: :yggdrasil_registry
   ```
   """
-  app_env :yggdrasil_module_registry, :yggdrasil, :module_registry,
+  app_env(
+    :yggdrasil_module_registry,
+    :yggdrasil,
+    :module_registry,
+    skip_system: true,
     default: :yggdrasil_registry
+  )
 
   ################################
   # Yggdrasil distribution options
@@ -59,8 +70,13 @@ defmodule Yggdrasil.Settings do
     pubsub_adapter: Phoenix.PubSub.PG2
   ```
   """
-  app_env :yggdrasil_pubsub_adapter, :yggdrasil, :pubsub_adapter,
+  app_env(
+    :yggdrasil_pubsub_adapter,
+    :yggdrasil,
+    :pubsub_adapter,
+    skip_system: true,
     default: Phoenix.PubSub.PG2
+  )
 
   @doc """
   Pub-sub name. By default is `Yggdrasil.PubSub`.
@@ -70,8 +86,13 @@ defmodule Yggdrasil.Settings do
     pubsub_name: Yggdrasil.PubSub
   ```
   """
-  app_env :yggdrasil_pubsub_name, :yggdrasil, :pubsub_name,
+  app_env(
+    :yggdrasil_pubsub_name,
+    :yggdrasil,
+    :pubsub_name,
+    skip_system: true,
     default: Yggdrasil.PubSub
+  )
 
   @doc """
   Pub-sub options. By default are `[pool_size: 1]`.
@@ -81,8 +102,13 @@ defmodule Yggdrasil.Settings do
     pubsub_options: [pool_size: 1]
   ```
   """
-  app_env :yggdrasil_pubsub_options, :yggdrasil, :pubsub_options,
+  app_env(
+    :yggdrasil_pubsub_options,
+    :yggdrasil,
+    :pubsub_options,
+    skip_system: true,
     default: [pool_size: 1]
+  )
 
   #############################
   # Yggdrasil publisher options
@@ -96,6 +122,11 @@ defmodule Yggdrasil.Settings do
     publisher_options: [size: 5, max_overflow: 10]
   ```
   """
-  app_env :yggdrasil_publisher_options, :yggdrasil, :publisher_options,
+  app_env(
+    :yggdrasil_publisher_options,
+    :yggdrasil,
+    :publisher_options,
+    skip_system: true,
     default: [size: 5, max_overflow: 10]
+  )
 end

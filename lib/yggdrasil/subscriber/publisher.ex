@@ -11,7 +11,7 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   require Logger
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   #############################################################################
   # Client API.
@@ -42,9 +42,9 @@ defmodule Yggdrasil.Subscriber.Publisher do
   Notifies synchronously of a new `message` coming from a `channel`.
   """
   @spec notify(
-    channel :: Channel.t(),
-    message :: term()
-  ) :: :ok | {:error, term()}
+          channel :: Channel.t(),
+          message :: term()
+        ) :: :ok | {:error, term()}
   def notify(%Channel{name: name} = channel, message) do
     publisher = {:via, @registry, {__MODULE__, channel}}
     notify(publisher, name, message)
@@ -55,10 +55,10 @@ defmodule Yggdrasil.Subscriber.Publisher do
   `publisher`.
   """
   @spec notify(
-    publisher :: GenServer.name(),
-    channel_name :: term(),
-    message :: term()
-  ) :: :ok | {:error, term()}
+          publisher :: GenServer.name(),
+          channel_name :: term(),
+          message :: term()
+        ) :: :ok | {:error, term()}
   def notify(publisher, channel_name, message) do
     GenServer.call(publisher, {:notify, channel_name, message})
   end
@@ -68,34 +68,38 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   @impl true
   def init(%Channel{} = channel) do
-    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect channel}" end)
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
     {:ok, channel}
   end
 
   @impl true
   def handle_call(
-    {:notify, channel_name, message},
-    _from,
-    %Channel{} = channel
-  ) do
+        {:notify, channel_name, message},
+        _from,
+        %Channel{} = channel
+      ) do
     real_channel = %Channel{channel | name: channel_name}
+
     result =
       with {:ok, decoded} <- Transformer.decode(real_channel, message) do
         Backend.publish(real_channel, decoded)
       end
+
     {:reply, result, channel}
   end
+
   def handle_call(_msg, _from, %Channel{} = channel) do
     {:noreply, channel}
   end
 
   @impl true
   def terminate(:normal, %Channel{} = channel) do
-    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect channel}" end)
+    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect(channel)}" end)
   end
+
   def terminate(reason, %Channel{} = channel) do
     Logger.warn(fn ->
-      "Stopped #{__MODULE__} for #{inspect channel} due to #{inspect reason}"
+      "Stopped #{__MODULE__} for #{inspect(channel)} due to #{inspect(reason)}"
     end)
   end
 end

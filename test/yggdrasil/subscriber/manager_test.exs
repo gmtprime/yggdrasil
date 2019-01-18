@@ -4,7 +4,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Manager
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   describe "join/2" do
     setup do
@@ -14,10 +14,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       {:ok, %{channel: channel, cache: cache}}
     end
@@ -96,21 +96,22 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       {:ok, %{channel: channel, cache: cache}}
     end
 
     test "leaves from connected group when connected",
-        %{channel: channel, cache: cache} do
+         %{channel: channel, cache: cache} do
       state = %Manager{
         channel: channel,
         status: :connected,
         cache: cache
       }
+
       name = {:connected, channel}
       pid = self()
       :ok = Manager.join([pid], state)
@@ -122,12 +123,13 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     end
 
     test "leaves from disconnected group when disconnected",
-        %{channel: channel, cache: cache} do
+         %{channel: channel, cache: cache} do
       state = %Manager{
         channel: channel,
         status: :disconnected,
         cache: cache
       }
+
       name = {:disconnected, channel}
       pid = self()
       :ok = Manager.join([self()], state)
@@ -194,6 +196,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     setup do
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
+
       state = %Manager{
         channel: channel,
         status: :disconnected,
@@ -203,10 +206,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       :ok = Manager.join([self()], state)
       {:ok, %{channel: channel, state: state}}
@@ -228,6 +231,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     setup do
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
       cache = :ets.new(:test, [:set])
+
       state = %Manager{
         channel: channel,
         status: :connected,
@@ -237,10 +241,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       :ok = Manager.join([self()], state)
       assert_receive {:Y_CONNECTED, ^channel}
@@ -250,8 +254,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     test "changes pid from disconnected to connected",
          %{channel: channel, state: state} do
       pid = self()
+
       assert {:ok, %Manager{status: :disconnected}} =
-             Manager.do_disconnected(state)
+               Manager.do_disconnected(state)
+
       assert_receive {:Y_DISCONNECTED, ^channel}
       name = {:connected, channel}
       assert not (pid in :pg2.get_members(name))
@@ -268,10 +274,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       {:ok, %{channel: channel, cache: cache}}
     end
@@ -294,6 +300,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :connected,
         cache: cache
       }
+
       assert :ok = Manager.join([self()], state)
       assert :ok = Manager.check_subscribers(state)
     end
@@ -316,6 +323,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :disconnected,
         cache: cache
       }
+
       assert :ok = Manager.join([self()], state)
       assert :ok = Manager.check_subscribers(state)
     end
@@ -329,10 +337,10 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
       :pg2.create({:connected, channel})
       :pg2.create({:disconnected, channel})
 
-      on_exit fn ->
+      on_exit(fn ->
         :pg2.delete({:connected, channel})
         :pg2.delete({:disconnected, channel})
-      end
+      end)
 
       {:ok, %{channel: channel, cache: cache}}
     end
@@ -344,6 +352,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :disconnected,
         cache: cache
       }
+
       pid = self()
       assert :ok = Manager.join([pid], state)
       assert true == Manager.subscribed?(:disconnected, channel, pid)
@@ -356,6 +365,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :disconnected,
         cache: cache
       }
+
       pid = self()
       assert :ok = Manager.join([pid], state)
       assert false == Manager.subscribed?(:connected, channel, pid)
@@ -368,6 +378,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :connected,
         cache: cache
       }
+
       pid = self()
       assert :ok = Manager.join([pid], state)
       assert_receive {:Y_CONNECTED, ^channel}
@@ -381,6 +392,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
         status: :connected,
         cache: cache
       }
+
       pid = self()
       assert :ok = Manager.join([pid], state)
       assert_receive {:Y_CONNECTED, ^channel}

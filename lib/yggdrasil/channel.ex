@@ -22,10 +22,10 @@ defmodule Yggdrasil.Channel do
             backend: nil
 
   @type t :: %__MODULE__{
-    name: any(),
-    adapter: module(),
-    transformer: module(),
-    namespace: atom(),
-    backend: module()
-  }
+          name: any(),
+          adapter: module(),
+          transformer: module(),
+          namespace: atom(),
+          backend: module()
+        }
 end

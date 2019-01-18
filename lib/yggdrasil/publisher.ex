@@ -8,7 +8,7 @@ defmodule Yggdrasil.Publisher do
   alias Yggdrasil.Publisher.Adapter
   alias Yggdrasil.Settings
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -38,6 +38,7 @@ defmodule Yggdrasil.Publisher do
         _, _ -> :ok
       end
     end
+
     Supervisor.stop(supervisor)
   end
 
@@ -51,6 +52,7 @@ defmodule Yggdrasil.Publisher do
   def publish(%Channel{} = channel, message, options) do
     base = %Channel{channel | name: nil}
     pool_name = {:via, @registry, {Poolboy, base}}
+
     :poolboy.transaction(pool_name, fn worker ->
       Adapter.publish(worker, channel, message, options)
     end)
@@ -60,12 +62,12 @@ defmodule Yggdrasil.Publisher do
   # Supervisor callback
 
   @impl true
-  def init(%Channel{} = channel) do
+  def init(%Channel{namespace: namespace} = channel) do
     via_tuple = {:via, @registry, {Poolboy, channel}}
 
     poolargs =
-      channel
-      |> publisher_options()
+      namespace
+      |> Settings.yggdrasil_publisher_options!()
       |> Keyword.put(:name, via_tuple)
       |> Keyword.put(:worker_module, Adapter)
 
@@ -77,21 +79,5 @@ defmodule Yggdrasil.Publisher do
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
-  end
-
-  #########
-  # Helpers
-
-  @doc false
-  def publisher_options(%Channel{namespace: nil}) do
-    Settings.yggdrasil_publisher_options()
-  end
-  def publisher_options(%Channel{namespace: namespace}) do
-    name = Settings.gen_env_name(namespace, :publisher_options)
-    Skogsra.get_app_env(:yggdrasil, :publisher_options,
-      domain: namespace,
-      default: Settings.yggdrasil_publisher_options(),
-      name: name
-    )
   end
 end

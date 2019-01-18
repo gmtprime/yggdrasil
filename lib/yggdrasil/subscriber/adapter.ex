@@ -10,9 +10,9 @@ defmodule Yggdrasil.Subscriber.Adapter do
   `GenServer` `options`.
   """
   @callback start_link(
-    channel :: Channel.t(),
-    options :: GenServer.options()
-  ) :: GenServer.on_start()
+              channel :: Channel.t(),
+              options :: GenServer.options()
+            ) :: GenServer.on_start()
 
   @doc """
   Use to implement `Yggdrasil.Subscriber.Adapter` behaviour.
@@ -29,7 +29,7 @@ defmodule Yggdrasil.Subscriber.Adapter do
         GenServer.start_link(__MODULE__, arguments, options)
       end
 
-      defoverridable [start_link: 1, start_link: 2]
+      defoverridable start_link: 1, start_link: 2
     end
   end
 
@@ -37,19 +37,17 @@ defmodule Yggdrasil.Subscriber.Adapter do
   Generic subscriber adapter starter that receives a `channel`, a `publisher`
   and an optional `GenServer` options.
   """
+  @spec start_link(Channel.t()) :: GenServer.on_start()
   @spec start_link(
-    Channel.t()
-  ) :: GenServer.on_start()
-  @spec start_link(
-    Channel.t(),
-    GenServer.options()
-  ) :: GenServer.on_start()
+          Channel.t(),
+          GenServer.options()
+        ) :: GenServer.on_start()
   def start_link(channel, options \\ [])
 
   def start_link(
-    %Channel{adapter: adapter} = channel,
-    options
-  ) do
+        %Channel{adapter: adapter} = channel,
+        options
+      ) do
     with {:ok, module} <- Reg.get_subscriber_module(adapter) do
       module.start_link(channel, options)
     end

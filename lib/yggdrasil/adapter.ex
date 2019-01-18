@@ -75,6 +75,7 @@ defmodule Yggdrasil.Adapter do
       @doc false
       def register do
         name = unquote(adapter_alias)
+
         with :ok <- Reg.register_adapter(name, __MODULE__) do
           :ok
         else
@@ -110,11 +111,13 @@ defmodule Yggdrasil.Adapter do
       @doc false
       def get_subscriber_module(nil) do
         base = "Elixir.Yggdrasil.Subscriber.Adapter"
+
         name =
           __MODULE__
           |> Atom.to_string()
           |> String.split(".")
           |> List.last()
+
         try do
           String.to_existing_atom(base <> "." <> name)
         catch
@@ -122,6 +125,7 @@ defmodule Yggdrasil.Adapter do
             :elixir
         end
       end
+
       def get_subscriber_module(module) when is_atom(module) do
         module
       end
@@ -137,11 +141,13 @@ defmodule Yggdrasil.Adapter do
       @doc false
       def get_publisher_module(nil) do
         base = "Elixir.Yggdrasil.Publisher.Adapter"
+
         name =
           __MODULE__
           |> Atom.to_string()
           |> String.split(".")
           |> List.last()
+
         try do
           String.to_existing_atom(base <> "." <> name)
         catch
@@ -149,6 +155,7 @@ defmodule Yggdrasil.Adapter do
             :elixir
         end
       end
+
       def get_publisher_module(module) when is_atom(module) do
         module
       end

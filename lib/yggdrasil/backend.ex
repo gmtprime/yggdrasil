@@ -52,26 +52,26 @@ defmodule Yggdrasil.Backend do
   in case the message shouldn't be broadcasted.
   """
   @callback connected(
-    channel :: Channel.t(),
-    pid :: atom() | pid()
-  ) :: :ok | {:error, term()}
+              channel :: Channel.t(),
+              pid :: atom() | pid()
+            ) :: :ok | {:error, term()}
 
   @doc """
   Callback to publish the disconnected message in the `channel`. Receives a
   `pid` in case the message shouldn't be broadcasted.
   """
   @callback disconnected(
-    channel :: Channel.t(),
-    pid :: atom() | pid()
-  ) :: :ok | {:error, term()}
+              channel :: Channel.t(),
+              pid :: atom() | pid()
+            ) :: :ok | {:error, term()}
 
   @doc """
   Callback to publish a `message` in a `channel`.
   """
   @callback publish(
-    channel :: Channel.t(),
-    message :: term()
-  ) :: :ok | {:error, term()}
+              channel :: Channel.t(),
+              message :: term()
+            ) :: :ok | {:error, term()}
 
   @doc """
   Macro for using `Yggdrasil.Backend`.
@@ -81,6 +81,7 @@ defmodule Yggdrasil.Backend do
   """
   defmacro __using__(options) do
     backend_alias = Keyword.get(options, :name)
+
     quote do
       @behaviour Yggdrasil.Backend
       alias Phoenix.PubSub
@@ -100,6 +101,7 @@ defmodule Yggdrasil.Backend do
       @doc false
       def register do
         name = unquote(backend_alias)
+
         with :ok <- Reg.register_backend(name, __MODULE__) do
           :ok
         else
@@ -113,7 +115,7 @@ defmodule Yggdrasil.Backend do
         if Manager.subscribed?(channel) do
           :ok
         else
-          pubsub = Settings.yggdrasil_pubsub_name()
+          pubsub = Settings.yggdrasil_pubsub_name!()
           channel_name = Backend.transform_name(channel)
           PubSub.subscribe(pubsub, channel_name)
         end
@@ -122,7 +124,7 @@ defmodule Yggdrasil.Backend do
       @doc false
       def unsubscribe(%Channel{} = channel) do
         if Manager.subscribed?(channel) do
-          pubsub = Settings.yggdrasil_pubsub_name()
+          pubsub = Settings.yggdrasil_pubsub_name!()
           channel_name = Backend.transform_name(channel)
           PubSub.unsubscribe(pubsub, channel_name)
         else
@@ -132,45 +134,45 @@ defmodule Yggdrasil.Backend do
 
       @doc false
       def connected(%Channel{} = channel, nil) do
-        pubsub = Settings.yggdrasil_pubsub_name()
+        pubsub = Settings.yggdrasil_pubsub_name!()
         real_message = {:Y_CONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
+
       def connected(%Channel{} = channel, pid) do
         real_message = {:Y_CONNECTED, channel}
-        send pid, real_message
+        send(pid, real_message)
         :ok
       end
 
       @doc false
       def disconnected(%Channel{} = channel, nil) do
-        pubsub = Settings.yggdrasil_pubsub_name()
+        pubsub = Settings.yggdrasil_pubsub_name!()
         real_message = {:Y_DISCONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
+
       def disconnected(%Channel{} = channel, pid) do
         real_message = {:Y_DISCONNECTED, channel}
-        send pid, real_message
+        send(pid, real_message)
         :ok
       end
 
       @doc false
       def publish(%Channel{} = channel, message) do
-        pubsub = Settings.yggdrasil_pubsub_name()
+        pubsub = Settings.yggdrasil_pubsub_name!()
         real_message = {:Y_EVENT, channel, message}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
 
-      defoverridable [
-        subscribe: 1,
-        unsubscribe: 1,
-        connected: 2,
-        disconnected: 2,
-        publish: 2
-      ]
+      defoverridable subscribe: 1,
+                     unsubscribe: 1,
+                     connected: 2,
+                     disconnected: 2,
+                     publish: 2
     end
   end
 
@@ -235,7 +237,7 @@ defmodule Yggdrasil.Backend do
   @doc """
   Generic publish `message` in a `channel`.
   """
-  @spec publish(Channel.t, term()) :: :ok | {:error, term()}
+  @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
   def publish(channel, message)
 
   def publish(%Channel{backend: backend} = channel, message) do

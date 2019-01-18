@@ -25,6 +25,6 @@
   "recon": {:hex, :recon, "2.3.2", "4444c879be323b1b133eec5241cb84bd3821ea194c740d75617e106be4744318", [:rebar3], [], "hexpm"},
   "redix": {:hex, :redix, "0.6.1", "20986b0e02f02b13e6f53c79a1ae70aa83147488c408f40275ec261f5bb0a6d0", [:mix], [{:connection, "~> 1.0", [hex: :connection, repo: "hexpm", optional: false]}], "hexpm"},
   "redix_pubsub": {:hex, :redix_pubsub, "0.4.2", "1fa2b79fdca4c8a7722da92c2afb98ce531a9653c261629e131335dfdc061d1d", [:mix], [{:connection, "~> 1.0", [hex: :connection, repo: "hexpm", optional: false]}, {:redix, "~> 0.6.0", [hex: :redix, repo: "hexpm", optional: false]}], "hexpm"},
-  "skogsra": {:hex, :skogsra, "0.2.1", "35c8a833c6f8ac03c04d7206a5704168aa046d09db0ac2dc1f06e774b4827c73", [:mix], [], "hexpm"},
+  "skogsra": {:hex, :skogsra, "1.0.1", "ffcca5590daf761aa8639d2d201538952e66bb8cdff5ef4da4cd73340cfc1d00", [:mix], [], "hexpm"},
   "uuid": {:hex, :uuid, "1.1.8", "e22fc04499de0de3ed1116b770c7737779f226ceefa0badb3592e64d5cfb4eb9", [:mix], [], "hexpm"},
 }

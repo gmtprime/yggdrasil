@@ -10,6 +10,7 @@ defmodule Yggdrasil.TransformerTest do
       {:ok, channel} =
         %Channel{name: "subscription cycle"}
         |> Registry.get_full_channel()
+
       {:ok, channel: channel}
     end
 
@@ -27,6 +28,7 @@ defmodule Yggdrasil.TransformerTest do
       {:ok, channel} =
         %Channel{name: "subscription cycle", transformer: :json}
         |> Registry.get_full_channel()
+
       json = "{\"hello\":\"world\"}"
       message = %{"hello" => "world"}
       {:ok, channel: channel, json: json, message: message}

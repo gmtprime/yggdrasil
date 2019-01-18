@@ -183,8 +183,7 @@ defmodule Yggdrasil do
   @doc """
   Unsubscribes from a `channel`.
   """
-  @spec unsubscribe(map() | Keyword.t() | Channel.t())
-          :: :ok | {:error, term()}
+  @spec unsubscribe(map() | Keyword.t() | Channel.t()) :: :ok | {:error, term()}
   def unsubscribe(channel)
 
   def unsubscribe(channel) do
@@ -200,10 +199,10 @@ defmodule Yggdrasil do
   @doc """
   Publishes a `message` in a `channel` with some optional `options`.
   """
-  @spec publish(map() | Keyword.t() | Channel.t(), term())
-          :: :ok | {:error, term()}
-  @spec publish(map() | Keyword.t() | Channel.t(), term(), Keyword.t())
-          :: :ok | {:error, term()}
+  @spec publish(map() | Keyword.t() | Channel.t(), term()) ::
+          :ok | {:error, term()}
+  @spec publish(map() | Keyword.t() | Channel.t(), term(), Keyword.t()) ::
+          :ok | {:error, term()}
   def publish(channel, message, options \\ [])
 
   def publish(channel, message, options) do
@@ -219,18 +218,20 @@ defmodule Yggdrasil do
   @doc """
   Creates a channel from `data` where data is a map or a `Keyword` list.
   """
-  @spec gen_channel(map() | Keyword.t() | Channel.t())
-          :: {:ok, Channel.t()} | {:error, term()}
+  @spec gen_channel(map() | Keyword.t() | Channel.t()) ::
+          {:ok, Channel.t()} | {:error, term()}
   def gen_channel(data)
 
   def gen_channel(%Channel{} = channel) do
     Reg.get_full_channel(channel)
   end
+
   def gen_channel(data) when is_list(data) or is_map(data) do
     Channel
     |> struct(data)
     |> gen_channel()
   end
+
   def gen_channel(_) do
     {:error, "Bad channel"}
   end

@@ -9,7 +9,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   alias Yggdrasil.Subscriber.Distributor
   alias Yggdrasil.Subscriber.Manager
 
-  @registry Settings.yggdrasil_process_registry()
+  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -35,6 +35,7 @@ defmodule Yggdrasil.Subscriber.Generator do
         _, _ -> :ok
       end
     end
+
     Supervisor.stop(generator)
   end
 
@@ -49,35 +50,41 @@ defmodule Yggdrasil.Subscriber.Generator do
   def subscribe(%Channel{} = channel, nil, options) do
     subscribe(channel, self(), options)
   end
+
   def subscribe(%Channel{} = channel, pid, options) when is_pid(pid) do
     name = {Distributor, channel}
+
     case @registry.whereis_name(name) do
       :undefined ->
         generator = Keyword.get(options, :name, __MODULE__)
         start_distributor(generator, channel, pid)
+
       _distributor ->
         do_subscribe(channel, pid)
     end
   end
 
   @doc false
-  @spec start_distributor(Supervisor.name(), Channel.t(), pid())
-    :: :ok | {:error, term()}
+  @spec start_distributor(Supervisor.name(), Channel.t(), pid()) ::
+          :ok | {:error, term()}
   def start_distributor(generator, %Channel{} = channel, pid) do
     name = {Distributor, channel}
     via_tuple = {:via, @registry, name}
+
     spec = %{
       id: via_tuple,
       start: {Distributor, :start_link, [channel, pid, [name: via_tuple]]},
       restart: :transient
     }
+
     with {:ok, _} <- DynamicSupervisor.start_child(generator, spec) do
       :ok
     else
       {:error, {:already_started, _}} ->
         do_subscribe(channel, pid)
+
       _ ->
-        {:error, "Cannot subscribe to #{inspect channel}"}
+        {:error, "Cannot subscribe to #{inspect(channel)}"}
     end
   end
 
@@ -87,7 +94,7 @@ defmodule Yggdrasil.Subscriber.Generator do
     Manager.add(channel, pid)
   catch
     :exit, {:timeout, _} ->
-    {:error, "Manager is not available for subscriptions"}
+      {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """
@@ -100,22 +107,25 @@ defmodule Yggdrasil.Subscriber.Generator do
   def unsubscribe(%Channel{} = channel, nil) do
     unsubscribe(channel, self())
   end
+
   def unsubscribe(%Channel{} = channel, pid) when is_pid(pid) do
     Manager.remove(channel, pid)
   catch
     :exit, {:timeout, _} ->
-    {:error, "Manager not available for unsubscriptions"}
+      {:error, "Manager not available for unsubscriptions"}
   end
 
   @doc false
   @spec stop_distributor(Channel.t()) :: :ok
   def stop_distributor(%Channel{} = channel) do
     name = {Distributor, channel}
+
     case @registry.whereis_name(name) do
       :undefined ->
         :ok
+
       pid ->
-        spawn fn -> Distributor.stop(pid) end
+        spawn(fn -> Distributor.stop(pid) end)
     end
   end
 

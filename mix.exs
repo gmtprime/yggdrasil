@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "4.1.1"
+  @version "4.1.2"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
@@ -9,8 +9,8 @@ defmodule Yggdrasil.Mixfile do
       app: :yggdrasil,
       version: @version,
       elixir: "~> 1.6",
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       name: "Yggdrasil",
       package: package(),
       deps: deps(),
@@ -23,20 +23,22 @@ defmodule Yggdrasil.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :skogsra],
       mod: {Yggdrasil.Application, []}
     ]
   end
 
   defp deps do
-    [{:exreg, "~> 0.0.3"},
-     {:phoenix_pubsub, "~> 1.0"},
-     {:poolboy, "~> 1.5"},
-     {:jason, "~> 1.0"},
-     {:skogsra, "~> 0.2"},
-     {:uuid, "~> 1.1", only: [:dev, :test]},
-     {:ex_doc, "~> 0.18.4", only: :dev},
-     {:credo, "~> 0.10", only: :dev}]
+    [
+      {:exreg, "~> 0.0.3"},
+      {:phoenix_pubsub, "~> 1.0"},
+      {:poolboy, "~> 1.5"},
+      {:jason, "~> 1.0"},
+      {:skogsra, "~> 1.0"},
+      {:uuid, "~> 1.1", only: [:dev, :test]},
+      {:ex_doc, "~> 0.18.4", only: :dev},
+      {:credo, "~> 0.10", only: :dev}
+    ]
   end
 
   #########
@@ -65,21 +67,21 @@ defmodule Yggdrasil.Mixfile do
       logo: "logo.png",
       main: Yggdrasil,
       formatters: ["html"],
-      groups_for_modules: groups_for_modules(),
+      groups_for_modules: groups_for_modules()
     ]
   end
 
   defp groups_for_modules do
     [
-      "Application": [
+      Application: [
         Yggdrasil.Settings,
         Yggdrasil.Application
       ],
-      "Channels": [
+      Channels: [
         Yggdrasil.Channel,
         Yggdrasil.Registry
       ],
-      "Adapters": [
+      Adapters: [
         Yggdrasil.Adapter,
         Yggdrasil.Adapter.Elixir
       ],
@@ -91,11 +93,11 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil.Publisher.Adapter,
         Yggdrasil.Publisher.Adapter.Elixir
       ],
-      "Backends": [
+      Backends: [
         Yggdrasil.Backend,
         Yggdrasil.Backend.Default
       ],
-      "Transformers": [
+      Transformers: [
         Yggdrasil.Transformer,
         Yggdrasil.Transformer.Default,
         Yggdrasil.Transformer.Json
