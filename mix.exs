@@ -23,7 +23,7 @@ defmodule Yggdrasil.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger, :skogsra],
+      extra_applications: [:logger],
       mod: {Yggdrasil.Application, []}
     ]
   end

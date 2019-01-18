@@ -2,6 +2,13 @@
 
 ## Highlights
 
+## v4.1.2
+
+### Enhancements
+
+  * Updated Skogsra.
+  * Added formatter.
+
 ## v4.1.1
 
 ### Bug fixes

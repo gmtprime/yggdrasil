@@ -1,6 +1,6 @@
 locals_without_parens = [
-  add_env: 3,
-  add_env: 4
+  app_env: 3,
+  app_env: 4
 ]
 
 [
