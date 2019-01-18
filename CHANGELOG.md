@@ -1,4 +1,4 @@
-# Changelog for 4.1.1
+# Changelog for 4.1.2
 
 ## Highlights
 
@@ -8,6 +8,8 @@
 
   * Updated Skogsra.
   * Added formatter.
+
+# Changelog for 4.1.1
 
 ## v4.1.1
 
