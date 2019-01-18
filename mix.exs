@@ -36,8 +36,8 @@ defmodule Yggdrasil.Mixfile do
       {:jason, "~> 1.0"},
       {:skogsra, "~> 1.0"},
       {:uuid, "~> 1.1", only: [:dev, :test]},
-      {:ex_doc, "~> 0.18.4", only: :dev},
-      {:credo, "~> 0.10", only: :dev}
+      {:ex_doc, "~> 0.18.0", only: :dev},
+      {:credo, "~> 1.0", only: :dev}
     ]
   end
 
