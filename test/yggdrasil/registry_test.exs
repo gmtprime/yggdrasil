@@ -126,7 +126,7 @@ defmodule Yggdrasil.RegistryTest do
                  adapter: :test_adapter,
                  transformer: :default,
                  backend: :default,
-                 namespace: Yggdrasil
+                 namespace: nil
                }
              } = Registry.get_full_channel(table, channel)
     end
