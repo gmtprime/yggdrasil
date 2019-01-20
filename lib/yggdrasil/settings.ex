@@ -1,19 +1,17 @@
 defmodule Yggdrasil.Settings do
   @moduledoc """
   This module defines the available settings for Yggdrasil.
+
+  Use `h Yggdrasil.Settings.<name of the environment variable>` to get more
+  information about every declaration in this file.
   """
   use Skogsra
 
   ############################
   # Yggdrasil process registry
 
-  @doc """
+  @envdoc """
   Process registry.
-
-  ```
-  config :yggdrasil,
-    process_registry: ExReg
-  ```
   """
   app_env :yggdrasil_process_registry, :yggdrasil, :process_registry,
     skip_system: true,
@@ -22,13 +20,8 @@ defmodule Yggdrasil.Settings do
   ############################
   # Yggdrasil registry options
 
-  @doc """
+  @envdoc """
   Module registry table name.
-
-  ```
-  config :yggdrasil,
-    module_registry: :yggdrasil_registry
-  ```
   """
   app_env :yggdrasil_module_registry, :yggdrasil, :module_registry,
     skip_system: true,
@@ -37,37 +30,22 @@ defmodule Yggdrasil.Settings do
   ################################
   # Yggdrasil distribution options
 
-  @doc """
+  @envdoc """
   Pub-sub adapter to use for channels. Default value is `Phoenix.PubSub.PG2`.
-
-  ```
-  config :yggdrasil,
-    pubsub_adapter: Phoenix.PubSub.PG2
-  ```
   """
   app_env :yggdrasil_pubsub_adapter, :yggdrasil, :pubsub_adapter,
     skip_system: true,
     default: Phoenix.PubSub.PG2
 
-  @doc """
+  @envdoc """
   Pub-sub name. By default is `Yggdrasil.PubSub`.
-
-  ```
-  config :yggdrasil,
-    pubsub_name: Yggdrasil.PubSub
-  ```
   """
   app_env :yggdrasil_pubsub_name, :yggdrasil, :pubsub_name,
     skip_system: true,
     default: Yggdrasil.PubSub
 
-  @doc """
+  @envdoc """
   Pub-sub options. By default are `[pool_size: 1]`.
-
-  ```
-  config :yggdrasil,
-    pubsub_options: [pool_size: 1]
-  ```
   """
   app_env :yggdrasil_pubsub_options, :yggdrasil, :pubsub_options,
     skip_system: true,
@@ -76,14 +54,9 @@ defmodule Yggdrasil.Settings do
   #############################
   # Yggdrasil publisher options
 
-  @doc """
+  @envdoc """
   Yggdrasil publisher options. This options are for `:poolboy`. Defaults to
   `[size: 5, max_overflow: 10]`.
-
-  ```
-  config :yggdrasil,
-    publisher_options: [size: 5, max_overflow: 10]
-  ```
   """
   app_env :yggdrasil_publisher_options, :yggdrasil, :publisher_options,
     skip_system: true,
