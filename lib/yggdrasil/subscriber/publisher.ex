@@ -52,15 +52,21 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   @doc """
   Notifies synchronously of a new `message` coming from a `channel_name` to a
-  `publisher`.
+  `publisher`. Optionally takes some `metadata`
   """
   @spec notify(
           publisher :: GenServer.name(),
           channel_name :: term(),
           message :: term()
         ) :: :ok | {:error, term()}
-  def notify(publisher, channel_name, message) do
-    GenServer.call(publisher, {:notify, channel_name, message})
+  @spec notify(
+          publisher :: GenServer.name(),
+          channel_name :: term(),
+          message :: term(),
+          metadata :: term()
+        ) :: :ok | {:error, term()}
+  def notify(publisher, channel_name, message, metadata \\ nil) do
+    GenServer.call(publisher, {:notify, channel_name, message, metadata})
   end
 
   #############################################################################
@@ -74,7 +80,7 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   @impl true
   def handle_call(
-        {:notify, channel_name, message},
+        {:notify, channel_name, message, metadata},
         _from,
         %Channel{} = channel
       ) do
@@ -82,7 +88,7 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
     result =
       with {:ok, decoded} <- Transformer.decode(real_channel, message) do
-        Backend.publish(real_channel, decoded)
+        Backend.publish(real_channel, decoded, metadata)
       end
 
     {:reply, result, channel}

@@ -66,11 +66,12 @@ defmodule Yggdrasil.Backend do
             ) :: :ok | {:error, term()}
 
   @doc """
-  Callback to publish a `message` in a `channel`.
+  Callback to publish a `message` in a `channel` with some `metadata`.
   """
   @callback publish(
               channel :: Channel.t(),
-              message :: term()
+              message :: term(),
+              metadata :: term()
             ) :: :ok | {:error, term()}
 
   @doc """
@@ -161,9 +162,10 @@ defmodule Yggdrasil.Backend do
       end
 
       @doc false
-      def publish(%Channel{} = channel, message) do
+      def publish(%Channel{} = channel, message, metadata) do
+        complete_channel = %Channel{channel | metadata: metadata}
         pubsub = Settings.yggdrasil_pubsub_name!()
-        real_message = {:Y_EVENT, channel, message}
+        real_message = {:Y_EVENT, complete_channel, message}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
       end
@@ -172,7 +174,7 @@ defmodule Yggdrasil.Backend do
                      unsubscribe: 1,
                      connected: 2,
                      disconnected: 2,
-                     publish: 2
+                     publish: 3
     end
   end
 
@@ -235,14 +237,15 @@ defmodule Yggdrasil.Backend do
   end
 
   @doc """
-  Generic publish `message` in a `channel`.
+  Generic publish `message` in a `channel` with some optional `metadata`.
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
-  def publish(channel, message)
+  @spec publish(Channel.t(), term(), term()) :: :ok | {:error, term()}
+  def publish(channel, message, metadata \\ nil)
 
-  def publish(%Channel{backend: backend} = channel, message) do
+  def publish(%Channel{backend: backend} = channel, message, metadata) do
     with {:ok, module} <- Reg.get_backend_module(backend) do
-      module.publish(channel, message)
+      module.publish(channel, message, metadata)
     end
   end
 end

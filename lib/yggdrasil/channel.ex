@@ -10,6 +10,7 @@ defmodule Yggdrasil.Channel do
     + `adapter` - Module where the adapter is defined or identifier.
     + `namespace` - Namespace of the adapter.
     + `backend` - Distributor backend.
+    + `metadata` - Metadata for the channel. Used internally.
   """
 
   @doc """
@@ -19,13 +20,15 @@ defmodule Yggdrasil.Channel do
             adapter: :elixir,
             transformer: nil,
             namespace: nil,
-            backend: nil
+            backend: nil,
+            metadata: nil
 
   @type t :: %__MODULE__{
           name: any(),
           adapter: module(),
           transformer: module(),
           namespace: atom(),
-          backend: module()
+          backend: module(),
+          metadata: term()
         }
 end

@@ -61,6 +61,7 @@ defmodule Yggdrasil do
     transformer: atom(), # Transformer's name.
     backend: atom(),     # Backend's name.
     namespace: atom()    # Adapter's configuration namespace.
+    metadata: term()     # Used internally to retrieve channel extra info.
   }
   ```
 
