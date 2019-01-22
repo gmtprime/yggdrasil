@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "4.1.5"
+  @version "4.1.6"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do

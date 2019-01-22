@@ -2,6 +2,7 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
   use ExUnit.Case, async: true
 
   alias Yggdrasil.Backend
+  alias Yggdrasil.Channel
   alias Yggdrasil.Subscriber.Publisher
 
   test "starts and stops the process correctly" do
@@ -14,14 +15,29 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
     assert_receive {:DOWN, ^ref, :process, ^publisher, :normal}
   end
 
-  test "Forwards a messages to the subscribers" do
+  test "Forwards a messages to the subscribers no metadata" do
     name = UUID.uuid4()
     {:ok, channel} = Yggdrasil.gen_channel(name: name)
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)
 
-    assert :ok = Publisher.notify(publisher, name, "message")
+    assert :ok = Publisher.notify(publisher, name, "message", nil)
     assert_receive {:Y_EVENT, ^channel, "message"}, 500
+
+    Backend.unsubscribe(channel)
+    Publisher.stop(publisher)
+  end
+
+  test "Forwards a messages to the subscribers with metadata" do
+    name = UUID.uuid4()
+    {:ok, channel} = Yggdrasil.gen_channel(name: name)
+    Backend.subscribe(channel)
+    {:ok, publisher} = Publisher.start_link(channel)
+
+    assert :ok = Publisher.notify(publisher, name, "message", :metadata)
+    assert_receive {:Y_EVENT, new_channel, "message"}, 500
+
+    assert ^new_channel = %Channel{channel | metadata: :metadata}
 
     Backend.unsubscribe(channel)
     Publisher.stop(publisher)

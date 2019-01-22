@@ -45,27 +45,22 @@ defmodule Yggdrasil.Subscriber.Publisher do
           channel :: Channel.t(),
           message :: term()
         ) :: :ok | {:error, term()}
-  def notify(%Channel{name: name} = channel, message) do
+  def notify(%Channel{name: name} = channel, message, metadata \\ nil) do
     publisher = {:via, @registry, {__MODULE__, channel}}
-    notify(publisher, name, message)
+    notify(publisher, name, message, metadata)
   end
 
   @doc """
   Notifies synchronously of a new `message` coming from a `channel_name` to a
-  `publisher`. Optionally takes some `metadata`
+  `publisher` with some `metadata`.
   """
-  @spec notify(
-          publisher :: GenServer.name(),
-          channel_name :: term(),
-          message :: term()
-        ) :: :ok | {:error, term()}
   @spec notify(
           publisher :: GenServer.name(),
           channel_name :: term(),
           message :: term(),
           metadata :: term()
         ) :: :ok | {:error, term()}
-  def notify(publisher, channel_name, message, metadata \\ nil) do
+  def notify(publisher, channel_name, message, metadata) do
     GenServer.call(publisher, {:notify, channel_name, message, metadata})
   end
 
