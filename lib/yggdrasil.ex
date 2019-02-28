@@ -8,15 +8,15 @@ defmodule Yggdrasil do
   `Yggdrasil` is an agnostic publisher/subscriber. Some of the available adapters
   are the following:
 
-    * [Redis](https://github.com/gmtprime/yggdrasil_redis)
+  * [Redis](https://github.com/gmtprime/yggdrasil_redis)
     (adapter's name `:redis`).
-    * [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
+  * [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
     (adapter's name `:rabbitmq`).
-    * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
+  * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
     (adapter's name `:postgres`).
-    * [Ethereum](https://github.com/etherharvest/yggdrasil_ethereum)
+  * [Ethereum](https://github.com/etherharvest/yggdrasil_ethereum)
     (adapter's name `:ethereum`).
-    * [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
+  * [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
     (adapter's name `:graphql`).
 
   For more information on how to use them, check the respective repository.
@@ -26,33 +26,33 @@ defmodule Yggdrasil do
   The following example uses the Elixir distribution to send the messages:
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{name: "channel"}
-  iex(2)> Yggdrasil.subscribe(channel)
-  iex(3)> flush()
-  {:Y_CONNECTED, %Yggdrasil.Channel{(...)}}
+  iex(1)> Yggdrasil.subscribe(name: "my_channel")
+  iex(2)> flush()
+  {:Y_CONNECTED, %Yggdrasil.Channel{...}}
   ```
 
   and to publish a for the subscribers:
 
   ```elixir
-  iex(4)> Yggdrasil.publish(channel, "message")
-  iex(5)> flush()
-  {:Y_EVENT, %Yggdrasil.Channel{(...)}, "message"}
+  iex(3)> Yggdrasil.publish([name: "my_channel"], "message")
+  iex(4)> flush()
+  {:Y_EVENT, %Yggdrasil.Channel{...}, "message"}
   ```
 
   When the subscriber wants to stop receiving messages, then it can unsubscribe
   from the channel:
 
   ```elixir
-  iex(6)> Yggdrasil.unsubscribe(channel)
+  iex(6)> Yggdrasil.unsubscribe(name: "my_channel")
   iex(7)> flush()
-  {:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}
+  {:Y_DISCONNECTED, %Yggdrasil.Channel{...}}
   ```
 
   ## Channels
 
-  The struct `%Yggdrasil.Channel{}` is used for subscription and message
-  publishing e.g:
+  Though a `Keyword` list or a map with the expected keys can be accepted as a
+  channel, the struct `%Yggdrasil.Channel{}` can also be used for subscription
+  and message publishing e.g:
 
   ```elixir
   %Yggdrasil.Channel{
@@ -67,25 +67,25 @@ defmodule Yggdrasil do
 
   ## Adapters
 
-  An adapter is a process that connects to a service and distributes its messages
-  among the subscribers of a channel. The following repositories have some of the
-  available adapters:
+  An adapter is a process that connects to a service and distributes its
+  messages among the subscribers of a channel. The following repositories have
+  some of the available adapters:
 
-    * [RabbitMQ adapter](https://github.com/gmtprime/yggdrasil_rabbitmq):
+  * [RabbitMQ adapter](https://github.com/gmtprime/yggdrasil_rabbitmq):
     Fault-tolerant RabbitMQ adapter that handles exchange subscriptions and
     message distribution among subscribers. The name of the adapter is
-    `:rabbitmq`.
-    * [Redis adapter](https://github.com/gmtprime/yggdrasil_redis):
+  `:rabbitmq`.
+  * [Redis adapter](https://github.com/gmtprime/yggdrasil_redis):
     Fault-tolerant Redis adapter that handles channel subscriptions and
     message distribution among subscribers. The name of the adapter is `:redis`.
-    * [PostgreSQL adapter](https://github.com/gmtprime/yggdrasil_postgres):
+  * [PostgreSQL adapter](https://github.com/gmtprime/yggdrasil_postgres):
     Fault-tolerant Postgres adapter that handles channel subscriptions and
     message distribution among subscribers. The name of the adapter is
-    `:postgres`.
-    * [Ethereum adapter](https://github.com/etherharvest/yggdrasil_ethereum):
+  `:postgres`.
+  * [Ethereum adapter](https://github.com/etherharvest/yggdrasil_ethereum):
     Fault-tolerant Ethereum adapter that handles channel subscriptions to
     Solidity contracts. The name of the adapter is `:ethereum`.
-    * [GraphQL adapter](https://github.com/etherharvest/yggdrasil_graphql):
+  * [GraphQL adapter](https://github.com/etherharvest/yggdrasil_graphql):
     Fault-tolerant adapter that bridges GraphQL subscriptions with Yggdrasil
     subscriptions in any adapter. The name of the adapter is `:graphql`.
 
@@ -97,14 +97,14 @@ defmodule Yggdrasil do
   A transformer is the implementation of the behaviour `Yggdrasil.Transformer`.
   In essence implements two functions:
 
-    * `decode/2` for decoding messages coming from the adapter.
-    * `encode/2` for encoding messages going to the adapter
+  * `decode/2` for decoding messages coming from the adapter.
+  * `encode/2` for encoding messages going to the adapter
 
   `Yggdrasil` has two implemented transformers:
 
-    * `:default` - Does nothing to the messages and it is the default
-    transformer used if no transformer has been defined.
-    * `:json` - Transforms from Elixir maps to string JSONs and viceversa.
+  * `:default` - Does nothing to the messages and it is the default transformer
+    used if no transformer has been defined.
+  * `:json` - Transforms from Elixir maps to string JSONs and viceversa.
 
   ## Backends
 
@@ -116,33 +116,34 @@ defmodule Yggdrasil do
 
   The messages received by the subscribers when using `:default` backend are:
 
-    * `{:Y_CONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
+  * `{:Y_CONNECTED, %Yggdrasil.Channel{...}}` when the connection with the
     adapter is established.
-    * `{:Y_EVENT, %Yggdrasil.Channel{(...)}, term()}` when a message is received
+  * `{:Y_EVENT, %Yggdrasil.Channel{...}, term()}` when a message is received
     from the adapter.
-    * `{:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
+  * `{:Y_DISCONNECTED, %Yggdrasil.Channel{...}}` when the connection with the
     adapter is finished due to disconnection or unsubscription.
 
   ## Configuration
 
-  `Yggdrasil` works out of the box with no special configuration at all. However,
-  it is possible to configure the publisher. `Yggdrasil` uses `Phoenix.PubSub`
-  for message distribution and the following are the available options:
+  `Yggdrasil` works out of the box with no special configuration at all.
+  However, it is possible to configure the publisher. `Yggdrasil` uses
+  `Phoenix.PubSub` for message distribution and the following are the available
+  options:
 
-    * `pubsub_adapter` - `Phoenix.PubSub` adapter (defaults to
-      `Phoenix.PubSub.PG2`).
-    * `pubsub_name` - Name of the `Phoenix.PubSub` adapter (defaults to
-      `Yggdrasil.PubSub`).
-    * `pubsub_options` - Options of the `Phoenix.PubSub` adapter (defaults
-      to `[pool_size: 1]`).
+  * `pubsub_adapter` - `Phoenix.PubSub` adapter (defaults to
+    `Phoenix.PubSub.PG2`).
+  * `pubsub_name` - Name of the `Phoenix.PubSub` adapter (defaults to
+    `Yggdrasil.PubSub`).
+  * `pubsub_options` - Options of the `Phoenix.PubSub` adapter (defaults
+    to `[pool_size: 1]`).
 
   The rest of the options are for configuring the publishers and process name
   registry:
 
-    * `publisher_options` - `Poolboy` options for publishing. Controls the amount
-      of connections established with the adapter service (defaults to
-      `[size: 5, max_overflow: 10]`).
-    * `registry` - Process name registry (defaults to`ExReg`).
+  * `publisher_options` - `Poolboy` options for publishing. Controls the
+    amount of connections established with the adapter service (defaults to
+    `[size: 5, max_overflow: 10]`).
+  * `registry` - Process name registry (defaults to`ExReg`).
 
   For more information about configuration using OS environment variables check
   the module `Yggdrasil.Settings`.

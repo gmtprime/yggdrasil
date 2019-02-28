@@ -7,6 +7,4 @@
 /log
 erl_crash.dump
 *.ez
-*.swp
-.env
-ttyrecord
+.*
