@@ -1,8 +1,8 @@
 defmodule Yggdrasil.Application do
-  @moduledoc """
-  Module that defines an `Yggdrasil` application.
-  """
+  @moduledoc false
   use Application
+
+  # TODO Improve children tree with ExReg names.
 
   alias Yggdrasil.Settings
 

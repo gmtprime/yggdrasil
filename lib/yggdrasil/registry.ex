@@ -4,6 +4,17 @@ defmodule Yggdrasil.Registry do
   """
   use Agent
 
+  # PG2 : {:"$yggdrasil_registry", :transformer, name} : pid => node
+  # PG2 : {:"$yggdrasil_registry", :backend, name}     : pid => node
+  # PG2 : {:"$yggdrasil_registry", :adapter, name}     : pid => node
+  #
+  # ETS : {:transformer, name} : module
+  # ETS : {:backend, name}     : module
+  # ETS : {:subscriber, name}  : module
+  # ETS : {:publisher, name}   : module
+  #
+  # :rpc.call(node, module, <function>, [<arg>, ...])
+
   alias Yggdrasil.Channel
   alias Yggdrasil.Settings
 
