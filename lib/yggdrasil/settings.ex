@@ -7,6 +7,16 @@ defmodule Yggdrasil.Settings do
   """
   use Skogsra
 
+  ###########################
+  # Yggdrasil module registry
+
+  @envdoc """
+  Module registry.
+  """
+  app_env :module_registry, :yggdrasil, :module_registry,
+    skip_system: true,
+    default: :"$yggdrasil_registry"
+
   ############################
   # Yggdrasil process registry
 
