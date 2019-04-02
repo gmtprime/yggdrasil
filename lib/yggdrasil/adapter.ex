@@ -57,7 +57,8 @@ defmodule Yggdrasil.Adapter do
   `MyAdapter`. If the module does not exist, then defaults to `:elixir`.
   """
   defmacro __using__(options) do
-    adapter_alias = Keyword.get(options, :name)
+    adapter_alias =
+      options[:name] || raise ArgumentError, message: "adapter alias not found"
     transformer_alias = Keyword.get(options, :transformer, :default)
     backend_alias = Keyword.get(options, :backend, :default)
 
@@ -78,14 +79,11 @@ defmodule Yggdrasil.Adapter do
       @doc """
       Registers adapter in `Registry`.
       """
-      @spec register() :: :ok | no_return()
+      @spec register() :: :ok
       def register do
         name = unquote(adapter_alias)
 
-        case Registry.register_adapter(name, __MODULE__) do
-          :ok -> :ok
-          :error -> exit(:error)
-        end
+        Registry.register_adapter(name, __MODULE__)
       end
 
       @doc """

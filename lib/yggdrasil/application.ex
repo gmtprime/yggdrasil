@@ -2,17 +2,15 @@ defmodule Yggdrasil.Application do
   @moduledoc false
   use Application
 
-  # TODO Improve children tree with ExReg names.
-
   alias Yggdrasil.Settings
 
   @impl true
   def start(_type, _args) do
-    adapter = Settings.yggdrasil_pubsub_adapter!()
+    adapter = Settings.pubsub_adapter!()
 
     options =
-      Settings.yggdrasil_pubsub_options!()
-      |> Keyword.put(:name, Settings.yggdrasil_pubsub_name!())
+      Settings.pubsub_options!()
+      |> Keyword.put(:name, Settings.pubsub_name!())
 
     children = [
       # Core
@@ -31,7 +29,7 @@ defmodule Yggdrasil.Application do
         },
         type: :supervisor
       ),
-      Supervisor.child_spec({Yggdrasil.Registry, []}, []),
+      Supervisor.child_spec({Yggdrasil.Registry, [name: Yggdrasil.Registry]}, []),
       Supervisor.child_spec({Yggdrasil.Backend.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Default, []}, []),
       Supervisor.child_spec({Yggdrasil.Transformer.Json, []}, []),

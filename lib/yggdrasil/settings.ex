@@ -27,37 +27,27 @@ defmodule Yggdrasil.Settings do
     skip_system: true,
     default: ExReg
 
-  ############################
-  # Yggdrasil registry options
-
-  @envdoc """
-  Module registry table name.
-  """
-  app_env :yggdrasil_module_registry, :yggdrasil, :module_registry,
-    skip_system: true,
-    default: :yggdrasil_registry
-
   ################################
   # Yggdrasil distribution options
 
   @envdoc """
-  Pub-sub adapter to use for channels. Default value is `Phoenix.PubSub.PG2`.
+  Pub-sub adapter to use for channels.
   """
-  app_env :yggdrasil_pubsub_adapter, :yggdrasil, :pubsub_adapter,
+  app_env :pubsub_adapter, :yggdrasil, :pubsub_adapter,
     skip_system: true,
     default: Phoenix.PubSub.PG2
 
   @envdoc """
-  Pub-sub name. By default is `Yggdrasil.PubSub`.
+  Pub-sub name.
   """
-  app_env :yggdrasil_pubsub_name, :yggdrasil, :pubsub_name,
+  app_env :pubsub_name, :yggdrasil, :pubsub_name,
     skip_system: true,
     default: Yggdrasil.PubSub
 
   @envdoc """
-  Pub-sub options. By default are `[pool_size: 1]`.
+  Pub-sub options.
   """
-  app_env :yggdrasil_pubsub_options, :yggdrasil, :pubsub_options,
+  app_env :pubsub_options, :yggdrasil, :pubsub_options,
     skip_system: true,
     default: [pool_size: 1]
 

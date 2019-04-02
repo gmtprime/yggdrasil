@@ -3,37 +3,37 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   Yggdrasil subscriber adapter for Elixir. The name of the channel can be any
   arbitrary term e.g:
 
-  Subscription to channel:
+  First we subscribe to a channel:
 
   ```
-  iex(2)> channel = %Yggdrasil.Channel{name: "elixir_channel"}
-  iex(3)> Yggdrasil.subscribe(channel)
+  iex> channel = [name: "elixir_channel"]
+  iex> Yggdrasil.subscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
+  iex> flush()
+  {:Y_CONNECTED, ...}
   ```
 
-  Publishing message:
+  Once connected, you can publish a message in that channel:
 
   ```
-  iex(5)> Yggdrasil.publish(channel, "foo")
+  iex> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
-  Subscriber receiving message:
+  And the subscriber should receive the message:
 
   ```
-  iex(6)> flush()
-  {:Y_EVENT, %Yggdrasil.Channel{name: "elixir_channel", (...)}, "foo"}
+  iex> flush()
+  {:Y_EVENT, ..., "foo"}
   ```
 
-  The subscriber can also unsubscribe from the channel:
+  Additionally, the subscriber can also unsubscribe from the channel:
 
   ```
-  iex(7)> Yggdrasil.unsubscribe(channel)
+  iex> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(8)> flush()
-  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
+  iex> flush()
+  {:Y_DISCONNECTED, ...}
   ```
   """
   use Yggdrasil.Subscriber.Adapter
@@ -46,28 +46,28 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  defstruct [:channel, :conn]
+  defstruct [:external, :internal]
   alias __MODULE__, as: State
 
   ####################
   # GenServer callback
 
-  @impl true
-  def init(%{channel: %Channel{name: name} = channel} = arguments) do
-    state = struct(State, arguments)
-    conn = %Channel{channel | name: {:elixir, name}}
-    Backend.subscribe(conn)
-    Manager.connected(channel)
-    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
-    {:ok, %State{state | conn: conn}}
+  @impl GenServer
+  def init(%{channel: %Channel{name: name} = external}) do
+    internal = %Channel{external | name: {:"$yggdrasil_elixir", name}}
+    state = %State{external: external, internal: internal}
+
+    Backend.subscribe(internal)
+    Manager.connected(external)
+
+    Logger.debug("Started #{__MODULE__} for #{inspect(external)}")
+
+    {:ok, state}
   end
 
-  @impl true
-  def handle_info(
-        {:Y_EVENT, _, message},
-        %State{channel: %Channel{} = channel} = state
-      ) do
-    Publisher.notify(channel, message)
+  @impl GenServer
+  def handle_info({:Y_EVENT, _, message}, %State{external: external} = state) do
+    Publisher.notify(external, message)
     {:noreply, state}
   end
 
@@ -75,19 +75,19 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     {:noreply, state}
   end
 
-  @impl true
-  def terminate(:normal, %State{channel: channel, conn: conn}) do
-    Backend.unsubscribe(conn)
-    Manager.disconnected(channel)
-    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect(channel)}" end)
+  @impl GenServer
+  def terminate(:normal, %State{external: external, internal: internal}) do
+    Backend.unsubscribe(internal)
+    Manager.disconnected(external)
+    Logger.debug("Stopped #{__MODULE__} for #{inspect(external)}")
   end
 
-  def terminate(reason, %State{channel: channel, conn: conn}) do
-    Backend.unsubscribe(conn)
-    Manager.disconnected(channel)
+  def terminate(reason, %State{external: external, internal: internal}) do
+    Backend.unsubscribe(internal)
+    Manager.disconnected(external)
 
-    Logger.warn(fn ->
-      "Stopped #{__MODULE__} for #{inspect(channel)} due to #{inspect(reason)}"
-    end)
+    Logger.warn(
+      "Stopped #{__MODULE__} for #{inspect(external)} due to #{inspect(reason)}"
+    )
   end
 end

@@ -6,11 +6,11 @@ defmodule Yggdrasil.Backend.Default do
   This module contains helper functions used by the adapters to broadcast their
   messages. The possible messages are:
 
-    - `{:Y_CONNECTED, Channel.()}`: When a subscriber connects to a channel
+    - `{:Y_CONNECTED, Channel.t()}`: When a subscriber connects to a channel
     successfully. See `connected/2` function.
     - `{:Y_DISCONNECTED, Channel.()}`; When a subscriber disconnects from
     a channel successfully. See `disconnected/2` function.
-    - `{:Y_EVENT, Channel.t(), message()} when message: term()`: When a
+    - `{:Y_EVENT, Channel.t(), term()} when message: term()`: When a
     subscriber gets a new messages from the adapter. See `publish/2` function.
   """
   use Yggdrasil.Backend, name: :default

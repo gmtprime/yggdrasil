@@ -1,12 +1,12 @@
-defmodule Yggdrasil.Adapter.Elixir do
+defmodule Yggdrasil.Adapter.Bridge do
   @moduledoc """
-  Yggdrasil adapter for Elixir. The name of the channel can be any arbitrary
-  term e.g:
+  Yggdrasil bridge adapter. The name of the channel is a valid remote
+  Yggdrasil.Channel e.g:
 
   First we subscribe to a channel:
 
   ```
-  iex> channel = [name: "elixir_channel"]
+  iex> channel = [name: [name: "remote_channel"], adapter: :bridge]
   iex> Yggdrasil.subscribe(channel)
   :ok
   iex> flush()
@@ -36,5 +36,5 @@ defmodule Yggdrasil.Adapter.Elixir do
   {:Y_DISCONNECTED, ...}
   ```
   """
-  use Yggdrasil.Adapter, name: :elixir
+  use Yggdrasil.Adapter, name: :bridge
 end

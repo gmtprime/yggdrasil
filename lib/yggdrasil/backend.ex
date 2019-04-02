@@ -34,8 +34,12 @@ defmodule Yggdrasil.Backend do
   %Channel{name: "my_channel", backend: :my_backend}
   ```
   """
+  alias __MODULE__
+  alias Phoenix.PubSub
   alias Yggdrasil.Channel
-  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Registry
+  alias Yggdrasil.Settings
+  alias Yggdrasil.Subscriber.Manager
 
   @doc """
   Callback to define the subscription method. Receives the `channel`.
@@ -51,19 +55,15 @@ defmodule Yggdrasil.Backend do
   Callback to publish the connected message in the `channel`. Receives a `pid`
   in case the message shouldn't be broadcasted.
   """
-  @callback connected(
-              channel :: Channel.t(),
-              pid :: atom() | pid()
-            ) :: :ok | {:error, term()}
+  @callback connected(channel :: Channel.t(), pid :: atom() | pid()) ::
+              :ok | {:error, term()}
 
   @doc """
   Callback to publish the disconnected message in the `channel`. Receives a
   `pid` in case the message shouldn't be broadcasted.
   """
-  @callback disconnected(
-              channel :: Channel.t(),
-              pid :: atom() | pid()
-            ) :: :ok | {:error, term()}
+  @callback disconnected(channel :: Channel.t(), pid :: atom() | pid()) ::
+              :ok | {:error, term()}
 
   @doc """
   Callback to publish a `message` in a `channel` with some `metadata`.
@@ -81,51 +81,57 @@ defmodule Yggdrasil.Backend do
   - `:name` - Name of the backend. Must be an atom.
   """
   defmacro __using__(options) do
-    backend_alias = Keyword.get(options, :name)
+    backend_alias =
+      options[:name] || raise ArgumentError, message: "Backend not found"
 
     quote do
       @behaviour Yggdrasil.Backend
-      alias Phoenix.PubSub
-      alias Yggdrasil.Backend
-      alias Yggdrasil.Channel
-      alias Yggdrasil.Registry, as: Reg
-      alias Yggdrasil.Settings
-      alias Yggdrasil.Subscriber.Manager
 
       use Task, restart: :transient
 
-      @doc false
+      @doc """
+      Start task to register the backend in the `Registry`.
+      """
+      @spec start_link(term()) :: {:ok, pid()}
       def start_link(_) do
         Task.start_link(__MODULE__, :register, [])
       end
 
-      @doc false
+      @doc """
+      Registers backend in `Registry`.
+      """
+      @spec register() :: :ok
       def register do
         name = unquote(backend_alias)
 
-        with :ok <- Reg.register_backend(name, __MODULE__) do
-          :ok
-        else
-          :error ->
-            exit(:error)
-        end
+        Registry.register_backend(name, __MODULE__)
       end
 
-      @doc false
+      @doc """
+      Subscribes to `channel`.
+      """
+      @spec subscribe(Channel.t()) :: :ok | {:error, term()}
+      def subscribe(channel)
+
       def subscribe(%Channel{} = channel) do
         if Manager.subscribed?(channel) do
           :ok
         else
-          pubsub = Settings.yggdrasil_pubsub_name!()
+          pubsub = Settings.pubsub_name!()
           channel_name = Backend.transform_name(channel)
           PubSub.subscribe(pubsub, channel_name)
         end
       end
 
-      @doc false
+      @doc """
+      Unsubscribe to `channel`.
+      """
+      @spec unsubscribe(Channel.t()) :: :ok | {:error, term()}
+      def unsubscribe(channel)
+
       def unsubscribe(%Channel{} = channel) do
         if Manager.subscribed?(channel) do
-          pubsub = Settings.yggdrasil_pubsub_name!()
+          pubsub = Settings.pubsub_name!()
           channel_name = Backend.transform_name(channel)
           PubSub.unsubscribe(pubsub, channel_name)
         else
@@ -133,9 +139,14 @@ defmodule Yggdrasil.Backend do
         end
       end
 
-      @doc false
+      @doc """
+      Broadcast a connection message in a `channel` and optionally to a `pid`.
+      """
+      @spec connected(Channel.t(), nil | pid()) :: :ok | {:error, term()}
+      def connected(channel, pid)
+
       def connected(%Channel{} = channel, nil) do
-        pubsub = Settings.yggdrasil_pubsub_name!()
+        pubsub = Settings.pubsub_name!()
         real_message = {:Y_CONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
@@ -147,9 +158,15 @@ defmodule Yggdrasil.Backend do
         :ok
       end
 
-      @doc false
+      @doc """
+      Broadcast a disconnection message in a `channel` and optionally to a
+      `pid`.
+      """
+      @spec disconnected(Channel.t(), nil | pid()) :: :ok | {:error, term()}
+      def disconnected(channel, pid)
+
       def disconnected(%Channel{} = channel, nil) do
-        pubsub = Settings.yggdrasil_pubsub_name!()
+        pubsub = Settings.pubsub_name!()
         real_message = {:Y_DISCONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
@@ -161,10 +178,15 @@ defmodule Yggdrasil.Backend do
         :ok
       end
 
-      @doc false
+      @doc """
+      Broadcasts a `message` in a `channel` with some `metadata`.
+      """
+      @spec publish(Channel.t(), term(), term()) :: :ok | {:error, term()}
+      def publish(channel, message, metadata)
+
       def publish(%Channel{} = channel, message, metadata) do
         complete_channel = %Channel{channel | metadata: metadata}
-        pubsub = Settings.yggdrasil_pubsub_name!()
+        pubsub = Settings.pubsub_name!()
         real_message = {:Y_EVENT, complete_channel, message}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
@@ -178,8 +200,12 @@ defmodule Yggdrasil.Backend do
     end
   end
 
-  @doc false
+  @doc """
+  Transforms name of the `channel` to a `binary`.
+  """
   @spec transform_name(Channel.t()) :: binary()
+  def transform_name(channel)
+
   def transform_name(%Channel{} = channel) do
     channel
     |> :erlang.phash2()
@@ -193,7 +219,7 @@ defmodule Yggdrasil.Backend do
   def subscribe(channel)
 
   def subscribe(%Channel{backend: backend} = channel) do
-    with {:ok, module} <- Reg.get_backend_module(backend) do
+    with {:ok, module} <- Registry.get_backend_module(backend) do
       module.subscribe(channel)
     end
   end
@@ -205,7 +231,7 @@ defmodule Yggdrasil.Backend do
   def unsubscribe(channel)
 
   def unsubscribe(%Channel{backend: backend} = channel) do
-    with {:ok, module} <- Reg.get_backend_module(backend) do
+    with {:ok, module} <- Registry.get_backend_module(backend) do
       module.unsubscribe(channel)
     end
   end
@@ -215,10 +241,11 @@ defmodule Yggdrasil.Backend do
   the `pid` of the specific subscriber.
   """
   @spec connected(Channel.t()) :: :ok | {:error, term()}
+  @spec connected(Channel.t(), nil | pid()) :: :ok | {:error, term()}
   def connected(channel, pid \\ nil)
 
   def connected(%Channel{backend: backend} = channel, pid) do
-    with {:ok, module} <- Reg.get_backend_module(backend) do
+    with {:ok, module} <- Registry.get_backend_module(backend) do
       module.connected(channel, pid)
     end
   end
@@ -228,10 +255,11 @@ defmodule Yggdrasil.Backend do
   the `pid` of the specific subscriber.
   """
   @spec disconnected(Channel.t()) :: :ok | {:error, term()}
+  @spec disconnected(Channel.t(), nil | pid()) :: :ok | {:error, term()}
   def disconnected(channel, pid \\ nil)
 
   def disconnected(%Channel{backend: backend} = channel, pid) do
-    with {:ok, module} <- Reg.get_backend_module(backend) do
+    with {:ok, module} <- Registry.get_backend_module(backend) do
       module.disconnected(channel, pid)
     end
   end
@@ -244,7 +272,7 @@ defmodule Yggdrasil.Backend do
   def publish(channel, message, metadata \\ nil)
 
   def publish(%Channel{backend: backend} = channel, message, metadata) do
-    with {:ok, module} <- Reg.get_backend_module(backend) do
+    with {:ok, module} <- Registry.get_backend_module(backend) do
       module.publish(channel, message, metadata)
     end
   end

@@ -3,37 +3,37 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   Yggdrasil publisher adapter for Elixir. The name of the channel can be any
   arbitrary term e.g:
 
-  Subscription to channel:
+  First we subscribe to a channel:
 
   ```
-  iex(2)> channel = %Yggdrasil.Channel{name: "elixir_channel"}
-  iex(3)> Yggdrasil.subscribe(channel)
+  iex> channel = [name: "elixir_channel"]
+  iex> Yggdrasil.subscribe(channel)
   :ok
-  iex(4)> flush()
-  {:Y_CONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
+  iex> flush()
+  {:Y_CONNECTED, ...}
   ```
 
-  Publishing message:
+  Once connected, you can publish a message in that channel:
 
   ```
-  iex(5)> Yggdrasil.publish(channel, "foo")
+  iex> Yggdrasil.publish(channel, "foo")
   :ok
   ```
 
-  Subscriber receiving message:
+  And the subscriber should receive the message:
 
   ```
-  iex(6)> flush()
-  {:Y_EVENT, %Yggdrasil.Channel{name: "elixir_channel", (...)}, "foo"}
+  iex> flush()
+  {:Y_EVENT, ..., "foo"}
   ```
 
-  The subscriber can also unsubscribe from the channel:
+  Additionally, the subscriber can also unsubscribe from the channel:
 
   ```
-  iex(7)> Yggdrasil.unsubscribe(channel)
+  iex> Yggdrasil.unsubscribe(channel)
   :ok
-  iex(8)> flush()
-  {:Y_DISCONNECTED, %Yggdrasil.Channel{name: "elixir_channel", (...)}}
+  iex> flush()
+  {:Y_DISCONNECTED, ...}
   ```
   """
   use Yggdrasil.Publisher.Adapter
@@ -46,14 +46,12 @@ defmodule Yggdrasil.Publisher.Adapter.Elixir do
   ####################
   # GenServer callback
 
-  @impl true
-  def init(_) do
-    {:ok, nil}
-  end
+  @impl GenServer
+  def init(_), do: {:ok, nil}
 
-  @impl true
+  @impl GenServer
   def handle_call({:publish, %Channel{name: name} = channel, message}, _, _) do
-    stream = %Channel{channel | name: {:elixir, name}}
+    stream = %Channel{channel | name: {:"$yggdrasil_elixir", name}}
 
     result =
       with {:ok, encoded} <- Transformer.encode(stream, message) do
