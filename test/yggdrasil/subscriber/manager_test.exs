@@ -4,8 +4,6 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Manager
 
-  @registry Settings.yggdrasil_process_registry!()
-
   describe "join/2" do
     setup do
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
@@ -411,7 +409,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
   describe "add/2" do
     setup do
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
-      via_tuple = {:via, @registry, {Manager, channel}}
+      via_tuple = ExReg.local({Manager, channel})
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       {:ok, %{channel: channel}}
     end
@@ -439,7 +437,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     setup do
       pid = self()
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
-      via_tuple = {:via, @registry, {Manager, channel}}
+      via_tuple = ExReg.local({Manager, channel})
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
       {:ok, %{channel: channel}}
@@ -467,7 +465,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     setup do
       pid = self()
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
-      via_tuple = {:via, @registry, {Manager, channel}}
+      via_tuple = ExReg.local({Manager, channel})
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
       {:ok, %{channel: channel}}
@@ -486,7 +484,7 @@ defmodule Yggdrasil.Subscriber.ManagerTest do
     setup do
       pid = self()
       {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
-      via_tuple = {:via, @registry, {Manager, channel}}
+      via_tuple = ExReg.local({Manager, channel})
       {:ok, _} = Manager.start_link(channel, name: via_tuple)
       :ok = Manager.add(channel, pid)
       :ok = Manager.connected(channel)

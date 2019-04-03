@@ -108,6 +108,14 @@ defmodule Yggdrasil.Registry do
   end
 
   @doc """
+  Gets adapter node by `name`.
+  """
+  @spec get_adapter_node(atom()) :: {:ok, node()} | {:error, term()}
+  def get_adapter_node(name) do
+    get_adapter_node(@module_registry, name)
+  end
+
+  @doc """
   Gets full channel.
   """
   @spec get_full_channel(Channel.t()) ::

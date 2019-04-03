@@ -9,13 +9,11 @@ defmodule Yggdrasil.Subscriber.AdapterTest do
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  @registry Settings.yggdrasil_process_registry!()
-
   test "start and stop" do
     {:ok, channel} = Registry.get_full_channel(%Channel{name: UUID.uuid4()})
     Backend.subscribe(channel)
-    publisher = {:via, @registry, {Publisher, channel}}
-    manager = {:via, @registry, {Manager, channel}}
+    publisher = ExReg.local({Publisher, channel})
+    manager = ExReg.local({Manager, channel})
     assert {:ok, _} = Publisher.start_link(channel, name: publisher)
     assert {:ok, _} = Manager.start_link(channel, name: manager)
     :ok = Manager.add(channel, self())
@@ -31,8 +29,8 @@ defmodule Yggdrasil.Subscriber.AdapterTest do
     name = UUID.uuid4()
     {:ok, channel} = Registry.get_full_channel(%Channel{name: name})
     Backend.subscribe(channel)
-    publisher = {:via, @registry, {Publisher, channel}}
-    manager = {:via, @registry, {Manager, channel}}
+    publisher = ExReg.local({Publisher, channel})
+    manager = ExReg.local({Manager, channel})
     assert {:ok, _} = Publisher.start_link(channel, name: publisher)
     assert {:ok, _} = Manager.start_link(channel, name: manager)
     :ok = Manager.add(channel, self())

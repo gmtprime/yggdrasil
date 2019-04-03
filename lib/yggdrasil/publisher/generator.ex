@@ -6,9 +6,6 @@ defmodule Yggdrasil.Publisher.Generator do
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Publisher
-  alias Yggdrasil.Settings
-
-  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -43,9 +40,9 @@ defmodule Yggdrasil.Publisher.Generator do
     channel = %Channel{channel | name: nil}
     name = {Publisher, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
-        via_tuple = {:via, @registry, name}
+        via_tuple = ExReg.local(name)
 
         spec = %{
           id: via_tuple,

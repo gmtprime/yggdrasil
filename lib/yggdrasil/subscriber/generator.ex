@@ -5,11 +5,8 @@ defmodule Yggdrasil.Subscriber.Generator do
   use DynamicSupervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Distributor
   alias Yggdrasil.Subscriber.Manager
-
-  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -54,7 +51,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   def subscribe(%Channel{} = channel, pid, options) when is_pid(pid) do
     name = {Distributor, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         generator = Keyword.get(options, :name, __MODULE__)
         start_distributor(generator, channel, pid)
@@ -68,8 +65,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   @spec start_distributor(Supervisor.name(), Channel.t(), pid()) ::
           :ok | {:error, term()}
   def start_distributor(generator, %Channel{} = channel, pid) do
-    name = {Distributor, channel}
-    via_tuple = {:via, @registry, name}
+    via_tuple = ExReg.local({Distributor, channel})
 
     spec = %{
       id: via_tuple,
@@ -120,7 +116,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   def stop_distributor(%Channel{} = channel) do
     name = {Distributor, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         :ok
 

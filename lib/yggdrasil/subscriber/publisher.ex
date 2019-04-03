@@ -6,12 +6,9 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   alias Yggdrasil.Backend
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Transformer
 
   require Logger
-
-  @registry Settings.yggdrasil_process_registry!()
 
   #############################################################################
   # Client API.
@@ -46,7 +43,7 @@ defmodule Yggdrasil.Subscriber.Publisher do
           message :: term()
         ) :: :ok | {:error, term()}
   def notify(%Channel{name: name} = channel, message, metadata \\ nil) do
-    publisher = {:via, @registry, {__MODULE__, channel}}
+    publisher = ExReg.local({__MODULE__, channel})
     notify(publisher, name, message, metadata)
   end
 

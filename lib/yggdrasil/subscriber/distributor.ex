@@ -6,15 +6,12 @@ defmodule Yggdrasil.Subscriber.Distributor do
   use Supervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Adapter
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  @registry Settings.yggdrasil_process_registry!()
-
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts the supervisor and its children using the `channel` as part of the
@@ -48,14 +45,14 @@ defmodule Yggdrasil.Subscriber.Distributor do
     Supervisor.stop(supervisor)
   end
 
-  #############################################################################
-  # Supervisor callback.
+  #####################
+  # Supervisor callback
 
   @impl true
   def init([%Channel{} = channel, pid]) do
-    manager_name = {:via, @registry, {Manager, channel}}
-    publisher_name = {:via, @registry, {Publisher, channel}}
-    adapter_name = {:via, @registry, {Adapter, channel}}
+    manager_name = ExReg.local({Manager, channel})
+    publisher_name = ExReg.local({Publisher, channel})
+    adapter_name = ExReg.local({Adapter, channel})
 
     children = [
       %{
