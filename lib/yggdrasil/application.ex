@@ -17,7 +17,8 @@ defmodule Yggdrasil.Application do
       {Yggdrasil.Backend.Default, []},
       {Yggdrasil.Transformer.Default, []},
       {Yggdrasil.Transformer.Json, []},
-      {Yggdrasil.Adapter.Elixir, []}
+      {Yggdrasil.Adapter.Elixir, []},
+      {Yggdrasil.Adapter.Bridge, []}
     ]
 
     options = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]

@@ -162,7 +162,7 @@ defmodule Yggdrasil do
   alias Yggdrasil.Channel
   alias Yggdrasil.Publisher
   alias Yggdrasil.Publisher.Generator, as: PublisherGen
-  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Registry
   alias Yggdrasil.Subscriber.Generator, as: SubscriberGen
 
   ######################
@@ -224,7 +224,7 @@ defmodule Yggdrasil do
   def gen_channel(data)
 
   def gen_channel(%Channel{} = channel) do
-    Reg.get_full_channel(channel)
+    Registry.get_full_channel(channel)
   end
 
   def gen_channel(data) when is_list(data) or is_map(data) do
