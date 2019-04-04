@@ -15,7 +15,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   Starts a distributor generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link(Supervisor.options()) :: Supervisor.on_start()
+  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
   def start_link(options \\ []) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
@@ -23,7 +23,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   @doc """
   Stops a distributor `generator`.
   """
-  @spec stop(Supervisor.name()) :: :ok
+  @spec stop(Supervisor.supervisor()) :: :ok
   def stop(generator) do
     for {_, pid, _, _} <- Supervisor.which_children(generator) do
       try do
@@ -62,7 +62,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   end
 
   @doc false
-  @spec start_distributor(Supervisor.name(), Channel.t(), pid()) ::
+  @spec start_distributor(Supervisor.supervisor(), Channel.t(), pid()) ::
           :ok | {:error, term()}
   def start_distributor(generator, %Channel{} = channel, pid) do
     via_tuple = ExReg.local({Distributor, channel})

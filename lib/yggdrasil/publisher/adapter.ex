@@ -3,7 +3,7 @@ defmodule Yggdrasil.Publisher.Adapter do
   Publisher adapter behaviour.
   """
   alias Yggdrasil.Channel
-  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Registry
 
   @doc """
   Callback to start a publisher with a `namespace` and some `GenServer`
@@ -15,7 +15,7 @@ defmodule Yggdrasil.Publisher.Adapter do
             ) :: GenServer.on_start()
 
   @doc """
-  Publishes a `message` in a `channel` using a `publisher`.
+  Callback for publishing a `message` in a `channel` using a `publisher`.
   """
   @callback publish(
               publisher :: GenServer.server(),
@@ -40,14 +40,26 @@ defmodule Yggdrasil.Publisher.Adapter do
     quote do
       @behaviour Yggdrasil.Publisher.Adapter
 
-      @doc false
+      @doc """
+      Starts a publisher adapter for an adapter given a `namespace`.
+      Optionally, receives `GenServer` `options`.
+      """
+      @spec start_link(atom(), GenServer.options()) :: GenServer.options()
+      @impl true
       def start_link(namespace, options \\ [])
 
       def start_link(namespace, options) do
         GenServer.start_link(__MODULE__, namespace, options)
       end
 
-      @doc false
+      @doc """
+      Publishes a `message` in a `channel` using a `publisher`.
+      """
+      @spec publish(GenServer.server(), Channel.t(), term()) ::
+              :ok | {:error, term()}
+      @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
+              :ok | {:error, term()}
+      @impl true
       def publish(publisher, channel, message, options \\ [])
 
       def publish(publisher, %Channel{} = channel, message, _options) do
@@ -66,10 +78,7 @@ defmodule Yggdrasil.Publisher.Adapter do
   `GenServer` options.
   """
   @spec start_link(Channel.t()) :: GenServer.on_start()
-  @spec start_link(
-          Channel.t(),
-          GenServer.options()
-        ) :: GenServer.on_start()
+  @spec start_link(Channel.t(), GenServer.options()) :: GenServer.on_start()
   def start_link(channel, options \\ [])
 
   def start_link(
@@ -79,7 +88,7 @@ defmodule Yggdrasil.Publisher.Adapter do
         },
         options
       ) do
-    with {:ok, module} <- Reg.get_publisher_module(adapter) do
+    with {:ok, module} <- Registry.get_publisher_module(adapter) do
       module.start_link(namespace, options)
     end
   end
@@ -88,13 +97,17 @@ defmodule Yggdrasil.Publisher.Adapter do
   Generic publisher adapter publish function. Publisher a `message` in a
   `channel` using a `publisher` and some `options`.
   """
+  @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
+          :ok | {:error, term()}
+  def publish(publish, channel, message, options)
+
   def publish(
         publisher,
         %Channel{adapter: adapter} = channel,
         message,
         options
       ) do
-    with {:ok, module} <- Reg.get_publisher_module(adapter) do
+    with {:ok, module} <- Registry.get_publisher_module(adapter) do
       module.publish(publisher, channel, message, options)
     end
   end
@@ -102,7 +115,7 @@ defmodule Yggdrasil.Publisher.Adapter do
   @doc """
   Generic publisher adapter stopper that receives the `pid`.
   """
-  @spec stop(GenServer.name()) :: :ok
+  @spec stop(GenServer.server()) :: :ok
   def stop(pid) do
     GenServer.stop(pid)
   end

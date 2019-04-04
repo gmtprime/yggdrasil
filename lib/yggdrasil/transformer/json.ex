@@ -17,6 +17,10 @@ defmodule Yggdrasil.Transformer.Json do
     Jason.decode(message)
   end
 
+  def decode(_channel, _message) do
+    {:error, "Cannot decode message"}
+  end
+
   @doc """
   Encodes some `data` to a JSON binary. The `channel` is ignored.
   """
@@ -26,5 +30,9 @@ defmodule Yggdrasil.Transformer.Json do
 
   def encode(%Channel{} = _, data) when is_map(data) do
     Jason.encode(data)
+  end
+
+  def encode(_channel, _message) do
+    {:error, "Cannot encode message"}
   end
 end

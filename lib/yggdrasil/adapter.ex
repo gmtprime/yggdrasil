@@ -69,7 +69,7 @@ defmodule Yggdrasil.Adapter do
       use Task, restart: :transient
 
       @doc """
-      Start task to register the adapter in the `Registry.
+      Start task to register the adapter in the `Registry`.
       """
       @spec start_link(term()) :: {:ok, pid()}
       def start_link(_) do

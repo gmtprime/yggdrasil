@@ -27,6 +27,7 @@ defmodule Yggdrasil.Subscriber.Adapter do
       @spec start_link(Channel.t()) :: GenServer.on_start()
       @spec start_link(Channel.t(), GenServer.options()) ::
               GenServer.on_start()
+      @impl true
       def start_link(channel, options \\ [])
 
       def start_link(%Channel{} = channel, options) do

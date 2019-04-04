@@ -10,8 +10,8 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   require Logger
 
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a server to distribute messages in a `channel`. Additionally can
@@ -61,8 +61,8 @@ defmodule Yggdrasil.Subscriber.Publisher do
     GenServer.call(publisher, {:notify, channel_name, message, metadata})
   end
 
-  #############################################################################
-  # GenServer callbacks.
+  #####################
+  # GenServer callbacks
 
   @impl true
   def init(%Channel{} = channel) do

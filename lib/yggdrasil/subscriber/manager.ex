@@ -28,7 +28,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @spec start_link(channel :: Channel.t()) :: GenServer.on_start()
   @spec start_link(
           channel :: Channel.t(),
-          GenServer.options()
+          options :: GenServer.options()
         ) :: GenServer.on_start()
   def start_link(channel, options \\ [])
 
