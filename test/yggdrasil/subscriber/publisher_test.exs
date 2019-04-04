@@ -6,7 +6,7 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
   alias Yggdrasil.Subscriber.Publisher
 
   test "starts and stops the process correctly" do
-    {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
+    {:ok, channel} = Yggdrasil.gen_channel(name: make_ref())
 
     assert {:ok, publisher} = Publisher.start_link(channel)
     ref = Process.monitor(publisher)
@@ -16,7 +16,7 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
   end
 
   test "Forwards a messages to the subscribers no metadata" do
-    name = UUID.uuid4()
+    name = make_ref()
     {:ok, channel} = Yggdrasil.gen_channel(name: name)
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)
@@ -29,7 +29,7 @@ defmodule Yggdrasil.Subscriber.PublisherTest do
   end
 
   test "Forwards a messages to the subscribers with metadata" do
-    name = UUID.uuid4()
+    name = make_ref()
     {:ok, channel} = Yggdrasil.gen_channel(name: name)
     Backend.subscribe(channel)
     {:ok, publisher} = Publisher.start_link(channel)

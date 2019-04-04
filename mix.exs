@@ -35,7 +35,6 @@ defmodule Yggdrasil.Mixfile do
       {:poolboy, "~> 1.5"},
       {:jason, "~> 1.1"},
       {:skogsra, "~> 1.2"},
-      {:elixir_uuid, "~> 1.2", only: [:dev, :test]},
       {:ex_doc, "~> 0.19", only: :dev},
       {:credo, "~> 1.0", only: :dev}
     ]

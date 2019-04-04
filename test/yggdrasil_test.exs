@@ -2,7 +2,7 @@ defmodule YggdrasilTest do
   use ExUnit.Case, async: true
 
   test "full subscription cycle" do
-    {:ok, channel} = Yggdrasil.gen_channel(name: UUID.uuid4())
+    {:ok, channel} = Yggdrasil.gen_channel(name: make_ref())
 
     assert :ok = Yggdrasil.subscribe(channel)
     assert_receive {:Y_CONNECTED, ^channel}

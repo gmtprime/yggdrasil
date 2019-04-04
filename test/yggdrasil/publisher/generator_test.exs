@@ -9,7 +9,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
   test "start publisher" do
     {:ok, channel} =
       Registry.get_full_channel(%Channel{
-        name: UUID.uuid4(),
+        name: make_ref(),
         namespace: StartPublisherTest
       })
 
@@ -29,7 +29,7 @@ defmodule Yggdrasil.Publisher.GeneratorTest do
   test "start publisher twice" do
     {:ok, channel} =
       Registry.get_full_channel(%Channel{
-        name: UUID.uuid4(),
+        name: make_ref(),
         namespace: StartPublisherTwiceTest
       })
 

@@ -15,7 +15,7 @@ defmodule Yggdrasil.Subscriber.GeneratorTest do
   end
 
   test "subscribe/unsubscribe" do
-    name = UUID.uuid4()
+    name = make_ref()
     {:ok, channel} = Registry.get_full_channel(%Channel{name: name})
     :ok = Backend.subscribe(channel)
 
@@ -24,7 +24,7 @@ defmodule Yggdrasil.Subscriber.GeneratorTest do
     assert_receive {:Y_CONNECTED, _}, 500
     assert Manager.subscribed?(channel)
 
-    stream = %Channel{channel | name: {:elixir, name}}
+    stream = %Channel{channel | name: {:"$yggdrasil_elixir", name}}
     Backend.publish(stream, "message")
 
     assert_receive {:Y_EVENT, _, "message"}, 500
