@@ -59,6 +59,7 @@ defmodule Yggdrasil.Adapter do
   defmacro __using__(options) do
     adapter_alias =
       options[:name] || raise ArgumentError, message: "adapter alias not found"
+
     transformer_alias = Keyword.get(options, :transformer, :default)
     backend_alias = Keyword.get(options, :backend, :default)
 
@@ -174,7 +175,7 @@ defmodule Yggdrasil.Adapter do
   def generate_module(adapter, type) when type in @types do
     base = Module.split(adapter)
 
-    case Enum.split_while(base, & &1 != "Adapter") do
+    case Enum.split_while(base, &(&1 != "Adapter")) do
       {[], _} ->
         {:error, "Cannot generate #{type} module for #{adapter}"}
 

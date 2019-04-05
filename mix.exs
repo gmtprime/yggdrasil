@@ -75,10 +75,10 @@ defmodule Yggdrasil.Mixfile do
 
   defp groups_for_modules do
     [
-      "Yggdrasil": [
+      Yggdrasil: [
         Yggdrasil
       ],
-      "Application": [
+      Application: [
         Yggdrasil.Settings,
         Yggdrasil.Application
       ],

@@ -2,6 +2,7 @@ defmodule Yggdrasil.Application do
   @moduledoc false
   use Application
 
+  alias Yggdrasil.Adapter.Bridge.Generator, as: BridgeGen
   alias Yggdrasil.Publisher.Generator, as: PublisherGen
   alias Yggdrasil.Registry
   alias Yggdrasil.Settings
@@ -18,7 +19,8 @@ defmodule Yggdrasil.Application do
       {Yggdrasil.Transformer.Default, []},
       {Yggdrasil.Transformer.Json, []},
       {Yggdrasil.Adapter.Elixir, []},
-      {Yggdrasil.Adapter.Bridge, []}
+      {Yggdrasil.Adapter.Bridge, []},
+      {BridgeGen, [name: BridgeGen]}
     ]
 
     options = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]
@@ -28,6 +30,7 @@ defmodule Yggdrasil.Application do
   @spec pubsub_adapter() :: Supervisor.child_spec()
   defp pubsub_adapter do
     adapter = Settings.pubsub_adapter!()
+
     options =
       Settings.pubsub_options!()
       |> Keyword.put(:name, Settings.pubsub_name!())

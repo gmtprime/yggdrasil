@@ -39,7 +39,9 @@ defmodule Yggdrasil.Publisher.Adapter.Bridge do
   use Yggdrasil.Publisher.Adapter
   use GenServer
 
+  alias Yggdrasil.Adapter.Bridge
   alias Yggdrasil.Channel
+  alias Yggdrasil.Publisher.Adapter
   alias Yggdrasil.Registry
   alias Yggdrasil.Transformer
 
@@ -50,7 +52,7 @@ defmodule Yggdrasil.Publisher.Adapter.Bridge do
           :ok | {:error, term()}
   @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
           :ok | {:error, term()}
-  @impl true
+  @impl Adapter
   def publish(publisher, channel, message, options \\ [])
 
   def publish(publisher, %Channel{} = channel, message, options) do
@@ -61,58 +63,52 @@ defmodule Yggdrasil.Publisher.Adapter.Bridge do
   # GenServer callback
 
   @impl GenServer
-  def init(_), do: {:ok, nil}
+  def init(_) do
+    {:ok, nil}
+  end
 
   @impl GenServer
-  def handle_call({:publish, %Channel{name: chan} = bridge, msg, opts}, _, _) do
-    result =
-      with {:ok, channel} <- get_remote_channel(chan),
-           name = :erlang.phash2(channel),
-           stream = %Channel{bridge | name: {:"$yggdrasil_bridge", name}},
-           {:ok, encoded} <- Transformer.encode(stream, msg) do
-        remote_publish(channel, encoded, opts)
-      end
-
+  def handle_call({:publish, %Channel{} = bridge, message, options}, _, _) do
+    result = handle_publish(bridge, message, options)
     {:reply, result, nil}
   end
 
   ########
   # Helper
 
-  # Channel name.
-  @spec get_remote_channel(term()) :: {:ok, integer()}
-  defp get_remote_channel(channel)
+  # Handles a `message` publishing with some `options` in a `bridge` channel.
+  @spec handle_publish(Channel.t(), term(), term()) :: :ok | {:error, term()}
+  defp handle_publish(bridge, message, options)
 
-  defp get_remote_channel(channel) do
-    %Channel{adapter: adapter} = channel = struct(Channel, channel)
-    with {:ok, node} <- Registry.get_adapter_node(adapter),
-         {:ok, channel} <-
-           :rpc.call(node, Registry, :get_full_channel, [channel]) do
-      {:ok, channel}
-    else
-      {:badrpc, reason} ->
-        {:error, reason}
-
-      {:error, _} = error ->
-        error
+  defp handle_publish(%Channel{} = bridge, message, options) do
+    with {:ok, {stream, channel}} <- Bridge.split_channels(bridge),
+         {:ok, encoded} <- Transformer.encode(stream, message) do
+      remote_publish(channel, encoded, options)
     end
   end
 
-  # Publish message to a remote channel.
+  # Publishes message to a remote channel.
   @spec remote_publish(Channel.t(), term(), term()) :: :ok | {:error, term()}
   defp remote_publish(channel, message, options)
 
   defp remote_publish(%Channel{adapter: adapter} = channel, message, options) do
-    with {:ok, node} <- Registry.get_adapter_node(adapter),
-         args = [channel, message, options],
-         :ok <- :rpc.call(node, Yggdrasil, :publish, args) do
-      :ok
-    else
-      {:badrpc, reason} ->
-        {:error, reason}
+    with {:ok, node} <- Registry.get_adapter_node(adapter) do
+      do_remote_publish(node, channel, message, options)
+    end
+  end
 
-      {:error, _} = error ->
-        error
+  # Publishes a message in a node.
+  @spec do_remote_publish(node(), Channel.t(), term(), term()) ::
+          :ok | {:error, term()}
+  defp do_remote_publish(node, channel, message, options)
+
+  defp do_remote_publish(node, %Channel{} = channel, message, options) do
+    args = [channel, message, options]
+
+    case :rpc.call(node, Yggdrasil, :publish, args) do
+      :ok -> :ok
+      {:badrpc, reason} -> {:error, reason}
+      {:error, _} = error -> error
     end
   end
 end

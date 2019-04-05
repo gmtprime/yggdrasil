@@ -46,6 +46,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
+  @doc false
   defstruct [:external, :internal]
   alias __MODULE__, as: State
 
@@ -60,7 +61,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
     Backend.subscribe(internal)
     Manager.connected(external)
 
-    Logger.debug("Started #{__MODULE__} for #{inspect(external)}")
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(external)}" end)
 
     {:ok, state}
   end
@@ -79,15 +80,15 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
   def terminate(:normal, %State{external: external, internal: internal}) do
     Backend.unsubscribe(internal)
     Manager.disconnected(external)
-    Logger.debug("Stopped #{__MODULE__} for #{inspect(external)}")
+    Logger.debug(fn -> "Stopped #{__MODULE__} for #{inspect(external)}" end)
   end
 
   def terminate(reason, %State{external: external, internal: internal}) do
     Backend.unsubscribe(internal)
     Manager.disconnected(external)
 
-    Logger.warn(
+    Logger.warn(fn ->
       "Stopped #{__MODULE__} for #{inspect(external)} due to #{inspect(reason)}"
-    )
+    end)
   end
 end
