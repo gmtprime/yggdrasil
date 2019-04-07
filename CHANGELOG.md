@@ -4,7 +4,10 @@
 
 ### Enhancements
 
-  * Added `:bridge` adapter for adding multi-node support to every adapter.
+  * [`Yggdrasil`] Added `Yggdrasil` behaviour which is a `GenServer` wrapper for
+    receiving `Yggdrasil` messages.
+  * [`Yggdrasil.Adapter.Bridge`] Added `:bridge` adapter for adding multi-node
+    support to every adapter.
   * Updated dependencies.
 
 ## v4.1.2
