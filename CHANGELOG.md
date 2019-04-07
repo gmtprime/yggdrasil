@@ -1,6 +1,11 @@
-# Changelog for 4.1.2
+# Changelog
 
-## Highlights
+## v4.2.0
+
+### Enhancements
+
+  * Added `:bridge` adapter for adding multi-node support to every adapter.
+  * Updated dependencies.
 
 ## v4.1.2
 
@@ -8,8 +13,6 @@
 
   * Updated Skogsra.
   * Added formatter.
-
-# Changelog for 4.1.1
 
 ## v4.1.1
 
@@ -26,10 +29,6 @@
   * Added Yggdrasil Ethereum adapter to documentation.
   * Added Yggdrasil GraphQL adapter to documentation.
 
-# Changelog for 4.1.0
-
-## Highlights
-
 ## v4.1.0
 
 ### Bug fixes
@@ -43,10 +42,6 @@
   * [`Yggdrasil.Subscriber.Manager`] Improved subscriber manager to distribute
   connection and disconnection messages from the adapters.
 
-# Changelog for 4.0.0
-
-## Highlights
-
 ## v4.0.0
 
 ### Enhancements
@@ -58,10 +53,6 @@
   Separated Redis, RabbitMQ and PostgreSQL adapters to three other
   repositories. This makes Yggdrasil really agnostic.
   * Updated the code to follow the new Supervisor child specs.
-
-# Changelog for 3.3.4
-
-## Highlights
 
 ## v3.3.4
 
@@ -76,10 +67,6 @@
   * [`Yggdrasil.Subscriber.Adapter.Postgres`] Exponential backoff on connection
   retries.
 
-# Changelog for 3.3.3
-
-## Highlights
-
 ## v3.3.3
 
 ### Enhancements
@@ -87,10 +74,6 @@
   * [`Yggdrasil.Subscriber.Adapter.RabbitMQ`] Exponential backoff on connection
   retries.
   * Improved disconnection handling.
-
-# Changelog for v3.3.0
-
-## Highlights
 
 ## v3.3.0
 
@@ -112,10 +95,6 @@
 
   * Added `docker-compose.yml` file that starts a PostgreSQL database, a
   RabbitMQ server and a Redis server (useful for testing).
-
-# Changelog for v3.2.1
-
-## Highlights
 
 ## v3.2.1
 

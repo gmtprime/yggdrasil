@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Subscriber.Adapter.Bridge do
   @moduledoc """
   Yggdrasil bridge subscriber adapter. The name of the channel is a valid
-  remote Yggdrasil.Channel e.g:
+  remote `Yggdrasil.Channel` e.g:
 
   First we subscribe to a channel:
 

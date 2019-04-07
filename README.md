@@ -5,38 +5,28 @@
 > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
 > Norse cosmology.
 
-`Yggdrasil` is an agnostic publisher/subscriber. Some of the available adapters
-are the following:
+`Yggdrasil` is an agnostic publisher/subscriber:
 
-  * [Redis](https://github.com/gmtprime/yggdrasil_redis)
-  (adapter's name `:redis`).
-  * [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
-  (adapter's name `:rabbitmq`).
-  * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
-  (adapter's name `:postgres`).
-  * [Ethereum](https://github.com/etherharvest/yggdrasil_ethereum)
-  (adapter's name `:ethereum`).
-  * [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
-  (adapter's name `:graphql`).
-
-For more information on how to use them, check the respective repository.
+- Multi-node pubsub.
+- Simple API (`subscribe/1`, `unsubscribe/1`, `publish/2`).
+- Several fault tolerant adapters (RabbitMQ, Redis, PostgreSQL, GraphQL,
+Ethereum).
 
 ## Small Example
 
 The following example uses the Elixir distribution to send the messages:
 
 ```elixir
-iex(1)> channel = %Yggdrasil.Channel{name: "channel"}
-iex(2)> Yggdrasil.subscribe(channel)
-iex(3)> flush()
+iex(1)> Yggdrasil.subscribe(name: "my_channel")
+iex(2)> flush()
 {:Y_CONNECTED, %Yggdrasil.Channel{(...)}}
 ```
 
 and to publish a for the subscribers:
 
 ```elixir
-iex(4)> Yggdrasil.publish(channel, "message")
-iex(5)> flush()
+iex(3)> Yggdrasil.publish([name: "my_channel"], "message")
+iex(4)> flush()
 {:Y_EVENT, %Yggdrasil.Channel{(...)}, "message"}
 ```
 
@@ -44,25 +34,46 @@ When the subscriber wants to stop receiving messages, then it can unsubscribe
 from the channel:
 
 ```elixir
-iex(6)> Yggdrasil.unsubscribe(channel)
-iex(7)> flush()
+iex(5)> Yggdrasil.unsubscribe(name: "my_channel")
+iex(6)> flush()
 {:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}
+```
+
+For convinience, `Yggdrasil` is also a `GenServer` wrapper for subscribing
+to one or several channels e.g:
+
+```elixir
+defmodule Subscriber do
+  use Yggdrasil
+
+  def start_link do
+    channel = [name: "my_channel"]
+    Yggdrasil.start_link(__MODULE__, [channel])
+  end
+
+  @impl true
+  def handle_event(_channel, message, _state) do
+    IO.inspect message
+    {:ok, nil}
+  end
+end
 ```
 
 ## Channels
 
-The struct `%Yggdrasil.Channel{}` is used for subscription and message
-publishing e.g:
+The following are the available fields for a channel:
 
-```elixir
-%Yggdrasil.Channel{
-  name: term(),        # Depends on the adapter.
-  adapter: atom(),     # Adapter's name.
-  transformer: atom(), # Transformer's name.
-  backend: atom(),     # Backend's name.
-  namespace: atom()    # Adapter's configuration namespace.
-}
-```
+- `adapter` - By default uses OTP message distribution using `:elixir` adapter,
+  but there are several other adapters (see next section for more information).
+- `name` - Depends on the adapter e.g. for `:elixir` adapter, any valid `term`
+  would suffice, but for `:bridge` adapter its necessary to pass a valid channel
+  as name.
+- `transformer` - Decodes and encodes messages for the specified adapter.
+  Defaults to `:default` (which does nothing to the message), but `Yggdrasil`
+  comes with other adapter for `:json` messages.
+- `backend` - Defines the distribution of the messages. Defaults to `:default`
+  `Phoenix.PubSub` message distribution.
+- `namespace` - Namespace for the channel configuration.
 
 ## Adapters
 
@@ -70,26 +81,18 @@ An adapter is a process that connects to a service and distributes its messages
 among the subscribers of a channel. The following repositories have some of the
 available adapters:
 
-  * [RabbitMQ adapter](https://github.com/gmtprime/yggdrasil_rabbitmq):
-  Fault-tolerant RabbitMQ adapter that handles exchange subscriptions and
-  message distribution among subscribers. The name of the adapter is
-  `:rabbitmq`.
-  * [Redis adapter](https://github.com/gmtprime/yggdrasil_redis):
-  Fault-tolerant Redis adapter that handles channel subscriptions and
-  message distribution among subscribers. The name of the adapter is `:redis`.
-  * [PostgreSQL adapter](https://github.com/gmtprime/yggdrasil_postgres):
-  Fault-tolerant Postgres adapter that handles channel subscriptions and
-  message distribution among subscribers. The name of the adapter is
-  `:postgres`.
-  * [Ethereum adapter](https://github.com/etherharvest/yggdrasil_ethereum):
-  Fault-tolerant Ethereum adapter that handles channel subscriptions to
-  Solidity contracts. The name of the adapter is `:ethereum`.
-  * [GraphQL adapter](https://github.com/etherharvest/yggdrasil_graphql):
-  Fault-tolerant adapter that bridges GraphQL subscriptions with Yggdrasil
-  subscriptions in any adapter. The name of the adapter is `:graphql`.
+Adapter         | Yggdrasil Adapter     | Dependencies                                                                | Description
+:-------------- | :-------------------- | :-------------------------------------------------------------------------- | :---------------------------------------------------
+**OTP**         | `:elixir` (default)   | [`:yggdrasil`](https://github.com/gmtprime/yggdrasil)                       | Multi node subscriptions
+**OTP**         | `:bridge`             | [`:yggdrasil`](https://github.com/gmtprime/yggdrasil)                       | Converts any adapter to multi node
+**RabbitMQ**    | `:rabbitmq`           | [`:yggdrasil_rabbitmq`](https://github.com/gmtprime/yggdrasil_rabbitmq)     | Fault tolerant pubsub for exchanges and routing keys
+**Redis**       | `:redis`              | [`:yggdrasil_redis`](https://github.com/gmtprime/yggdrasil_redis)           | Fault tolerant pubsub for Redis channels
+**PostgreSQL**  | `:postgres`           | [`:yggdrasil_postgres`](https://github.com/gmtprime/yggdrasil_postgres)     | Fault tolerant pubsub for `PG_NOTIFY` messages
+**GraphQL**     | `:graphql`            | [`:yggdrasil_graphql`](https://github.com/etherharvest/yggdrasil_graphql)   | Converts any adapter to a GraphQL subscription
+**Ethereum**    | `:ethereum`           | [`:yggdrasil_ethereum`](https://github.com/etherharvest/yggdrasil_ethereum) | Fault tolerant pubsub for contract log messages
 
-For more information on how to use them, check the corresponding repository
-documentation.
+> For more information on how to use them, check the corresponding repository
+> documentation.
 
 ## Transformers
 
@@ -110,23 +113,59 @@ In essence implements two functions:
 A backend is the implementation of the behaviour `Yggdrasil.Backend`. The
 module is in charge of distributing the messages with a certain format inside
 `Yggdrasil`. Currently, there is only one backend, `:default`, and it is used
-by default in `:elixir` adapter and the previously mentioned adapters
-`:rabbitmq`, `:redis` and `:postgres`.
+by default. It uses `Phoenix.PubSub` to distribute the messages.
 
 The messages received by the subscribers when using `:default` backend are:
 
-  * `{:Y_CONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
+  * `{:Y_CONNECTED, Yggdrasil.Channel.t()}` when the connection with the
   adapter is established.
-  * `{:Y_EVENT, %Yggdrasil.Channel{(...)}, term()}` when a message is received
+  * `{:Y_EVENT, Yggdrasil.Channel.t(), term()}` when a message is received
   from the adapter.
-  * `{:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
+  * `{:Y_DISCONNECTED, Yggdrasil.Channel.t()}` when the connection with the
   adapter is finished due to disconnection or unsubscription.
+
+## Multi node
+
+Though `:elixir` adapter has built-in support for multi node pubsub, that's not
+the case with the other adapters. To overcome this limitation, `:bridge`
+adapter is capable of connecting to a remote adapter if and only if this adapter
+is not present in the current node e.g. let's say we have the following:
+
+- Node A has `:yggdrasil`.
+- Node B has `:yggdrasil_rabbitmq`.
+- The nodes A and B are connected.
+
+Then is possible for the node A to connect to RabbitMQ through node B by using
+the `:bridge` adapter:
+
+For subscription:
+
+```elixir
+iex(1)> channel = [
+...(1)>   name: [name: {"amq.topic", "foo"}, adapter: :rabbitmq],
+...(1)>   adapter: :bridge
+...(1)> ]
+iex(2)> Yggdrasil.subscribe(channel)
+iex(3)> flush()
+{:Y_CONNECTED, %Yggdrasil.Channel{(...)}}
+```
+
+and for publishing:
+
+```elixir
+iex(1)> channel = [
+...(1)>   name: [name: {"amq.topic", "foo"}, adapter: :rabbitmq],
+...(1)>   adapter: :bridge
+...(1)> ]
+iex(2)> Yggdrasil.publish(channel, "bar")
+:ok
+```
 
 ## Configuration
 
 `Yggdrasil` works out of the box with no special configuration at all. However,
-it is possible to configure the publisher. `Yggdrasil` uses `Phoenix.PubSub`
-for message distribution and the following are the available options:
+it is possible to tune the publisher. The default `Yggdrasil` backend uses
+`Phoenix.PubSub` and the following are the available options:
 
   * `pubsub_adapter` - `Phoenix.PubSub` adapter (defaults to
     `Phoenix.PubSub.PG2`).
@@ -140,8 +179,7 @@ registry:
 
   * `publisher_options` - `Poolboy` options for publishing. Controls the amount
     of connections established with the adapter service (defaults to
-    `[size: 5, max_overflow: 10]`).
-  * `registry` - Process name registry (defaults to`ExReg`).
+    `[size: 1, max_overflow: 5]`).
 
 For more information about configuration using OS environment variables check
 the module `Yggdrasil.Settings`.
@@ -151,20 +189,22 @@ the module `Yggdrasil.Settings`.
 `Yggdrasil` is available as a Hex package. To install, add it to your
 dependencies in your `mix.exs` file:
 
-```elixir
-def deps do
-  [{:yggdrasil, "~> 4.1"}]
-end
-```
 
-## Relevant projects used
+- For Elixir < 1.7 and Erlang < 21
 
-  * [`ExReg`](https://github.com/gmtprime/exreg): rich process name registry.
-  * [`Poolboy`](https://github.com/devinus/poolboy): A hunky Erlang worker pool
-  factory.
-  * [`Jason`](https://github.com/michalmuskala/jason): JSON parsing library.
-  * [`Credo`](https://github.com/rrrene/credo): static code analysis tool for
-  the Elixir language.
+  ```elixir
+  def deps do
+    [{:yggdrasil, "~> 4.1.2"}]
+  end
+  ```
+
+- For Elixir ≥ 1.7 and Erlang ≥ 21
+
+  ```elixir
+  def deps do
+    [{:yggdrasil, "~> 4.2"}]
+  end
+  ```
 
 ## Author
 

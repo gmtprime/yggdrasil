@@ -22,7 +22,7 @@ defmodule Yggdrasil.Subscriber.Adapter do
       @behaviour Yggdrasil.Subscriber.Adapter
 
       @doc """
-      Starts #{__MODULE__} with a `channel and optional `options`.
+      Starts #{__MODULE__} with a `channel` and optional `options`.
       """
       @spec start_link(Channel.t()) :: GenServer.on_start()
       @spec start_link(Channel.t(), GenServer.options()) ::

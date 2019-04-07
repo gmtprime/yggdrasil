@@ -1,42 +1,30 @@
 defmodule Yggdrasil do
   @moduledoc """
-  [![Build Status](https://travis-ci.org/gmtprime/yggdrasil.svg?branch=master)](https://travis-ci.org/gmtprime/yggdrasil) [![Hex pm](http://img.shields.io/hexpm/v/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil) [![hex.pm downloads](https://img.shields.io/hexpm/dt/yggdrasil.svg?style=flat)](https://hex.pm/packages/yggdrasil)
-
   > *Yggdrasil* is an immense mythical tree that connects the nine worlds in
   > Norse cosmology.
 
-  `Yggdrasil` is an agnostic publisher/subscriber. Some of the available adapters
-  are the following:
+  `Yggdrasil` is an agnostic publisher/subscriber:
 
-    * [Redis](https://github.com/gmtprime/yggdrasil_redis)
-    (adapter's name `:redis`).
-    * [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
-    (adapter's name `:rabbitmq`).
-    * [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
-    (adapter's name `:postgres`).
-    * [Ethereum](https://github.com/etherharvest/yggdrasil_ethereum)
-    (adapter's name `:ethereum`).
-    * [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
-    (adapter's name `:graphql`).
-
-  For more information on how to use them, check the respective repository.
+  - Multi-node pubsub.
+  - Simple API (`subscribe/1`, `unsubscribe/1`, `publish/2`).
+  - Several fault tolerant adapters (RabbitMQ, Redis, PostgreSQL, GraphQL,
+  Ethereum).
 
   ## Small Example
 
   The following example uses the Elixir distribution to send the messages:
 
   ```elixir
-  iex(1)> channel = %Yggdrasil.Channel{name: "channel"}
-  iex(2)> Yggdrasil.subscribe(channel)
-  iex(3)> flush()
+  iex(1)> Yggdrasil.subscribe(name: "my_channel")
+  iex(2)> flush()
   {:Y_CONNECTED, %Yggdrasil.Channel{(...)}}
   ```
 
   and to publish a for the subscribers:
 
   ```elixir
-  iex(4)> Yggdrasil.publish(channel, "message")
-  iex(5)> flush()
+  iex(3)> Yggdrasil.publish([name: "my_channel"], "message")
+  iex(4)> flush()
   {:Y_EVENT, %Yggdrasil.Channel{(...)}, "message"}
   ```
 
@@ -44,120 +32,35 @@ defmodule Yggdrasil do
   from the channel:
 
   ```elixir
-  iex(6)> Yggdrasil.unsubscribe(channel)
-  iex(7)> flush()
+  iex(5)> Yggdrasil.unsubscribe(name: "my_channel")
+  iex(6)> flush()
   {:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}
   ```
 
-  ## Channels
+  Though a `GenServer` can be used to receive these messages, this module also
+  implements a behaviour for handling events e.g:
 
-  The struct `%Yggdrasil.Channel{}` is used for subscription and message
-  publishing e.g:
-
-  ```elixir
-  %Yggdrasil.Channel{
-    name: term(),        # Depends on the adapter.
-    adapter: atom(),     # Adapter's name.
-    transformer: atom(), # Transformer's name.
-    backend: atom(),     # Backend's name.
-    namespace: atom()    # Adapter's configuration namespace.
-    metadata: term()     # Used internally to retrieve channel extra info.
-  }
   ```
+  defmodule Subscriber do
+    use Yggdrasil
 
-  ## Adapters
+    def start_link do
+      channel = [name: "my_channel"]
+      Yggdrasil.start_link(__MODULE__, [channel])
+    end
 
-  An adapter is a process that connects to a service and distributes its messages
-  among the subscribers of a channel. The following repositories have some of the
-  available adapters:
-
-    * [RabbitMQ adapter](https://github.com/gmtprime/yggdrasil_rabbitmq):
-    Fault-tolerant RabbitMQ adapter that handles exchange subscriptions and
-    message distribution among subscribers. The name of the adapter is
-    `:rabbitmq`.
-    * [Redis adapter](https://github.com/gmtprime/yggdrasil_redis):
-    Fault-tolerant Redis adapter that handles channel subscriptions and
-    message distribution among subscribers. The name of the adapter is `:redis`.
-    * [PostgreSQL adapter](https://github.com/gmtprime/yggdrasil_postgres):
-    Fault-tolerant Postgres adapter that handles channel subscriptions and
-    message distribution among subscribers. The name of the adapter is
-    `:postgres`.
-    * [Ethereum adapter](https://github.com/etherharvest/yggdrasil_ethereum):
-    Fault-tolerant Ethereum adapter that handles channel subscriptions to
-    Solidity contracts. The name of the adapter is `:ethereum`.
-    * [GraphQL adapter](https://github.com/etherharvest/yggdrasil_graphql):
-    Fault-tolerant adapter that bridges GraphQL subscriptions with Yggdrasil
-    subscriptions in any adapter. The name of the adapter is `:graphql`.
-
-  For more information on how to use them, check the corresponding repository
-  documentation.
-
-  ## Transformers
-
-  A transformer is the implementation of the behaviour `Yggdrasil.Transformer`.
-  In essence implements two functions:
-
-    * `decode/2` for decoding messages coming from the adapter.
-    * `encode/2` for encoding messages going to the adapter
-
-  `Yggdrasil` has two implemented transformers:
-
-    * `:default` - Does nothing to the messages and it is the default
-    transformer used if no transformer has been defined.
-    * `:json` - Transforms from Elixir maps to string JSONs and viceversa.
-
-  ## Backends
-
-  A backend is the implementation of the behaviour `Yggdrasil.Backend`. The
-  module is in charge of distributing the messages with a certain format inside
-  `Yggdrasil`. Currently, there is only one backend, `:default`, and it is used
-  by default in `:elixir` adapter and the previously mentioned adapters
-  `:rabbitmq`, `:redis` and `:postgres`.
-
-  The messages received by the subscribers when using `:default` backend are:
-
-    * `{:Y_CONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
-    adapter is established.
-    * `{:Y_EVENT, %Yggdrasil.Channel{(...)}, term()}` when a message is received
-    from the adapter.
-    * `{:Y_DISCONNECTED, %Yggdrasil.Channel{(...)}}` when the connection with the
-    adapter is finished due to disconnection or unsubscription.
-
-  ## Configuration
-
-  `Yggdrasil` works out of the box with no special configuration at all. However,
-  it is possible to configure the publisher. `Yggdrasil` uses `Phoenix.PubSub`
-  for message distribution and the following are the available options:
-
-    * `pubsub_adapter` - `Phoenix.PubSub` adapter (defaults to
-      `Phoenix.PubSub.PG2`).
-    * `pubsub_name` - Name of the `Phoenix.PubSub` adapter (defaults to
-      `Yggdrasil.PubSub`).
-    * `pubsub_options` - Options of the `Phoenix.PubSub` adapter (defaults
-      to `[pool_size: 1]`).
-
-  The rest of the options are for configuring the publishers and process name
-  registry:
-
-    * `publisher_options` - `Poolboy` options for publishing. Controls the amount
-      of connections established with the adapter service (defaults to
-      `[size: 5, max_overflow: 10]`).
-    * `registry` - Process name registry (defaults to`ExReg`).
-
-  For more information about configuration using OS environment variables check
-  the module `Yggdrasil.Settings`.
-
-  ## Installation
-
-  `Yggdrasil` is available as a Hex package. To install, add it to your
-  dependencies in your `mix.exs` file:
-
-  ```elixir
-  def deps do
-    [{:yggdrasil, "~> 4.1"}]
+    def handle_event(_channel, message, _state) do
+      IO.inspect message
+      {:ok, nil}
+    end
   end
   ```
+
+  The previous `Yggdrasil` subscriber would subscribe to `[name: "my_channel"]`
+  and print every message it receives from it.
   """
+  use GenServer
+
   alias Yggdrasil.Backend
   alias Yggdrasil.Channel
   alias Yggdrasil.Publisher
@@ -235,5 +138,191 @@ defmodule Yggdrasil do
 
   def gen_channel(_) do
     {:error, "Bad channel"}
+  end
+
+  ###########
+  # Callbacks
+
+  @doc """
+  Callback to initialize an `Yggdrasil`.
+  """
+  @callback init(args) ::
+              {:subscribe, [Channel.t()], state}
+              | {:stop, reason}
+              when args: term, reason: term, state: term
+
+  @doc """
+  Callback to handle connection to channels.
+  """
+  @callback handle_connect(Channel.t(), state) ::
+              {:ok, state}
+              | {:subscribe, [Channel.t()], state}
+              | {:unsubscribe, [Channel.t()], state}
+              | {:stop, reason, state}
+              when state: term(), reason: term()
+
+  @doc """
+  Callback to handle disconnections from a channel.
+  """
+  @callback handle_disconnect(Channel.t(), state) ::
+              {:ok, state}
+              | {:subscribe, [Channel.t()], state}
+              | {:unsubscribe, [Channel.t()], state}
+              | {:stop, reason, state}
+              when state: term(), reason: term()
+
+  @doc """
+  Callback to handle incoming messages from a channel.
+  """
+  @callback handle_event(Channel.t(), message, state) ::
+              {:ok, state}
+              | {:subscribe, [Channel.t()], state}
+              | {:unsubscribe, [Channel.t()], state}
+              | {:stop, reason, state}
+              when message: term(), state: term(), reason: term()
+
+  @doc """
+  Callback to handle `Yggdrasil` termination.
+  """
+  @callback terminate(reason, state) ::
+              term() when state: term(), reason: term()
+
+  ######################
+  # Behaviour public API
+
+  @doc """
+  Starts an `Yggdrasil` given a `module`, `args` and some optional
+  `options`.
+  """
+  @spec start_link(module(), term()) :: GenServer.on_start()
+  @spec start_link(module(), term(), GenServer.options()) ::
+          GenServer.on_start()
+  def start_link(module, args, options \\ []) do
+    GenServer.start_link(__MODULE__, [module, args], options)
+  end
+
+  @doc """
+  Stops a `server` given optional `reason` and `timeout`.
+  """
+  @spec stop(GenServer.server()) :: :ok
+  @spec stop(GenServer.server(), term()) :: :ok
+  @spec stop(GenServer.server(), term(), :infinity | non_neg_integer()) :: :ok
+  defdelegate stop(server, reason \\ :normal, timeout \\ :infinity),
+    to: GenServer
+
+  @doc false
+  defmacro __using__(opts) do
+    quote do
+      @behaviour Yggdrasil
+
+      @doc false
+      def child_spec(init_arg) do
+        default = %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, [init_arg]}
+        }
+
+        Supervisor.child_spec(default, unquote(Macro.escape(opts)))
+      end
+
+      @impl Yggdrasil
+      def init(channels) when is_list(channels), do: {:subscribe, channels, nil}
+
+      @impl Yggdrasil
+      def handle_connect(_, state), do: {:ok, state}
+
+      @impl Yggdrasil
+      def handle_disconnect(_, state), do: {:ok, state}
+
+      @impl Yggdrasil
+      def handle_event(_, _, state), do: {:ok, state}
+
+      @impl Yggdrasil
+      def terminate(_, _), do: :ok
+
+      defoverridable child_spec: 1,
+                     init: 1,
+                     handle_connect: 2,
+                     handle_disconnect: 2,
+                     handle_event: 3,
+                     terminate: 2
+    end
+  end
+
+  @doc false
+  defstruct [:module, :state]
+  alias __MODULE__, as: State
+
+  @typedoc false
+  @type t :: %State{
+    module: module :: module(),
+    state: state :: term()
+  }
+
+  #####################
+  # GenServer callbacks
+
+  @impl GenServer
+  def init([module, args]) do
+    case module.init(args) do
+      {:subscribe, channels, internal} ->
+        external = %State{module: module, state: internal}
+        {:ok, external, {:continue, {:subscribe, channels}}}
+
+      {:stop, _} = stop ->
+        stop
+    end
+  end
+
+  @impl GenServer
+  def handle_continue({:subscribe, channels}, %State{} = external) do
+    Enum.each(channels, &Yggdrasil.subscribe(&1))
+    {:noreply, external}
+  end
+
+  def handle_continue({:unsubscribe, channels}, %State{} = external) do
+    Enum.each(channels, &Yggdrasil.unsubscribe(&1))
+    {:noreply, external}
+  end
+
+  @impl GenServer
+  def handle_info({:Y_CONNECTED, channel}, %State{module: module} = external) do
+    run(&module.handle_connect(channel, &1), external)
+  end
+
+  def handle_info({:Y_DISCONNECTED, channel}, %State{module: module} = external) do
+    run(&module.handle_disconnect(channel, &1), external)
+  end
+
+  def handle_info({:Y_EVENT, channel, message}, %State{module: module} = external) do
+    run(&module.handle_event(channel, message, &1), external)
+  end
+
+  @impl GenServer
+  def terminate(reason, %State{module: module, state: internal}) do
+    module.terminate(reason, internal)
+  end
+
+  # Runs callbacks
+  @spec run((term -> {:ok, term()} | {:stop, term(), term()}), State.t()) ::
+          {:noreply, State.t()} | {:stop, term(), State.t()}
+  defp run(callback, %State{state: internal} = external) do
+    case callback.(internal) do
+      {:ok, internal} ->
+        external = %State{external | state: internal}
+        {:noreply, external}
+
+      {:subscribe, channels, internal} ->
+        external = %State{external | state: internal}
+        {:noreply, external, {:continue, {:subscribe, channels}}}
+
+      {:unsubscribe, channels, internal} ->
+        external = %State{external | state: internal}
+        {:noreply, external, {:continue, {:unsubscribe, channels}}}
+
+      {:stop, reason, internal} ->
+        external = %State{external | state: internal}
+        {:stop, reason, external}
+    end
   end
 end

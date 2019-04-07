@@ -35,7 +35,7 @@ defmodule Yggdrasil.Mixfile do
       {:poolboy, "~> 1.5"},
       {:jason, "~> 1.1"},
       {:skogsra, "~> 1.2"},
-      {:ex_doc, "~> 0.19", only: :dev},
+      {:ex_doc, "~> 0.20", only: :dev},
       {:credo, "~> 1.0", only: :dev}
     ]
   end
@@ -75,34 +75,36 @@ defmodule Yggdrasil.Mixfile do
 
   defp groups_for_modules do
     [
-      Yggdrasil: [
+      "Yggdrasil": [
         Yggdrasil
       ],
-      Application: [
-        Yggdrasil.Settings,
-        Yggdrasil.Application
+      "Application": [
+        Yggdrasil.Settings
       ],
-      Channels: [
+      "Channels": [
         Yggdrasil.Channel,
         Yggdrasil.Registry
       ],
-      Adapters: [
+      "Adapters": [
         Yggdrasil.Adapter,
-        Yggdrasil.Adapter.Elixir
+        Yggdrasil.Adapter.Elixir,
+        Yggdrasil.Adapter.Bridge
       ],
       "Subscriber adapters": [
         Yggdrasil.Subscriber.Adapter,
-        Yggdrasil.Subscriber.Adapter.Elixir
+        Yggdrasil.Subscriber.Adapter.Elixir,
+        Yggdrasil.Subscriber.Adapter.Bridge
       ],
       "Publisher adapters": [
         Yggdrasil.Publisher.Adapter,
-        Yggdrasil.Publisher.Adapter.Elixir
+        Yggdrasil.Publisher.Adapter.Elixir,
+        Yggdrasil.Publisher.Adapter.Bridge
       ],
-      Backends: [
+      "Backends": [
         Yggdrasil.Backend,
         Yggdrasil.Backend.Default
       ],
-      Transformers: [
+      "Transformers": [
         Yggdrasil.Transformer,
         Yggdrasil.Transformer.Default,
         Yggdrasil.Transformer.Json
@@ -114,6 +116,10 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil.Subscriber.Distributor,
         Yggdrasil.Subscriber.Manager,
         Yggdrasil.Subscriber.Publisher
+      ],
+      "Bridge subscribers": [
+        Yggdrasil.Adapter.Bridge.Generator,
+        Yggdrasil.Adapter.Bridge.Subscriber
       ]
     ]
   end
