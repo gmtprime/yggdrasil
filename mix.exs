@@ -75,17 +75,17 @@ defmodule Yggdrasil.Mixfile do
 
   defp groups_for_modules do
     [
-      "Yggdrasil": [
+      Yggdrasil: [
         Yggdrasil
       ],
-      "Application": [
+      Application: [
         Yggdrasil.Settings
       ],
-      "Channels": [
+      Channels: [
         Yggdrasil.Channel,
         Yggdrasil.Registry
       ],
-      "Adapters": [
+      Adapters: [
         Yggdrasil.Adapter,
         Yggdrasil.Adapter.Elixir,
         Yggdrasil.Adapter.Bridge
@@ -100,11 +100,11 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil.Publisher.Adapter.Elixir,
         Yggdrasil.Publisher.Adapter.Bridge
       ],
-      "Backends": [
+      Backends: [
         Yggdrasil.Backend,
         Yggdrasil.Backend.Default
       ],
-      "Transformers": [
+      Transformers: [
         Yggdrasil.Transformer,
         Yggdrasil.Transformer.Default,
         Yggdrasil.Transformer.Json

@@ -150,7 +150,7 @@ defmodule Yggdrasil do
   @callback init(args) ::
               {:subscribe, [Channel.t()], state}
               | {:stop, reason}
-              when args: term, reason: term, state: term
+            when args: term, reason: term, state: term
 
   @doc """
   Callback to handle connection to channels.
@@ -160,7 +160,7 @@ defmodule Yggdrasil do
               | {:subscribe, [Channel.t()], state}
               | {:unsubscribe, [Channel.t()], state}
               | {:stop, reason, state}
-              when state: term(), reason: term()
+            when state: term(), reason: term()
 
   @doc """
   Callback to handle disconnections from a channel.
@@ -170,7 +170,7 @@ defmodule Yggdrasil do
               | {:subscribe, [Channel.t()], state}
               | {:unsubscribe, [Channel.t()], state}
               | {:stop, reason, state}
-              when state: term(), reason: term()
+            when state: term(), reason: term()
 
   @doc """
   Callback to handle incoming messages from a channel.
@@ -180,13 +180,14 @@ defmodule Yggdrasil do
               | {:subscribe, [Channel.t()], state}
               | {:unsubscribe, [Channel.t()], state}
               | {:stop, reason, state}
-              when message: term(), state: term(), reason: term()
+            when message: term(), state: term(), reason: term()
 
   @doc """
   Callback to handle `Yggdrasil` termination.
   """
   @callback terminate(reason, state) ::
-              term() when state: term(), reason: term()
+              term()
+            when state: term(), reason: term()
 
   ######################
   # Behaviour public API
@@ -256,9 +257,9 @@ defmodule Yggdrasil do
 
   @typedoc false
   @type t :: %State{
-    module: module :: module(),
-    state: state :: term()
-  }
+          module: module :: module(),
+          state: state :: term()
+        }
 
   #####################
   # GenServer callbacks
@@ -295,7 +296,10 @@ defmodule Yggdrasil do
     run(&module.handle_disconnect(channel, &1), external)
   end
 
-  def handle_info({:Y_EVENT, channel, message}, %State{module: module} = external) do
+  def handle_info(
+        {:Y_EVENT, channel, message},
+        %State{module: module} = external
+      ) do
     run(&module.handle_event(channel, message, &1), external)
   end
 

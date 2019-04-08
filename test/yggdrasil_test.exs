@@ -2,7 +2,6 @@ defmodule YggdrasilTest do
   use ExUnit.Case, async: true
 
   describe "behaviour" do
-
     defmodule Subscriber do
       def start_link(parent, channel) do
         Yggdrasil.start_link(__MODULE__, [parent, channel])
