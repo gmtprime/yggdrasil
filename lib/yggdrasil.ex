@@ -7,6 +7,7 @@ defmodule Yggdrasil do
 
   - Multi-node pubsub.
   - Simple API (`subscribe/1`, `unsubscribe/1`, `publish/2`).
+  - `GenServer` wrapper for handling subscriber events easily.
   - Several fault tolerant adapters (RabbitMQ, Redis, PostgreSQL, GraphQL,
   Ethereum).
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.2.0
+## v5.0.0
 
 ### Enhancements
 
@@ -9,6 +9,7 @@
   * [`Yggdrasil.Adapter.Bridge`] Added `:bridge` adapter for adding multi-node
     support to every adapter.
   * Updated dependencies.
+  * Support for Elixir 1.8 and Erlang 21
 
 ## v4.1.2
 

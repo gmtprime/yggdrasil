@@ -9,6 +9,7 @@
 
 - Multi-node pubsub.
 - Simple API (`subscribe/1`, `unsubscribe/1`, `publish/2`).
+- `GenServer` wrapper for handling subscriber events easily.
 - Several fault tolerant adapters (RabbitMQ, Redis, PostgreSQL, GraphQL,
 Ethereum).
 
@@ -40,7 +41,8 @@ iex(6)> flush()
 ```
 
 For convinience, `Yggdrasil` is also a `GenServer` wrapper for subscribing
-to one or several channels e.g:
+to one or several channels e.g the following `Subscriber` prints every message
+it receives from the channel `[name: "my_channel"]`:
 
 ```elixir
 defmodule Subscriber do
@@ -61,25 +63,40 @@ end
 
 ## Channels
 
-The following are the available fields for a channel:
+Channels, though internally use the struct `Yggdrasil.Channel.t()`, they can be
+any map or keyword list with the following keys:
 
-- `adapter` - By default uses OTP message distribution using `:elixir` adapter,
-  but there are several other adapters (see next section for more information).
-- `name` - Depends on the adapter e.g. for `:elixir` adapter, any valid `term`
-  would suffice, but for `:bridge` adapter its necessary to pass a valid channel
-  as name.
-- `transformer` - Decodes and encodes messages for the specified adapter.
-  Defaults to `:default` (which does nothing to the message), but `Yggdrasil`
-  comes with other adapter for `:json` messages.
-- `backend` - Defines the distribution of the messages. Defaults to `:default`
-  `Phoenix.PubSub` message distribution.
-- `namespace` - Namespace for the channel configuration.
+Key           | Default                                   | Meaning
+:------------ | :---------------------------------------- | :------
+`adapter`     | `:elixir` (OTP message distribution)      | Adapter where subscribers subscribe to and publishers publish to.
+`name`        | no defaults                               | Name of the channel. Depends on the adapter.
+`transformer` | `:default` (does nothing to the messages) | The way the adapter encodes outgoing messages and decodes incoming messages.
+`backend`     | `:default` (`Phonix.PubSub`)              | The way the messages are distributed across nodes.
+`namespace`   | `nil`                                     | Name of the configuration of the adapter. This allows several configurations for the same adapter e.g. two different PostgreSQL databases.
+
+This means that the channel `[name: "my_channel"]` actually translates to:
+
+```elixir
+%Yggdrasil.Channel{
+  adapter: :elixir,
+  name: "my_channel",
+  transformer: :default,
+  backend: :default,
+  namespace: nil
+}
+```
 
 ## Adapters
 
-An adapter is a process that connects to a service and distributes its messages
-among the subscribers of a channel. The following repositories have some of the
-available adapters:
+An adapter is the implementation of the behaviour `Yggdrasil.Adapter`. This
+behaviour depends on two other behaviours:
+
+- `Yggdrasil.Subscriber.Adapter` for implementing subscribers for a specific
+adapter.
+- `Yggdrasil.Publisher.Adapter` for implementing publishers for a specific
+adapter.
+
+The following are the available adapters and their respective projects:
 
 Adapter         | Yggdrasil Adapter     | Dependencies                                                                | Description
 :-------------- | :-------------------- | :-------------------------------------------------------------------------- | :---------------------------------------------------
@@ -104,9 +121,10 @@ In essence implements two functions:
 
 `Yggdrasil` has two implemented transformers:
 
-  * `:default` - Does nothing to the messages and it is the default
-  transformer used if no transformer has been defined.
-  * `:json` - Transforms from Elixir maps to string JSONs and viceversa.
+Transformer | Description
+:---------- | :----------
+`:default`  | Does nothing to the messages and it is the default transformer used if no transformer has been defined.
+`:json`     | Transforms from Elixir maps to string JSONs and viceversa.
 
 ## Backends
 
@@ -124,12 +142,15 @@ The messages received by the subscribers when using `:default` backend are:
   * `{:Y_DISCONNECTED, Yggdrasil.Channel.t()}` when the connection with the
   adapter is finished due to disconnection or unsubscription.
 
+> This backend is the only backend supported by `Yggdrasil` behaviour.
+
 ## Multi node
 
 Though `:elixir` adapter has built-in support for multi node pubsub, that's not
 the case with the other adapters. To overcome this limitation, `:bridge`
 adapter is capable of connecting to a remote adapter if and only if this adapter
-is not present in the current node e.g. let's say we have the following:
+is not present in the current node e.g. let's say we have the following
+scenario:
 
 - Node A has `:yggdrasil`.
 - Node B has `:yggdrasil_rabbitmq`.
@@ -167,22 +188,15 @@ iex(2)> Yggdrasil.publish(channel, "bar")
 it is possible to tune the publisher. The default `Yggdrasil` backend uses
 `Phoenix.PubSub` and the following are the available options:
 
-  * `pubsub_adapter` - `Phoenix.PubSub` adapter (defaults to
-    `Phoenix.PubSub.PG2`).
-  * `pubsub_name` - Name of the `Phoenix.PubSub` adapter (defaults to
-    `Yggdrasil.PubSub`).
-  * `pubsub_options` - Options of the `Phoenix.PubSub` adapter (defaults
-    to `[pool_size: 1]`).
+Option              | Default                      | Description
+:------------------ | :--------------------------- | :----------
+`pubsub_adapter`    | `Phoenix.PubSub.PG2`         | `Phoenix.PubSub` adapter.
+`pubsub_name`       | `Yggdrasil.PubSub`           | Name of the `Phoenix.PubSub` adapter.
+`pubsub_options`    | `[pool_size: 1]`             | Options of the `Phoenix.PubSub` adapter.
+`publisher_options` | `[size: 1, max_overflow: 5]` | `Poolboy` options for publishing. Controls the amount of connections established with the adapter service.
 
-The rest of the options are for configuring the publishers and process name
-registry:
-
-  * `publisher_options` - `Poolboy` options for publishing. Controls the amount
-    of connections established with the adapter service (defaults to
-    `[size: 1, max_overflow: 5]`).
-
-For more information about configuration using OS environment variables check
-the module `Yggdrasil.Settings`.
+> For more information about configuration using OS environment variables check
+> the module `Yggdrasil.Settings`.
 
 ## Installation
 
@@ -194,7 +208,7 @@ dependencies in your `mix.exs` file:
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 4.1.2"}]
+    [{:yggdrasil, "~> 4.1"}]
   end
   ```
 
@@ -202,7 +216,7 @@ dependencies in your `mix.exs` file:
 
   ```elixir
   def deps do
-    [{:yggdrasil, "~> 4.2"}]
+    [{:yggdrasil, "~> 5.0"}]
   end
   ```
 
