@@ -203,7 +203,7 @@ Option              | Default                      | Description
 `Yggdrasil` is available as a Hex package. To install, add it to your
 dependencies in your `mix.exs` file:
 
-- For Elixir < 1.7 and Erlang < 21
+- For Elixir < 1.8 and Erlang < 21
 
   ```elixir
   def deps do
@@ -211,7 +211,7 @@ dependencies in your `mix.exs` file:
   end
   ```
 
-- For Elixir ≥ 1.7 and Erlang ≥ 21
+- For Elixir ≥ 1.8 and Erlang ≥ 21
 
   ```elixir
   def deps do
