@@ -29,13 +29,15 @@ defmodule Yggdrasil.Adapter do
   ])
   ```
 
-  This will allow you to use the following as a `Channel` to subscribe and
-  publish with your adapters:
+  This will allow you to use `:my_adapter` as a `Channel` adapter to subscribe
+  and publish with `MyAdapter` e.g:
 
   ```
   %Channel{name: "my_channel", adapter: :my_adapter}
   ```
   """
+  alias __MODULE__
+  alias Yggdrasil.Registry
 
   @doc """
   Macro for using `Yggdrasil.Adapter`.
@@ -55,7 +57,9 @@ defmodule Yggdrasil.Adapter do
   `MyAdapter`. If the module does not exist, then defaults to `:elixir`.
   """
   defmacro __using__(options) do
-    adapter_alias = Keyword.get(options, :name)
+    adapter_alias =
+      options[:name] || raise ArgumentError, message: "adapter alias not found"
+
     transformer_alias = Keyword.get(options, :transformer, :default)
     backend_alias = Keyword.get(options, :backend, :default)
 
@@ -65,100 +69,138 @@ defmodule Yggdrasil.Adapter do
     quote do
       use Task, restart: :transient
 
-      alias Yggdrasil.Registry, as: Reg
-
-      @doc false
+      @doc """
+      Start task to register the adapter in the `Registry`.
+      """
+      @spec start_link(term()) :: {:ok, pid()}
       def start_link(_) do
         Task.start_link(__MODULE__, :register, [])
       end
 
-      @doc false
+      @doc """
+      Registers adapter in `Registry`.
+      """
+      @spec register() :: :ok
       def register do
         name = unquote(adapter_alias)
 
-        with :ok <- Reg.register_adapter(name, __MODULE__) do
-          :ok
-        else
-          :error ->
-            exit(:error)
-        end
+        Registry.register_adapter(name, __MODULE__)
       end
 
-      #############
-      # Transformer
-
-      @doc false
+      @doc """
+      Gets default transformer.
+      """
+      @spec get_transformer() :: atom()
       def get_transformer do
         unquote(transformer_alias)
       end
 
-      #########
-      # Backend
-
-      @doc false
+      @doc """
+      Gets default backend.
+      """
+      @spec get_backend() :: atom()
       def get_backend do
         unquote(backend_alias)
       end
 
-      ############
-      # Subscriber
-
-      @doc false
+      @doc """
+      Gets subscriber module.
+      """
+      @spec get_subscriber_module() :: {:ok, module()} | {:error, term()}
       def get_subscriber_module do
         get_subscriber_module(unquote(subscriber_module))
       end
 
-      @doc false
+      @doc """
+      Gets subscriber module only if the given module exists.
+      """
+      @spec get_subscriber_module(nil | module()) ::
+              {:ok, module()} | {:error, term()}
+      def get_subscriber_module(module)
+
       def get_subscriber_module(nil) do
-        base = "Elixir.Yggdrasil.Subscriber.Adapter"
+        type = Subscriber
 
-        name =
-          __MODULE__
-          |> Atom.to_string()
-          |> String.split(".")
-          |> List.last()
-
-        try do
-          String.to_existing_atom(base <> "." <> name)
-        catch
-          {:error, :badarg} ->
-            :elixir
+        with {:ok, module} <- Adapter.generate_module(__MODULE__, type) do
+          get_subscriber_module(module)
         end
       end
 
-      def get_subscriber_module(module) when is_atom(module) do
-        module
+      def get_subscriber_module(module) do
+        Adapter.check_module(__MODULE__, module)
       end
 
-      ###########
-      # Publisher
-
-      @doc false
+      @doc """
+      Gets publisher module.
+      """
+      @spec get_publisher_module() :: {:ok, module()} | {:error, term()}
       def get_publisher_module do
         get_publisher_module(unquote(publisher_module))
       end
 
-      @doc false
+      @doc """
+      Gets publisher module only if the given module exists.
+      """
+      @spec get_publisher_module(nil | module()) ::
+              {:ok, module()} | {:error, term()}
+      def get_publisher_module(module)
+
       def get_publisher_module(nil) do
-        base = "Elixir.Yggdrasil.Publisher.Adapter"
+        type = Publisher
 
-        name =
-          __MODULE__
-          |> Atom.to_string()
-          |> String.split(".")
-          |> List.last()
-
-        try do
-          String.to_existing_atom(base <> "." <> name)
-        catch
-          {:error, :badarg} ->
-            :elixir
+        with {:ok, module} <- Adapter.generate_module(__MODULE__, type) do
+          get_publisher_module(module)
         end
       end
 
-      def get_publisher_module(module) when is_atom(module) do
-        module
+      def get_publisher_module(module) do
+        Adapter.check_module(__MODULE__, module)
       end
+    end
+  end
+
+  @typedoc """
+  Adapter types.
+  """
+  @type type :: Subscriber | Publisher
+
+  @types [Subscriber, Publisher]
+
+  @doc """
+  Generates module given an `adapter` module and a `type`.
+  """
+  @spec generate_module(module(), type()) :: {:ok, module()} | {:error, term()}
+  def generate_module(adapter, type)
+
+  def generate_module(adapter, type) when type in @types do
+    base = Module.split(adapter)
+
+    case Enum.split_while(base, &(&1 != "Adapter")) do
+      {[], _} ->
+        {:error, "Cannot generate #{type} module for #{adapter}"}
+
+      {_, []} ->
+        {:error, "Cannot generate #{type} module for #{adapter}"}
+
+      {prefix, suffix} ->
+        module = Module.concat(prefix ++ [to_string(type) | suffix])
+        {:ok, module}
+    end
+  end
+
+  @doc """
+  Checks that the module exists.
+  """
+  @spec check_module(module(), module()) :: {:ok, module()} | {:error, term()}
+  def check_module(adapter, module)
+
+  def check_module(adapter, module) do
+    case Code.ensure_loaded(module) do
+      {:module, ^module} ->
+        {:ok, module}
+
+      _ ->
+        {:error, "Cannot find #{module} for #{adapter}"}
     end
   end
 end

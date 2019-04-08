@@ -1,17 +1,17 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "4.1.6"
+  @version "5.0.0"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
     [
+      name: "Yggdrasil",
       app: :yggdrasil,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.8",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      name: "Yggdrasil",
       package: package(),
       deps: deps(),
       docs: docs()
@@ -30,13 +30,12 @@ defmodule Yggdrasil.Mixfile do
 
   defp deps do
     [
-      {:exreg, "~> 0.0.3"},
+      {:exreg, "~> 0.1"},
       {:phoenix_pubsub, "~> 1.0"},
       {:poolboy, "~> 1.5"},
-      {:jason, "~> 1.0"},
-      {:skogsra, "~> 1.0"},
-      {:uuid, "~> 1.1", only: [:dev, :test]},
-      {:ex_doc, "~> 0.18.0", only: :dev},
+      {:jason, "~> 1.1"},
+      {:skogsra, "~> 1.2"},
+      {:ex_doc, "~> 0.20", only: :dev},
       {:credo, "~> 1.0", only: :dev}
     ]
   end
@@ -62,42 +61,50 @@ defmodule Yggdrasil.Mixfile do
 
   defp docs do
     [
+      main: "readme",
+      logo: "logo.png",
       source_url: @root,
       source_ref: "v#{@version}",
-      logo: "logo.png",
-      main: Yggdrasil,
-      formatters: ["html"],
+      extras: [
+        "README.md",
+        "CHANGELOG.md"
+      ],
       groups_for_modules: groups_for_modules()
     ]
   end
 
   defp groups_for_modules do
     [
-      Application: [
-        Yggdrasil.Settings,
-        Yggdrasil.Application
+      "Yggdrasil": [
+        Yggdrasil
       ],
-      Channels: [
+      "Application": [
+        Yggdrasil.Settings
+      ],
+      "Channels": [
         Yggdrasil.Channel,
         Yggdrasil.Registry
       ],
-      Adapters: [
+      "Adapters": [
         Yggdrasil.Adapter,
-        Yggdrasil.Adapter.Elixir
+        Yggdrasil.Adapter.Elixir,
+        Yggdrasil.Adapter.Bridge
       ],
       "Subscriber adapters": [
         Yggdrasil.Subscriber.Adapter,
-        Yggdrasil.Subscriber.Adapter.Elixir
+        Yggdrasil.Subscriber.Adapter.Elixir,
+        Yggdrasil.Subscriber.Adapter.Bridge
       ],
       "Publisher adapters": [
         Yggdrasil.Publisher.Adapter,
-        Yggdrasil.Publisher.Adapter.Elixir
+        Yggdrasil.Publisher.Adapter.Elixir,
+        Yggdrasil.Publisher.Adapter.Bridge
       ],
-      Backends: [
+      "Backends": [
         Yggdrasil.Backend,
         Yggdrasil.Backend.Default
       ],
-      Transformers: [
+      "Transformers": [
         Yggdrasil.Transformer,
         Yggdrasil.Transformer.Default,
         Yggdrasil.Transformer.Json
@@ -109,6 +116,10 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil.Subscriber.Distributor,
         Yggdrasil.Subscriber.Manager,
         Yggdrasil.Subscriber.Publisher
+      ],
+      "Bridge subscribers": [
+        Yggdrasil.Adapter.Bridge.Generator,
+        Yggdrasil.Adapter.Bridge.Subscriber
       ]
     ]
   end

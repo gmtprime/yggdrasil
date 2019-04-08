@@ -6,26 +6,20 @@ defmodule Yggdrasil.Subscriber.Distributor do
   use Supervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Adapter
   alias Yggdrasil.Subscriber.Manager
   alias Yggdrasil.Subscriber.Publisher
 
-  @registry Settings.yggdrasil_process_registry!()
-
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts the supervisor and its children using the `channel` as part of the
   identificator for the supervision tree. It also receives the `pid` of
   the first subscriber. Additionally it can receive `Supervisor` `options`.
   """
-  @spec start_link(
-          Channel.t(),
-          pid(),
-          Supervisor.options()
-        ) :: Supervisor.on_start()
+  @spec start_link(Channel.t(), pid(), Supervisor.options()) ::
+          Supervisor.on_start()
   def start_link(channel, pid, options \\ [])
 
   def start_link(%Channel{} = channel, pid, options) do
@@ -35,7 +29,7 @@ defmodule Yggdrasil.Subscriber.Distributor do
   @doc """
   Stops the `supervisor`.
   """
-  @spec stop(Supervisor.name()) :: :ok
+  @spec stop(Supervisor.supervisor()) :: :ok
   def stop(supervisor) do
     for {module, child, _, _} <- Supervisor.which_children(supervisor) do
       try do
@@ -48,14 +42,14 @@ defmodule Yggdrasil.Subscriber.Distributor do
     Supervisor.stop(supervisor)
   end
 
-  #############################################################################
-  # Supervisor callback.
+  #####################
+  # Supervisor callback
 
   @impl true
   def init([%Channel{} = channel, pid]) do
-    manager_name = {:via, @registry, {Manager, channel}}
-    publisher_name = {:via, @registry, {Publisher, channel}}
-    adapter_name = {:via, @registry, {Adapter, channel}}
+    manager_name = ExReg.local({Manager, channel})
+    publisher_name = ExReg.local({Publisher, channel})
+    adapter_name = ExReg.local({Adapter, channel})
 
     children = [
       %{

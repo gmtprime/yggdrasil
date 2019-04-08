@@ -6,15 +6,12 @@ defmodule Yggdrasil.Subscriber.Publisher do
 
   alias Yggdrasil.Backend
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Transformer
 
   require Logger
 
-  @registry Settings.yggdrasil_process_registry!()
-
-  #############################################################################
-  # Client API.
+  ############
+  # Client API
 
   @doc """
   Starts a server to distribute messages in a `channel`. Additionally can
@@ -46,7 +43,7 @@ defmodule Yggdrasil.Subscriber.Publisher do
           message :: term()
         ) :: :ok | {:error, term()}
   def notify(%Channel{name: name} = channel, message, metadata \\ nil) do
-    publisher = {:via, @registry, {__MODULE__, channel}}
+    publisher = ExReg.local({__MODULE__, channel})
     notify(publisher, name, message, metadata)
   end
 
@@ -64,8 +61,8 @@ defmodule Yggdrasil.Subscriber.Publisher do
     GenServer.call(publisher, {:notify, channel_name, message, metadata})
   end
 
-  #############################################################################
-  # GenServer callbacks.
+  #####################
+  # GenServer callbacks
 
   @impl true
   def init(%Channel{} = channel) do

@@ -70,7 +70,7 @@ defmodule Yggdrasil.Transformer do
   ```
   """
   alias Yggdrasil.Channel
-  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Registry
 
   @doc """
   Callback to define how to decode the `message`s coming from a `channel`.
@@ -95,39 +95,60 @@ defmodule Yggdrasil.Transformer do
   - `:name` - Name of the transformer. Must be an atom.
   """
   defmacro __using__(options) do
-    transformer_alias = Keyword.get(options, :name)
+    transformer_alias =
+      options[:name] || raise ArgumentError, message: "transformer not found"
 
     quote do
       @behaviour Yggdrasil.Transformer
-      alias Yggdrasil.Registry, as: Reg
 
       use Task, restart: :transient
 
-      @doc false
+      @doc """
+      Start task to register the transformer in the `Registry`.
+      """
+      @spec start_link(term()) :: {:ok, pid()}
       def start_link(_) do
         Task.start_link(__MODULE__, :register, [])
       end
 
-      @doc false
+      @doc """
+      Registers transformer in `Registry`.
+      """
+      @spec register() :: :ok
       def register do
         name = unquote(transformer_alias)
 
-        with :ok <- Reg.register_transformer(name, __MODULE__) do
-          :ok
-        else
-          :error ->
-            exit(:error)
-        end
+        Registry.register_transformer(name, __MODULE__)
       end
 
-      @doc false
-      def decode(_channel, message) do
+      @doc """
+      Decodes a `message` for a `channel`.
+      """
+      @spec decode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
+      @impl true
+      def decode(channel, message)
+
+      def decode(%Channel{} = _channel, message) do
         {:ok, message}
       end
 
-      @doc false
-      def encode(_channel, message) do
+      def decode(_channel, _message) do
+        {:error, "invalid channel"}
+      end
+
+      @doc """
+      Encodes a `message` for a `channel`.
+      """
+      @spec encode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
+      @impl true
+      def encode(channel, message)
+
+      def encode(%Channel{} = _channel, message) do
         {:ok, message}
+      end
+
+      def encode(_channel, _message) do
+        {:error, "invalid channel"}
       end
 
       defoverridable decode: 2, encode: 2
@@ -141,7 +162,7 @@ defmodule Yggdrasil.Transformer do
   def decode(channel, message)
 
   def decode(%Channel{transformer: name} = channel, message) do
-    with {:ok, module} <- Reg.get_transformer_module(name) do
+    with {:ok, module} <- Registry.get_transformer_module(name) do
       module.decode(channel, message)
     end
   end
@@ -153,7 +174,7 @@ defmodule Yggdrasil.Transformer do
   def encode(channel, message)
 
   def encode(%Channel{transformer: name} = channel, message) do
-    with {:ok, module} <- Reg.get_transformer_module(name) do
+    with {:ok, module} <- Registry.get_transformer_module(name) do
       module.encode(channel, message)
     end
   end

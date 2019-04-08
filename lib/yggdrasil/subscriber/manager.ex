@@ -8,10 +8,7 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   alias Yggdrasil.Backend
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Generator
-
-  @registry Settings.yggdrasil_process_registry!()
 
   defstruct [:status, :channel, :cache]
   alias __MODULE__, as: State
@@ -31,7 +28,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @spec start_link(channel :: Channel.t()) :: GenServer.on_start()
   @spec start_link(
           channel :: Channel.t(),
-          GenServer.options()
+          options :: GenServer.options()
         ) :: GenServer.on_start()
   def start_link(channel, options \\ [])
 
@@ -59,7 +56,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   def add(%Channel{} = channel, pid) do
     name = {__MODULE__, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         {:error, "Manager is not available for subscriptions"}
 
@@ -77,7 +74,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   def remove(%Channel{} = channel, pid) do
     name = {__MODULE__, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         {:error, "Manager is not available for unsubscriptions"}
 
@@ -92,7 +89,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   def connected(%Channel{} = channel) do
     name = {__MODULE__, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         {:error, "Manager is not available for subscriptions"}
 
@@ -107,7 +104,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   def disconnected(%Channel{} = channel) do
     name = {__MODULE__, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         {:error, "Manager is not available for subscriptions"}
 

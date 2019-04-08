@@ -8,8 +8,6 @@ defmodule Yggdrasil.Publisher do
   alias Yggdrasil.Publisher.Adapter
   alias Yggdrasil.Settings
 
-  @registry Settings.yggdrasil_process_registry!()
-
   ############
   # Client API
 
@@ -51,7 +49,7 @@ defmodule Yggdrasil.Publisher do
 
   def publish(%Channel{} = channel, message, options) do
     base = %Channel{channel | name: nil}
-    pool_name = {:via, @registry, {Poolboy, base}}
+    pool_name = ExReg.local({Poolboy, base})
 
     :poolboy.transaction(pool_name, fn worker ->
       Adapter.publish(worker, channel, message, options)
@@ -63,11 +61,11 @@ defmodule Yggdrasil.Publisher do
 
   @impl true
   def init(%Channel{namespace: namespace} = channel) do
-    via_tuple = {:via, @registry, {Poolboy, channel}}
+    via_tuple = ExReg.local({Poolboy, channel})
 
     poolargs =
       namespace
-      |> Settings.yggdrasil_publisher_options!()
+      |> Settings.publisher_options!()
       |> Keyword.put(:name, via_tuple)
       |> Keyword.put(:worker_module, Adapter)
 

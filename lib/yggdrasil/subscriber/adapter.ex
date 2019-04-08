@@ -3,7 +3,7 @@ defmodule Yggdrasil.Subscriber.Adapter do
   Subscriber adapter behaviour.
   """
   alias Yggdrasil.Channel
-  alias Yggdrasil.Registry, as: Reg
+  alias Yggdrasil.Registry
 
   @doc """
   Callback to start a subscriber with a `channel`, a `publisher` and some
@@ -21,12 +21,17 @@ defmodule Yggdrasil.Subscriber.Adapter do
     quote do
       @behaviour Yggdrasil.Subscriber.Adapter
 
-      @doc false
+      @doc """
+      Starts #{__MODULE__} with a `channel` and optional `options`.
+      """
+      @spec start_link(Channel.t()) :: GenServer.on_start()
+      @spec start_link(Channel.t(), GenServer.options()) ::
+              GenServer.on_start()
+      @impl true
       def start_link(channel, options \\ [])
 
       def start_link(%Channel{} = channel, options) do
-        arguments = %{channel: channel}
-        GenServer.start_link(__MODULE__, arguments, options)
+        GenServer.start_link(__MODULE__, %{channel: channel}, options)
       end
 
       defoverridable start_link: 1, start_link: 2
@@ -38,26 +43,21 @@ defmodule Yggdrasil.Subscriber.Adapter do
   and an optional `GenServer` options.
   """
   @spec start_link(Channel.t()) :: GenServer.on_start()
-  @spec start_link(
-          Channel.t(),
-          GenServer.options()
-        ) :: GenServer.on_start()
+  @spec start_link(Channel.t(), GenServer.options()) :: GenServer.on_start()
   def start_link(channel, options \\ [])
 
-  def start_link(
-        %Channel{adapter: adapter} = channel,
-        options
-      ) do
-    with {:ok, module} <- Reg.get_subscriber_module(adapter) do
+  def start_link(%Channel{adapter: adapter} = channel, options) do
+    with {:ok, module} <- Registry.get_subscriber_module(adapter) do
       module.start_link(channel, options)
     end
   end
 
   @doc """
-  Generic subscriber adapter stopper that receives the `pid`.
+  Generic subscriber adapter stopper that receives the `pid` and optional
+  `reason` and `timeout`.
   """
-  @spec stop(GenServer.name()) :: :ok
-  def stop(pid) do
-    GenServer.stop(pid)
-  end
+  @spec stop(pid() | GenServer.name()) :: :ok
+  @spec stop(pid() | GenServer.name(), term()) :: :ok
+  @spec stop(pid() | GenServer.name(), term(), :infinity | pos_integer()) :: :ok
+  defdelegate stop(pid, reason \\ :normal, timeout \\ :infinity), to: GenServer
 end

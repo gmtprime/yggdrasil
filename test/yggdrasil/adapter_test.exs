@@ -8,8 +8,8 @@ defmodule Yggdrasil.AdapterTest do
       name: :test_adapter,
       transformer: :some_transformer,
       backend: :some_backend,
-      subscriber: :some_subscriber,
-      publisher: :some_publisher
+      subscriber: Some.Subscriber,
+      publisher: Some.Publisher
   end
 
   describe "Adapter behaviour" do
@@ -21,12 +21,12 @@ defmodule Yggdrasil.AdapterTest do
       assert :some_backend = TestAdapter.get_backend()
     end
 
-    test "gets subscriber module" do
-      assert :some_subscriber = TestAdapter.get_subscriber_module()
+    test "errors when subscriber module does not exist" do
+      assert {:error, _} = TestAdapter.get_subscriber_module()
     end
 
-    test "gets publisher module" do
-      assert :some_publisher = TestAdapter.get_publisher_module()
+    test "errors when publisher module does not exist" do
+      assert {:error, _} = TestAdapter.get_publisher_module()
     end
   end
 
@@ -40,12 +40,13 @@ defmodule Yggdrasil.AdapterTest do
     end
 
     test "gets subscriber module" do
-      assert Yggdrasil.Subscriber.Adapter.Elixir =
+      assert {:ok, Yggdrasil.Subscriber.Adapter.Elixir} =
                Default.get_subscriber_module()
     end
 
     test "gets publisher module" do
-      assert Yggdrasil.Publisher.Adapter.Elixir = Default.get_publisher_module()
+      assert {:ok, Yggdrasil.Publisher.Adapter.Elixir} =
+               Default.get_publisher_module()
     end
   end
 end

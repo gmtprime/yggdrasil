@@ -6,7 +6,7 @@ defmodule Yggdrasil.Publisher.AdapterTest do
   alias Yggdrasil.Registry
 
   test "publish" do
-    {:ok, channel} = Registry.get_full_channel(%Channel{name: UUID.uuid4()})
+    {:ok, channel} = Registry.get_full_channel(%Channel{name: make_ref()})
     :ok = Yggdrasil.subscribe(channel)
 
     assert_receive {:Y_CONNECTED, _}, 500

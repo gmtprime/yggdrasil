@@ -5,11 +5,8 @@ defmodule Yggdrasil.Subscriber.Generator do
   use DynamicSupervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
   alias Yggdrasil.Subscriber.Distributor
   alias Yggdrasil.Subscriber.Manager
-
-  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -18,7 +15,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   Starts a distributor generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link(Supervisor.options()) :: Supervisor.on_start()
+  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
   def start_link(options \\ []) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
@@ -26,7 +23,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   @doc """
   Stops a distributor `generator`.
   """
-  @spec stop(Supervisor.name()) :: :ok
+  @spec stop(Supervisor.supervisor()) :: :ok
   def stop(generator) do
     for {_, pid, _, _} <- Supervisor.which_children(generator) do
       try do
@@ -54,7 +51,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   def subscribe(%Channel{} = channel, pid, options) when is_pid(pid) do
     name = {Distributor, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         generator = Keyword.get(options, :name, __MODULE__)
         start_distributor(generator, channel, pid)
@@ -65,11 +62,10 @@ defmodule Yggdrasil.Subscriber.Generator do
   end
 
   @doc false
-  @spec start_distributor(Supervisor.name(), Channel.t(), pid()) ::
+  @spec start_distributor(Supervisor.supervisor(), Channel.t(), pid()) ::
           :ok | {:error, term()}
   def start_distributor(generator, %Channel{} = channel, pid) do
-    name = {Distributor, channel}
-    via_tuple = {:via, @registry, name}
+    via_tuple = ExReg.local({Distributor, channel})
 
     spec = %{
       id: via_tuple,
@@ -120,7 +116,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   def stop_distributor(%Channel{} = channel) do
     name = {Distributor, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
         :ok
 

@@ -23,6 +23,9 @@ defmodule Yggdrasil.Channel do
             backend: nil,
             metadata: nil
 
+  @typedoc """
+  Channel.
+  """
   @type t :: %__MODULE__{
           name: any(),
           adapter: module(),

@@ -6,9 +6,6 @@ defmodule Yggdrasil.Publisher.Generator do
 
   alias Yggdrasil.Channel
   alias Yggdrasil.Publisher
-  alias Yggdrasil.Settings
-
-  @registry Settings.yggdrasil_process_registry!()
 
   ############
   # Client API
@@ -16,13 +13,20 @@ defmodule Yggdrasil.Publisher.Generator do
   @doc """
   Starts a publisher generator with `Supervisor` `options`.
   """
-  def start_link(options \\ []) do
+  @spec start_link() :: Supervisor.on_start()
+  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
+  def start_link(options \\ [])
+
+  def start_link(options) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
 
   @doc """
   Stops a publisher `generator`.
   """
+  @spec stop(Supervisor.supervisor()) :: :ok
+  def stop(generator)
+
   def stop(generator) do
     for {_, pid, _, _} <- Supervisor.which_children(generator) do
       try do
@@ -39,13 +43,17 @@ defmodule Yggdrasil.Publisher.Generator do
   Starts a publisher using the `generator` and the `channel` to identify the
   connection.
   """
+  @spec start_publisher(Supervisor.supervisor(), Channel.t()) ::
+          DynamicSupervisor.on_start_child()
+  def start_publisher(generator, channel)
+
   def start_publisher(generator, %Channel{} = channel) do
     channel = %Channel{channel | name: nil}
     name = {Publisher, channel}
 
-    case @registry.whereis_name(name) do
+    case ExReg.whereis_name(name) do
       :undefined ->
-        via_tuple = {:via, @registry, name}
+        via_tuple = ExReg.local(name)
 
         spec = %{
           id: via_tuple,

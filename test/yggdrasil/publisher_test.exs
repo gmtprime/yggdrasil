@@ -8,7 +8,7 @@ defmodule Yggdrasil.PublisherTest do
   test "publish message" do
     {:ok, channel} =
       Registry.get_full_channel(%Channel{
-        name: UUID.uuid4(),
+        name: make_ref(),
         namespace: PublisherTest
       })
 
