@@ -25,9 +25,12 @@ defmodule Yggdrasil.Application do
 
     options = [strategy: :rest_for_one, name: Yggdrasil.Supervisor]
     Supervisor.start_link(children, options)
+  rescue
+    reason ->
+      {:error, reason}
   end
 
-  @spec pubsub_adapter() :: Supervisor.child_spec()
+  @spec pubsub_adapter() :: Supervisor.child_spec() | no_return()
   defp pubsub_adapter do
     adapter = Settings.pubsub_adapter!()
 

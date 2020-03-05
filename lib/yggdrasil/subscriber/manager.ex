@@ -63,6 +63,9 @@ defmodule Yggdrasil.Subscriber.Manager do
       manager ->
         GenServer.call(manager, {:add, pid})
     end
+  catch
+    :exit, {:timeout, _} ->
+      {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """
@@ -81,6 +84,9 @@ defmodule Yggdrasil.Subscriber.Manager do
       manager ->
         GenServer.call(manager, {:remove, pid})
     end
+  catch
+    :exit, {:timeout, _} ->
+      {:error, "Manager not available for unsubscriptions"}
   end
 
   @doc """
@@ -117,7 +123,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   Whether the `pid` is subscribed or not to the `channel`.
   """
   @spec subscribed?(Channel.t()) :: boolean()
-  @spec subscribed?(Channel.t(), pid()) :: boolean()
+  @spec subscribed?(Channel.t(), nil | pid()) :: boolean()
   def subscribed?(channel, pid \\ nil)
 
   def subscribed?(%Channel{} = channel, nil) do
@@ -143,13 +149,8 @@ defmodule Yggdrasil.Subscriber.Manager do
     :pg2.create({:connected, channel})
     :pg2.create({:disconnected, channel})
 
-    with {:ok, new_state} <- do_disconnected(state) do
-      Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
-      {:ok, new_state}
-    else
-      :stop ->
-        {:stop, :normal}
-    end
+    Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
+    do_disconnected(state)
   end
 
   @impl true
@@ -199,10 +200,12 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   @impl true
   def handle_info({:DOWN, _, _, pid, _}, %State{} = state) do
-    if leave([pid], state) > 0 do
+    with :ok <- leave([pid], state),
+         :ok <- check_subscribers(state) do
       {:noreply, state}
     else
-      {:stop, :normal, state}
+      :stop ->
+        {:stop, :normal, state}
     end
   end
 

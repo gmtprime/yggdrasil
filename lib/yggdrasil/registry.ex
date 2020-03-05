@@ -26,7 +26,7 @@ defmodule Yggdrasil.Registry do
   Starts a registry with some optional `options`.
   """
   @spec start_link() :: Agent.on_start()
-  @spec start_link(Agent.options()) :: Agent.on_start()
+  @spec start_link(GenServer.options()) :: Agent.on_start()
   def start_link(options \\ []) do
     opts = [
       :set,
@@ -169,7 +169,7 @@ defmodule Yggdrasil.Registry do
 
   # Starts a Registry.
   @doc false
-  @spec start_link(:ets.tab(), list(), Agent.options()) :: Agent.on_start()
+  @spec start_link(:ets.tab(), list(), GenServer.options()) :: Agent.on_start()
   def start_link(table, table_opts, options) do
     Agent.start_link(fn -> :ets.new(table, table_opts) end, options)
   end

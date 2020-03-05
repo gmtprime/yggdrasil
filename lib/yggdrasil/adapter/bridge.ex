@@ -66,7 +66,7 @@ defmodule Yggdrasil.Adapter.Bridge do
   # Helpers
 
   # Gets remote `channel`.
-  @spec get_remote_channel(Channel.t() | map() | Keyword.t()) ::
+  @spec get_remote_channel(Channel.t() | map() | keyword()) ::
           {:ok, Channel.t()} | {:error, term()}
   defp get_remote_channel(channel)
 

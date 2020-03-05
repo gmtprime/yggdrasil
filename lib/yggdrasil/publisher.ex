@@ -16,7 +16,8 @@ defmodule Yggdrasil.Publisher do
   Additionally can receive `Supervisor` `options`.
   """
   @spec start_link(Channel.t()) :: Supervisor.on_start()
-  @spec start_link(Channel.t(), Supervisor.options()) :: Supervisor.on_start()
+  @spec start_link(Channel.t(), [Supervisor.option() | Supervisor.init_option()]) ::
+          Supervisor.on_start()
   def start_link(channel, options \\ [])
 
   def start_link(%Channel{} = channel, options) do
@@ -44,7 +45,7 @@ defmodule Yggdrasil.Publisher do
   Publishes `message` in a `channel` with some optional `options`.
   """
   @spec publish(Channel.t(), term()) :: :ok | {:error, term()}
-  @spec publish(Channel.t(), term(), Keyword.t()) :: :ok | {:error, term()}
+  @spec publish(Channel.t(), term(), keyword()) :: :ok | {:error, term()}
   def publish(channel, message, options \\ [])
 
   def publish(%Channel{} = channel, message, options) do

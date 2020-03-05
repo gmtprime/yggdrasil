@@ -15,7 +15,8 @@ defmodule Yggdrasil.Subscriber.Generator do
   Starts a distributor generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
+  @spec start_link([DynamicSupervisor.option() | DynamicSupervisor.init_option()]) ::
+          Supervisor.on_start()
   def start_link(options \\ []) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
@@ -41,7 +42,7 @@ defmodule Yggdrasil.Subscriber.Generator do
   """
   @spec subscribe(Channel.t()) :: :ok | {:error, term()}
   @spec subscribe(Channel.t(), pid()) :: :ok | {:error, term()}
-  @spec subscribe(Channel.t(), pid(), Keyword.t()) :: :ok | {:error, term()}
+  @spec subscribe(Channel.t(), nil | pid(), keyword()) :: :ok | {:error, term()}
   def subscribe(channel, pid \\ nil, options \\ [])
 
   def subscribe(%Channel{} = channel, nil, options) do
@@ -73,9 +74,10 @@ defmodule Yggdrasil.Subscriber.Generator do
       restart: :transient
     }
 
-    with {:ok, _} <- DynamicSupervisor.start_child(generator, spec) do
-      :ok
-    else
+    case DynamicSupervisor.start_child(generator, spec) do
+      {:ok, _} ->
+        :ok
+
       {:error, {:already_started, _}} ->
         do_subscribe(channel, pid)
 
@@ -88,16 +90,13 @@ defmodule Yggdrasil.Subscriber.Generator do
   @spec do_subscribe(Channel.t(), pid()) :: :ok | {:error, term()}
   def do_subscribe(%Channel{} = channel, pid) do
     Manager.add(channel, pid)
-  catch
-    :exit, {:timeout, _} ->
-      {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """
   Makes a `pid` unsubscribe from a `channel`.
   """
-  @spec unsubscribe(Channel.t()) :: :ok
-  @spec unsubscribe(Channel.t(), pid()) :: :ok
+  @spec unsubscribe(Channel.t()) :: :ok | {:error, term()}
+  @spec unsubscribe(Channel.t(), nil | pid()) :: :ok | {:error, term()}
   def unsubscribe(channel, pid \\ nil)
 
   def unsubscribe(%Channel{} = channel, nil) do
@@ -106,9 +105,6 @@ defmodule Yggdrasil.Subscriber.Generator do
 
   def unsubscribe(%Channel{} = channel, pid) when is_pid(pid) do
     Manager.remove(channel, pid)
-  catch
-    :exit, {:timeout, _} ->
-      {:error, "Manager not available for unsubscriptions"}
   end
 
   @doc false

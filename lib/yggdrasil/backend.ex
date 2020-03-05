@@ -81,8 +81,7 @@ defmodule Yggdrasil.Backend do
   - `:name` - Name of the backend. Must be an atom.
   """
   defmacro __using__(options) do
-    backend_alias =
-      options[:name] || raise ArgumentError, message: "Backend not found"
+    backend_alias = options[:name] || raise ArgumentError, message: "Backend not found"
 
     quote do
       @behaviour Yggdrasil.Backend
@@ -121,6 +120,9 @@ defmodule Yggdrasil.Backend do
           channel_name = Backend.transform_name(channel)
           PubSub.subscribe(pubsub, channel_name)
         end
+      rescue
+        reason ->
+          {:error, reason}
       end
 
       @doc """
@@ -137,6 +139,9 @@ defmodule Yggdrasil.Backend do
         else
           :ok
         end
+      rescue
+        reason ->
+          {:error, reason}
       end
 
       @doc """
@@ -150,6 +155,9 @@ defmodule Yggdrasil.Backend do
         real_message = {:Y_CONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
+      rescue
+        reason ->
+          {:error, reason}
       end
 
       def connected(%Channel{} = channel, pid) do
@@ -170,6 +178,9 @@ defmodule Yggdrasil.Backend do
         real_message = {:Y_DISCONNECTED, channel}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
+      rescue
+        reason ->
+          {:error, reason}
       end
 
       def disconnected(%Channel{} = channel, pid) do
@@ -190,6 +201,9 @@ defmodule Yggdrasil.Backend do
         real_message = {:Y_EVENT, complete_channel, message}
         channel_name = Backend.transform_name(channel)
         PubSub.broadcast(pubsub, channel_name, real_message)
+      rescue
+        reason ->
+          {:error, reason}
       end
 
       defoverridable subscribe: 1,

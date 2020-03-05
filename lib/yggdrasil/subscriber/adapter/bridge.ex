@@ -89,11 +89,9 @@ defmodule Yggdrasil.Subscriber.Adapter.Bridge do
         :subscribe,
         %State{node: node, local: local, remote: remote} = state
       ) do
-    with :ok <- handle_subscription(node, local, remote) do
-      {:noreply, state}
-    else
-      {:error, _} = error ->
-        {:stop, error, state}
+    case handle_subscription(node, local, remote) do
+      :ok -> {:noreply, state}
+      {:error, _} = error -> {:stop, error, state}
     end
   end
 
@@ -180,7 +178,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Bridge do
   defp handle_subscription(node, local, remote)
 
   defp handle_subscription(node, %Channel{} = local, %Channel{} = remote) do
-    with {:ok, pid} = run_remote_subscriber(node, local, remote) do
+    with {:ok, pid} <- run_remote_subscriber(node, local, remote) do
       Process.monitor(pid)
       :ok
     end

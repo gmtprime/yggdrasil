@@ -30,7 +30,7 @@ defmodule Yggdrasil.Publisher.Adapter do
               publisher :: GenServer.server(),
               channel :: Channel.t(),
               message :: term(),
-              options :: Keyword.t()
+              options :: keyword()
             ) :: :ok | {:error, term()}
 
   @doc """
@@ -44,8 +44,7 @@ defmodule Yggdrasil.Publisher.Adapter do
       Starts a publisher adapter for an adapter given a `namespace`.
       Optionally, receives `GenServer` `options`.
       """
-      @spec start_link(atom(), GenServer.options()) :: GenServer.options()
-      @impl true
+      @impl Yggdrasil.Publisher.Adapter
       def start_link(namespace, options \\ [])
 
       def start_link(namespace, options) do
@@ -55,11 +54,7 @@ defmodule Yggdrasil.Publisher.Adapter do
       @doc """
       Publishes a `message` in a `channel` using a `publisher`.
       """
-      @spec publish(GenServer.server(), Channel.t(), term()) ::
-              :ok | {:error, term()}
-      @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
-              :ok | {:error, term()}
-      @impl true
+      @impl Yggdrasil.Publisher.Adapter
       def publish(publisher, channel, message, options \\ [])
 
       def publish(publisher, %Channel{} = channel, message, _options) do
@@ -97,7 +92,7 @@ defmodule Yggdrasil.Publisher.Adapter do
   Generic publisher adapter publish function. Publisher a `message` in a
   `channel` using a `publisher` and some `options`.
   """
-  @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
+  @spec publish(GenServer.server(), Channel.t(), term(), keyword()) ::
           :ok | {:error, term()}
   def publish(publish, channel, message, options)
 

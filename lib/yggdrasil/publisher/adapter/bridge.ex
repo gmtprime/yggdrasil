@@ -48,10 +48,6 @@ defmodule Yggdrasil.Publisher.Adapter.Bridge do
   @doc """
   Publishes a `message` in a `channel` using a `publisher` with some `options`.
   """
-  @spec publish(GenServer.server(), Channel.t(), term()) ::
-          :ok | {:error, term()}
-  @spec publish(GenServer.server(), Channel.t(), term(), Keyword.t()) ::
-          :ok | {:error, term()}
   @impl Adapter
   def publish(publisher, channel, message, options \\ [])
 
