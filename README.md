@@ -10,8 +10,11 @@
 - Multi-node pubsub.
 - Simple API (`subscribe/1`, `unsubscribe/1`, `publish/2`).
 - `GenServer` wrapper for handling subscriber events easily.
-- Several fault tolerant adapters (RabbitMQ, Redis, PostgreSQL, GraphQL,
-Ethereum).
+- Several fault tolerant adapters:
+  + [RabbitMQ](https://github.com/gmtprime/yggdrasil_rabbitmq)
+  + [PostgreSQL](https://github.com/gmtprime/yggdrasil_postgres)
+  + [Redis](https://github.com/gmtprime/yggdrasil_redis)
+  + [GraphQL](https://github.com/etherharvest/yggdrasil_graphql)
 
 ## Small Example
 
@@ -106,7 +109,6 @@ Adapter         | Yggdrasil Adapter     | Dependencies                          
 **Redis**       | `:redis`              | [`:yggdrasil_redis`](https://github.com/gmtprime/yggdrasil_redis)           | Fault tolerant pubsub for Redis channels
 **PostgreSQL**  | `:postgres`           | [`:yggdrasil_postgres`](https://github.com/gmtprime/yggdrasil_postgres)     | Fault tolerant pubsub for `PG_NOTIFY` messages
 **GraphQL**     | `:graphql`            | [`:yggdrasil_graphql`](https://github.com/etherharvest/yggdrasil_graphql)   | Converts any adapter to a GraphQL subscription
-**Ethereum**    | `:ethereum`           | [`:yggdrasil_ethereum`](https://github.com/etherharvest/yggdrasil_ethereum) | Fault tolerant pubsub for contract log messages
 
 > For more information on how to use them, check the corresponding repository
 > documentation.
