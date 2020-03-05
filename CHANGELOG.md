@@ -1,5 +1,16 @@
 # Changelog
 
+## v5.0.2
+
+### Enhancements
+
+  * Updated dependencies.
+  * Added dialyzer.
+
+### Bug fixes
+
+  * Fixed dialyzer warnings.
+
 ## v5.0.0
 
 ### Enhancements

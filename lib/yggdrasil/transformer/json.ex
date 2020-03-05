@@ -9,8 +9,7 @@ defmodule Yggdrasil.Transformer.Json do
   @doc """
   Decodes a JSON from a binary `message`. The `channel` is ignored.
   """
-  @spec decode(Channel.t(), binary()) :: {:ok, map()} | {:error, term()}
-  @impl true
+  @impl Yggdrasil.Transformer
   def decode(channel, message)
 
   def decode(%Channel{} = _, message) when is_binary(message) do
@@ -24,8 +23,7 @@ defmodule Yggdrasil.Transformer.Json do
   @doc """
   Encodes some `data` to a JSON binary. The `channel` is ignored.
   """
-  @spec encode(Channel.t(), binary()) :: {:ok, binary()} | {:error, term()}
-  @impl true
+  @impl Yggdrasil.Transformer
   def encode(channel, data)
 
   def encode(%Channel{} = _, data) when is_map(data) do

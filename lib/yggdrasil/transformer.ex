@@ -95,8 +95,7 @@ defmodule Yggdrasil.Transformer do
   - `:name` - Name of the transformer. Must be an atom.
   """
   defmacro __using__(options) do
-    transformer_alias =
-      options[:name] || raise ArgumentError, message: "transformer not found"
+    transformer_alias = options[:name] || raise ArgumentError, message: "transformer not found"
 
     quote do
       @behaviour Yggdrasil.Transformer
@@ -124,8 +123,7 @@ defmodule Yggdrasil.Transformer do
       @doc """
       Decodes a `message` for a `channel`.
       """
-      @spec decode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
-      @impl true
+      @impl Yggdrasil.Transformer
       def decode(channel, message)
 
       def decode(%Channel{} = _channel, message) do
@@ -139,8 +137,7 @@ defmodule Yggdrasil.Transformer do
       @doc """
       Encodes a `message` for a `channel`.
       """
-      @spec encode(Channel.t(), term()) :: {:ok, term()} | {:error, term()}
-      @impl true
+      @impl Yggdrasil.Transformer
       def encode(channel, message)
 
       def encode(%Channel{} = _channel, message) do

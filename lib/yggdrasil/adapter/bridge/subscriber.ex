@@ -6,6 +6,8 @@ defmodule Yggdrasil.Adapter.Bridge.Subscriber do
 
   require Logger
 
+  alias Yggdrasil.Channel
+
   @doc false
   defstruct [:target, :pid, :channel]
   alias __MODULE__, as: State
@@ -34,13 +36,14 @@ defmodule Yggdrasil.Adapter.Bridge.Subscriber do
   def init(%State{pid: pid, channel: channel} = state) do
     Process.monitor(pid)
 
-    with :ok <- Yggdrasil.subscribe(channel) do
-      Logger.debug(fn ->
-        "Started #{__MODULE__} for #{inspect(pid)} and #{inspect(channel)}"
-      end)
+    case Yggdrasil.subscribe(channel) do
+      :ok ->
+        Logger.debug(fn ->
+          "Started #{__MODULE__} for #{inspect(pid)} and #{inspect(channel)}"
+        end)
 
-      {:ok, state}
-    else
+        {:ok, state}
+
       {:error, reason} ->
         Logger.error(fn ->
           "Cannot start #{__MODULE__} due to #{inspect(reason)}"

@@ -75,7 +75,7 @@ defmodule Yggdrasil do
   @doc """
   Subscribes to a `channel`.
   """
-  @spec subscribe(map() | Keyword.t() | Channel.t()) :: :ok | {:error, term()}
+  @spec subscribe(map() | keyword() | Channel.t()) :: :ok | {:error, term()}
   def subscribe(channel)
 
   def subscribe(channel) do
@@ -88,7 +88,7 @@ defmodule Yggdrasil do
   @doc """
   Unsubscribes from a `channel`.
   """
-  @spec unsubscribe(map() | Keyword.t() | Channel.t()) :: :ok | {:error, term()}
+  @spec unsubscribe(map() | keyword() | Channel.t()) :: :ok | {:error, term()}
   def unsubscribe(channel)
 
   def unsubscribe(channel) do
@@ -104,9 +104,9 @@ defmodule Yggdrasil do
   @doc """
   Publishes a `message` in a `channel` with some optional `options`.
   """
-  @spec publish(map() | Keyword.t() | Channel.t(), term()) ::
+  @spec publish(map() | keyword() | Channel.t(), term()) ::
           :ok | {:error, term()}
-  @spec publish(map() | Keyword.t() | Channel.t(), term(), Keyword.t()) ::
+  @spec publish(map() | keyword() | Channel.t(), term(), Keyword.t()) ::
           :ok | {:error, term()}
   def publish(channel, message, options \\ [])
 
@@ -123,7 +123,7 @@ defmodule Yggdrasil do
   @doc """
   Creates a channel from `data` where data is a map or a `Keyword` list.
   """
-  @spec gen_channel(map() | Keyword.t() | Channel.t()) ::
+  @spec gen_channel(map() | keyword() | Channel.t()) ::
           {:ok, Channel.t()} | {:error, term()}
   def gen_channel(data)
 

@@ -14,7 +14,7 @@ defmodule Yggdrasil.Settings do
       :"$yggdrasil_registry"
   """
   app_env :module_registry, :yggdrasil, :module_registry,
-    skip_system: true,
+    binding_skip: [:system],
     default: :"$yggdrasil_registry"
 
   ################################
@@ -27,7 +27,7 @@ defmodule Yggdrasil.Settings do
       Phoenix.PubSub.PG2
   """
   app_env :pubsub_adapter, :yggdrasil, :pubsub_adapter,
-    skip_system: true,
+    binding_skip: [:system],
     default: Phoenix.PubSub.PG2
 
   @envdoc """
@@ -37,7 +37,7 @@ defmodule Yggdrasil.Settings do
       Yggdrasil.PubSub
   """
   app_env :pubsub_name, :yggdrasil, :pubsub_name,
-    skip_system: true,
+    binding_skip: [:system],
     default: Yggdrasil.PubSub
 
   @envdoc """
@@ -47,7 +47,7 @@ defmodule Yggdrasil.Settings do
       [pool_size: 1]
   """
   app_env :pubsub_options, :yggdrasil, :pubsub_options,
-    skip_system: true,
+    binding_skip: [:system],
     default: [pool_size: 1]
 
   #############################
@@ -60,6 +60,6 @@ defmodule Yggdrasil.Settings do
       [size: 1, max_overflow: 5]
   """
   app_env :publisher_options, :yggdrasil, :publisher_options,
-    skip_system: true,
+    binding_skip: [:system],
     default: [size: 1, max_overflow: 5]
 end

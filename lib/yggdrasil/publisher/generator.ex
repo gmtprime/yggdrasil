@@ -14,7 +14,8 @@ defmodule Yggdrasil.Publisher.Generator do
   Starts a publisher generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
+  @spec start_link([DynamicSupervisor.option() | DynamicSupervisor.init_option()]) ::
+          Supervisor.on_start()
   def start_link(options \\ [])
 
   def start_link(options) do

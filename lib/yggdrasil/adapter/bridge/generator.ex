@@ -4,8 +4,8 @@ defmodule Yggdrasil.Adapter.Bridge.Generator do
   """
   use DynamicSupervisor
 
-  alias Yggdrasil.Channel
   alias Yggdrasil.Adapter.Bridge.Subscriber
+  alias Yggdrasil.Channel
 
   ############
   # Client API
@@ -14,7 +14,8 @@ defmodule Yggdrasil.Adapter.Bridge.Generator do
   Starts a bridge subscriber generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link(DynamicSupervisor.options()) :: Supervisor.on_start()
+  @spec start_link([DynamicSupervisor.option() | DynamicSupervisor.init_option()]) ::
+          Supervisor.on_start()
   def start_link(options \\ []) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)
   end
@@ -33,6 +34,8 @@ defmodule Yggdrasil.Adapter.Bridge.Generator do
 
       Supervisor.stop(generator)
     end
+
+    :ok
   end
 
   @doc """
