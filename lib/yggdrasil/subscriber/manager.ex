@@ -146,9 +146,6 @@ defmodule Yggdrasil.Subscriber.Manager do
       cache: :ets.new(:monitored, [:set])
     }
 
-    :pg2.create({:connected, channel})
-    :pg2.create({:disconnected, channel})
-
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
     do_disconnected(state)
   end
@@ -215,8 +212,6 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   @impl true
   def terminate(:normal, %State{channel: channel}) do
-    :pg2.delete({:connected, channel})
-    :pg2.delete({:disconnected, channel})
     Generator.stop_distributor(channel)
 
     Logger.debug(fn ->
@@ -236,24 +231,19 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc false
   def subscribed?(type, %Channel{} = channel, pid) do
     name = {type, channel}
-
-    case :pg2.get_members(name) do
-      {:error, {:no_such_group, _}} ->
-        false
-
-      members when is_list(members) ->
-        pid in members
-    end
+    pid in :pg.get_members(__MODULE__, name)
   end
 
   @doc false
   def check_subscribers(%State{status: status, channel: channel}) do
     name = {status, channel}
 
-    if length(:pg2.get_members(name)) > 0 do
-      :ok
-    else
-      :stop
+    case :pg.get_members(__MODULE__, name) do
+      [_ | _] ->
+        :ok
+
+      [] ->
+        :stop
     end
   end
 
@@ -263,7 +253,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc false
   def do_connected(%State{channel: channel} = state) do
     name = {:disconnected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     leave(members, state)
     new_state = %State{state | status: :connected}
     join(members, new_state)
@@ -273,7 +263,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc false
   def do_disconnected(%State{channel: channel} = state) do
     name = {:connected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     leave(members, state)
     new_state = %State{state | status: :disconnected}
     join(members, new_state)
@@ -300,11 +290,11 @@ defmodule Yggdrasil.Subscriber.Manager do
   @spec do_join(pid(), State.t()) :: :ok
   def do_join(pid, %State{status: :connected, channel: channel} = state) do
     name = {:connected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     monitor(pid, state)
 
-    if not (pid in members) do
-      :pg2.join(name, pid)
+    if pid not in members do
+      :pg.join(__MODULE__, name, pid)
       Backend.connected(channel, pid)
     end
 
@@ -313,11 +303,11 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   def do_join(pid, %State{status: :disconnected, channel: channel} = state) do
     name = {:disconnected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     monitor(pid, state)
 
-    if not (pid in members) do
-      :pg2.join(name, pid)
+    if pid not in members do
+      :pg.join(__MODULE__, name, pid)
     end
 
     :ok
@@ -358,11 +348,11 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   def do_leave(pid, %State{status: :connected, channel: channel} = state) do
     name = {:connected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     demonitor(pid, state)
 
     if pid in members do
-      :pg2.leave(name, pid)
+      :pg.leave(__MODULE__, name, pid)
       Backend.disconnected(channel, pid)
     end
 
@@ -371,11 +361,11 @@ defmodule Yggdrasil.Subscriber.Manager do
 
   def do_leave(pid, %State{status: :disconnected, channel: channel} = state) do
     name = {:disconnected, channel}
-    members = :pg2.get_members(name)
+    members = :pg.get_members(__MODULE__, name)
     demonitor(pid, state)
 
     if pid in members do
-      :pg2.leave(name, pid)
+      :pg.leave(__MODULE__, name, pid)
     end
 
     :ok

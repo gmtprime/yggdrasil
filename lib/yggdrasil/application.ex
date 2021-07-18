@@ -10,6 +10,10 @@ defmodule Yggdrasil.Application do
   def start(_type, _args) do
     children = [
       {Phoenix.PubSub, [name: Yggdrasil.PubSub]},
+      %{
+        id: Manager.PG,
+        start: {:pg, :start_link, [Yggdrasil.Subscriber.Manager]}
+      },
       {PublisherGen, [name: Yggdrasil.Publisher.Generator]},
       {SubscriberGen, [name: Yggdrasil.Subscriber.Generator]},
       Yggdrasil.Registry,
