@@ -23,8 +23,8 @@ erl_crash.dump
 .tool-versions
 
 # PLTs
-priv/plts/skogsra.plt
-priv/plts/skogsra.plt.hash
+priv/plts/yggdrasil.plt
+priv/plts/yggdrasil.plt.hash
 
 # Language server
 .elixir_ls

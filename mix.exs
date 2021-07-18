@@ -12,6 +12,7 @@ defmodule Yggdrasil.Mixfile do
       elixir: "~> 1.12",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
+      dialyzer: dialyzer(),
       package: package(),
       deps: deps(),
       docs: docs()
@@ -38,6 +39,12 @@ defmodule Yggdrasil.Mixfile do
       {:ex_doc, "~> 0.24", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  def dialyzer do
+    [
+      plt_file: {:no_warn, "priv/plts/yggdrasil.plt"}
     ]
   end
 
@@ -80,7 +87,7 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil
       ],
       Application: [
-        Yggdrasil.Settings
+        Yggdrasil.Config
       ],
       Channels: [
         Yggdrasil.Channel,
