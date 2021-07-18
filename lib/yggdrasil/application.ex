@@ -12,7 +12,7 @@ defmodule Yggdrasil.Application do
       {Phoenix.PubSub, [name: Yggdrasil.PubSub]},
       {PublisherGen, [name: Yggdrasil.Publisher.Generator]},
       {SubscriberGen, [name: Yggdrasil.Subscriber.Generator]},
-      {Yggdrasil.Registry, [name: Yggdrasil.Registry]},
+      Yggdrasil.Registry,
       {Yggdrasil.Backend.Default, []},
       {Yggdrasil.Transformer.Default, []},
       {Yggdrasil.Transformer.Json, []},

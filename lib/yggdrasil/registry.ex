@@ -2,12 +2,9 @@ defmodule Yggdrasil.Registry do
   @moduledoc """
   Yggdrasil `Registry` for adapters, transformers and backends aliases.
   """
-  use Agent
+  use Supervisor
 
   alias Yggdrasil.Channel
-  alias Yggdrasil.Settings
-
-  @module_registry Settings.module_registry!()
 
   @typedoc """
   Registry alias.
@@ -22,350 +19,214 @@ defmodule Yggdrasil.Registry do
   ############
   # Public API
 
-  @doc """
-  Starts a registry with some optional `options`.
-  """
-  @spec start_link() :: Agent.on_start()
-  @spec start_link(GenServer.options()) :: Agent.on_start()
-  def start_link(options \\ []) do
-    opts = [
-      :set,
-      :named_table,
-      :public,
-      write_concurrency: true,
-      read_concurrency: true
-    ]
-
-    start_link(@module_registry, opts, options)
+  @spec start_link([Supervisor.option() | Supervisor.init_option()]) ::
+          Supervisor.on_start()
+  def start_link(_) do
+    Supervisor.start_link(__MODULE__, nil, name: Yggdrasil.Registry.Supervisor)
   end
 
   @doc """
-  Stops a `registry` with optional `reason` and `timeout`.
-  """
-  @spec stop(pid() | GenServer.name()) :: :ok
-  @spec stop(pid() | GenServer.name(), term()) :: :ok
-  @spec stop(pid() | GenServer.name(), term(), :infinity | pos_integer()) :: :ok
-  defdelegate stop(agent, reason \\ :normal, timeout \\ :infinity), to: Agent
-
-  @doc """
   Registers a transformer.
-
-  Creates the following entries in the #{@module_registry} `:ets` table:
-
-  ```
-  - {:transformer, name()}   => module()
-  - {:transformer, module()} => module()
-  ```
   """
   @spec register_transformer(name(), module()) :: :ok
   def register_transformer(name, module) do
-    register_transformer(@module_registry, name, module)
+    register(:transformer, name, module)
   end
 
   @doc """
   Registers a backend.
-
-  Creates the following entries in the #{@module_registry} `:ets` table:
-
-  ```
-  - {:backend, name()}   => module()
-  - {:backend, module()} => module()
-  ```
   """
   @spec register_backend(name(), module()) :: :ok
   def register_backend(name, module) do
-    register_backend(@module_registry, name, module)
+    register(:backend, name, module)
   end
 
   @doc """
   Registers an adapter.
-
-  Creates the following entries in the #{@module_registry} `:ets` table:
-
-  ```
-  - {:adapter, name()}      => module()
-  - {:adapter, module()}    => module()
-
-  - {:subscriber, name()}   => module()
-  - {:subscriber, module()} => module()
-
-  - {:publisher, name()}    => module()
-  - {:publisher, module()}  => module()
-  ```
-
-  And also creates the following `:pg2` groups:
-
-  ```
-  - {:"$yggdrasil_registry", name()}              => pid()
-  - {:"$yggdrasil_registry", module()}            => pid()
-  - {:"$yggdrasil_registry", subscriber_module()} => pid()
-  - {:"$yggdrasil_registry", publisher_module()}  => pid()
-  ```
   """
   @spec register_adapter(name(), module()) :: :ok
   def register_adapter(name, module) do
-    register_adapter(@module_registry, name, module)
+    with {:ok, subscriber} <- module.get_subscriber_module(),
+         :ok <- register(:subscriber, name, subscriber),
+         :ok <- global_register(subscriber),
+         {:ok, publisher} <- module.get_publisher_module(),
+         :ok <- register(:publisher, name, publisher),
+         :ok <- global_register(publisher),
+         :ok <- register(:adapter, name, module),
+         :ok <- global_register(module) do
+      global_register(name)
+    end
   end
 
   @doc """
   Gets adapter node by `name`.
   """
-  @spec get_adapter_node(atom()) :: {:ok, node()} | {:error, term()}
+  @spec get_adapter_node(name() | module()) ::
+          {:ok, node()}
+          | {:error, binary()}
   def get_adapter_node(name) do
-    get_adapter_node(@module_registry, name)
+    group = {__MODULE__, name}
+
+    with [] <- :pg.get_local_members(__MODULE__, group),
+         [] <- :pg.get_members(__MODULE__, group) do
+      {:error, "Yggdrasil #{name} not registered in any node"}
+    else
+      [pid | _] ->
+        {:ok, node(pid)}
+    end
   end
 
   @doc """
-  Gets full channel.
+  Gets full channel given a `channel`.
   """
   @spec get_full_channel(Channel.t()) ::
-          {:ok, Channel.t()} | {:error, term()}
-  def get_full_channel(%Channel{} = channel) do
-    get_full_channel(@module_registry, channel)
+          {:ok, Channel.t()}
+          | {:error, binary()}
+  def get_full_channel(%Channel{adapter: name} = channel) do
+    node = node()
+
+    case get_adapter_node(name) do
+      {:ok, ^node} ->
+        get_local_channel(channel)
+
+      {:ok, _} ->
+        get_bridge_channel(channel)
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   @doc """
   Gets transformer module.
   """
-  @spec get_transformer_module(atom()) :: {:ok, module()} | {:error, term()}
+  @spec get_transformer_module(name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
   def get_transformer_module(name) do
-    get_transformer_module(@module_registry, name)
+    get_module(:transformer, name)
   end
 
   @doc """
   Gets backend module.
   """
-  @spec get_backend_module(atom()) :: {:ok, module()} | {:error, term()}
+  @spec get_backend_module(name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
   def get_backend_module(name) do
-    get_backend_module(@module_registry, name)
+    get_module(:backend, name)
   end
 
   @doc """
   Gets subscriber module.
   """
-  @spec get_subscriber_module(atom()) :: {:ok, module()} | {:error, term()}
+  @spec get_subscriber_module(name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
   def get_subscriber_module(name) do
-    get_subscriber_module(@module_registry, name)
+    get_module(:subscriber, name)
   end
 
   @doc """
   Gets publisher module.
   """
-  @spec get_publisher_module(atom()) :: {:ok, module()} | {:error, term()}
+  @spec get_publisher_module(name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
   def get_publisher_module(name) do
-    get_publisher_module(@module_registry, name)
+    get_module(:publisher, name)
   end
 
   @doc """
   Gets adapter module.
   """
-  @spec get_adapter_module(atom()) :: {:ok, module()} | {:error, term()}
+  @spec get_adapter_module(name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
   def get_adapter_module(name) do
-    get_adapter_module(@module_registry, name)
-  end
-
-  ###############
-  # Agent helpers
-
-  # Starts a Registry.
-  @doc false
-  @spec start_link(:ets.tab(), list(), GenServer.options()) :: Agent.on_start()
-  def start_link(table, table_opts, options) do
-    Agent.start_link(fn -> :ets.new(table, table_opts) end, options)
-  end
-
-  # Gets table.
-  @doc false
-  @spec get(pid() | Agent.name()) :: :ets.tab()
-  def get(registry) do
-    Agent.get(registry, & &1)
+    get_module(:adapter, name)
   end
 
   ######################
-  # Registration helpers
+  # Supervisor callbacks
 
-  # Registers a transformer.
-  @doc false
-  @spec register_transformer(:ets.tab(), name(), module()) :: :ok
-  def register_transformer(table, name, module) do
-    register(table, :transformer, name, module)
+  @impl Supervisor
+  def init(_) do
+    children = [%{id: __MODULE__, start: {:pg, :start_link, [__MODULE__]}}]
+
+    Supervisor.init(children, strategy: :one_for_one)
   end
 
-  # Registers a backend.
-  @doc false
-  @spec register_backend(:ets.tab(), name(), module()) :: :ok
-  def register_backend(table, name, module) do
-    register(table, :backend, name, module)
-  end
+  ############
+  # Public API
 
-  # Registers an adapter.
-  @doc false
-  @spec register_adapter(:ets.tab(), name(), module()) ::
-          :ok | {:error, term()}
-  def register_adapter(table, name, module) do
-    with {:ok, subscriber} <- module.get_subscriber_module(),
-         {:ok, publisher} <- module.get_publisher_module(),
-         :ok <- register_subscriber(table, name, subscriber),
-         :ok <- register_publisher(table, name, publisher) do
-      register_global(table, name)
-      register_global(table, module)
-      register_global(table, subscriber)
-      register_global(table, publisher)
-      register(table, :adapter, name, module)
-    end
-  end
+  #########
+  # Helpers
 
-  # Registers a subscriber.
-  @doc false
-  @spec register_subscriber(:ets.tab(), name(), module()) :: :ok
-  def register_subscriber(table, name, module) do
-    register(table, :subscriber, name, module)
-  end
-
-  # Registers a publisher.
-  @doc false
-  @spec register_publisher(:ets.tab(), name(), module()) :: :ok
-  def register_publisher(table, name, module) do
-    register(table, :publisher, name, module)
-  end
-
-  # Registers a module.
-  @doc false
-  @spec register(:ets.tab(), type(), name(), module()) :: :ok
-  def register(table, type, name, module) do
-    :ets.insert_new(table, {{type, name}, module})
-    :ets.insert_new(table, {{type, module}, module})
+  # Registers a new `type` of `module` with its `name` or alias.
+  @spec register(type(), name(), module()) :: :ok
+  defp register(type, name, module) do
+    :persistent_term.put({__MODULE__, type, name}, module)
+    :persistent_term.put({__MODULE__, type, module}, module)
 
     :ok
   end
 
-  # Registers a global group.
-  @doc false
-  @spec register_global(:ets.tab(), atom()) :: :ok
-  def register_global(table, name) do
-    group = {table, name}
-    pid = Process.whereis(__MODULE__)
+  @spec global_register(name() | module()) :: :ok
+  defp global_register(module) do
+    group = {__MODULE__, module}
+    pid = Process.whereis(Yggdrasil.Registry.Supervisor)
 
-    :pg2.create(group)
-
-    with pids when is_list(pids) <- :pg2.get_local_members(group),
+    with [_ | _] = pids <- :pg.get_local_members(__MODULE__, group),
          true <- pid in pids do
       :ok
     else
       _ ->
-        :pg2.join(group, pid)
-        :ok
-    end
-  end
-
-  ######################
-  # Channel manipulation
-
-  # Gets full channel.
-  @doc false
-  @spec get_full_channel(:ets.tab(), Channel.t()) ::
-          {:ok, Channel.t()} | {:error, term()}
-  def get_full_channel(table, %Channel{adapter: name} = channel) do
-    with {:ok, node} <- get_adapter_node(table, name) do
-      if node != node() do
-        get_bridge_channel(table, channel)
-      else
-        get_local_channel(table, channel)
-      end
-    end
-  end
-
-  # Gets adapter node.
-  @doc false
-  @spec get_adapter_node(:ets.tab(), atom()) :: {:ok, node()} | {:error, term()}
-  def get_adapter_node(table, name) do
-    group = {table, name}
-
-    with pid when is_pid(pid) <- :pg2.get_closest_pid(group) do
-      {:ok, node(pid)}
+        :pg.join(__MODULE__, group, pid)
     end
   end
 
   # Gets bridge channel.
-  @doc false
-  @spec get_bridge_channel(:ets.tab(), Channel.t()) ::
-          {:ok, Channel.t()} | {:error, term()}
-  def get_bridge_channel(table, %Channel{} = channel) do
-    get_local_channel(table, %Channel{name: channel, adapter: :bridge})
+  @spec get_bridge_channel(Channel.t()) ::
+          {:ok, Channel.t()}
+          | {:error, binary()}
+  defp get_bridge_channel(%Channel{} = channel) do
+    get_local_channel(%Channel{name: channel, adapter: :bridge})
   end
 
   # Gets local channel.
-  @doc false
-  @spec get_local_channel(:ets.tab(), Channel.t()) ::
-          {:ok, Channel.t()} | {:error, term()}
-  def get_local_channel(table, %Channel{adapter: adapter} = channel) do
-    with {:ok, adapter} <- get_adapter_module(table, adapter),
+  @spec get_local_channel(Channel.t()) ::
+          {:ok, Channel.t()}
+          | {:error, binary()}
+  defp get_local_channel(%Channel{adapter: adapter} = channel) do
+    with {:ok, adapter} <- get_adapter_module(adapter),
          transformer = channel.transformer || adapter.get_transformer(),
-         {:ok, _} <- get_transformer_module(table, transformer),
+         {:ok, _} <- get_transformer_module(transformer),
          backend = channel.backend || adapter.get_backend(),
-         {:ok, _} <- get_backend_module(table, backend) do
-      channel = %Channel{channel | transformer: transformer, backend: backend}
+         {:ok, _} <- get_backend_module(backend) do
+      channel = %Channel{
+        channel
+        | transformer: transformer,
+          backend: backend
+      }
 
       {:ok, channel}
     end
   end
 
-  ################
-  # Module getters
+  # Gets the cached module.
+  @spec get_module(type(), name() | module()) ::
+          {:ok, module()}
+          | {:error, binary()}
+  defp get_module(type, name) do
+    key = {__MODULE__, type, name}
 
-  # Gets transformer module.
-  @doc false
-  @spec get_transformer_module(:ets.tab(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_transformer_module(table, name) do
-    get_module(table, :transformer, name)
-  end
-
-  # Gets backend module.
-  @doc false
-  @spec get_backend_module(:ets.tab(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_backend_module(table, name) do
-    get_module(table, :backend, name)
-  end
-
-  # Gets subscriber module.
-  @doc false
-  @spec get_subscriber_module(:ets.tab(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_subscriber_module(table, name) do
-    get_module(table, :subscriber, name)
-  end
-
-  # Gets publisher module.
-  @doc false
-  @spec get_publisher_module(:ets.tab(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_publisher_module(table, name) do
-    get_module(table, :publisher, name)
-  end
-
-  # Gets adapter module.
-  @doc false
-  @spec get_adapter_module(:ets.tab(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_adapter_module(table, name) do
-    get_module(table, :adapter, name)
-  end
-
-  # Gets module.
-  @doc false
-  @spec get_module(:ets.tab(), type(), atom()) ::
-          {:ok, module()} | {:error, term()}
-  def get_module(table, type, name) do
-    key = {type, name}
-
-    case :ets.lookup(table, key) do
-      [{^key, module} | _] ->
-        {:ok, module}
-
-      _ ->
+    case :persistent_term.get(key, nil) do
+      nil ->
         {:error, "Yggdrasil #{type}: #{name} not loaded"}
+
+      module ->
+        {:ok, module}
     end
   end
 end
