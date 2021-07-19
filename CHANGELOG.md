@@ -1,5 +1,11 @@
 # Changelog
 
+## v6.0.1
+
+### Enhancements
+
+  * Updated `Yggdrasil.Subscriber.Manager` so it starts faster.
+
 ## v6.0.0
 
 ### Enhancements
