@@ -14,8 +14,7 @@ defmodule Yggdrasil.Subscriber.AdapterTest do
     publisher = ExReg.local({Publisher, channel})
     manager = ExReg.local({Manager, channel})
     assert {:ok, _} = Publisher.start_link(channel, name: publisher)
-    assert {:ok, _} = Manager.start_link(channel, name: manager)
-    :ok = Manager.add(channel, self())
+    assert {:ok, _} = Manager.start_link(channel, self(), name: manager)
 
     assert {:ok, adapter} = Adapter.start_link(channel)
     assert_receive {:Y_CONNECTED, _}, 500
@@ -31,8 +30,7 @@ defmodule Yggdrasil.Subscriber.AdapterTest do
     publisher = ExReg.local({Publisher, channel})
     manager = ExReg.local({Manager, channel})
     assert {:ok, _} = Publisher.start_link(channel, name: publisher)
-    assert {:ok, _} = Manager.start_link(channel, name: manager)
-    :ok = Manager.add(channel, self())
+    assert {:ok, _} = Manager.start_link(channel, self(), name: manager)
 
     assert {:ok, adapter} = Adapter.start_link(channel)
     assert_receive {:Y_CONNECTED, ^channel}, 500

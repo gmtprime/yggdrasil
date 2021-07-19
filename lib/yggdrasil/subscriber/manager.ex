@@ -10,11 +10,18 @@ defmodule Yggdrasil.Subscriber.Manager do
   alias Yggdrasil.Channel
   alias Yggdrasil.Subscriber.Generator
 
+  @doc false
   defstruct [:status, :channel, :cache]
   alias __MODULE__, as: State
 
+  @typedoc """
+  Subscription status.
+  """
+  @type status :: :connected | :disconnected
+
+  @typedoc false
   @type t :: %__MODULE__{
-          status: atom(),
+          status: status(),
           channel: Channel.t(),
           cache: reference()
         }
@@ -25,15 +32,13 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc """
   Starts a manager with a `channel`.
   """
-  @spec start_link(channel :: Channel.t()) :: GenServer.on_start()
-  @spec start_link(
-          channel :: Channel.t(),
-          options :: GenServer.options()
-        ) :: GenServer.on_start()
-  def start_link(channel, options \\ [])
+  @spec start_link(Channel.t(), pid()) :: GenServer.on_start()
+  @spec start_link(Channel.t(), pid(), GenServer.options()) ::
+          GenServer.on_start()
+  def start_link(channel, pid, options \\ [])
 
-  def start_link(%Channel{} = channel, options) do
-    GenServer.start_link(__MODULE__, channel, options)
+  def start_link(%Channel{} = channel, first_pid, options) do
+    GenServer.start_link(__MODULE__, [channel, first_pid], options)
   end
 
   @doc """
@@ -50,7 +55,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc """
   Adds a `pid` to the `channel`.
   """
-  @spec add(Channel.t(), pid()) :: :ok | {:error, term()}
+  @spec add(Channel.t(), pid()) :: :ok | {:error, binary()}
   def add(channel, pid)
 
   def add(%Channel{} = channel, pid) do
@@ -71,7 +76,7 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc """
   Removes a `pid` from the `channel`.
   """
-  @spec remove(Channel.t(), pid()) :: :ok | {:error, term()}
+  @spec remove(Channel.t(), pid()) :: :ok | {:error, binary()}
   def remove(channel, pid)
 
   def remove(%Channel{} = channel, pid) do
@@ -92,6 +97,9 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc """
   Reports the connection of the adapter.
   """
+  @spec connected(Channel.t()) :: :ok | {:error, binary()}
+  def connected(channel)
+
   def connected(%Channel{} = channel) do
     name = {__MODULE__, channel}
 
@@ -107,6 +115,9 @@ defmodule Yggdrasil.Subscriber.Manager do
   @doc """
   Reports the disconnection of the adapter.
   """
+  @spec disconnected(Channel.t()) :: :ok | {:error, binary()}
+  def disconnected(channel)
+
   def disconnected(%Channel{} = channel) do
     name = {__MODULE__, channel}
 
@@ -135,59 +146,81 @@ defmodule Yggdrasil.Subscriber.Manager do
       subscribed?(:disconnected, channel, pid)
   end
 
+  @doc false
+  @spec subscribed?(status(), Channel.t(), pid()) :: boolean()
+  def subscribed?(status, channel, pid)
+
+  def subscribed?(status, %Channel{} = channel, pid) do
+    pid in :pg.get_members(__MODULE__, {status, channel})
+  end
+
   #####################
   # GenServer callbacks
 
-  @impl true
-  def init(%Channel{} = channel) do
+  @impl GenServer
+  def init(args)
+
+  def init([%Channel{} = channel, first_pid]) do
     state = %State{
-      status: :connected,
+      status: :disconnected,
       channel: channel,
       cache: :ets.new(:monitored, [:set])
     }
 
     Logger.debug(fn -> "Started #{__MODULE__} for #{inspect(channel)}" end)
-    do_disconnected(state)
+
+    {:ok, state, {:continue, {:first_pid, first_pid}}}
   end
 
-  @impl true
+  @impl GenServer
+  def handle_continue(message, state)
+
+  def handle_continue({:first_pid, pid}, %State{} = state) do
+    do_join(pid, state)
+
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  def handle_call(message, from, state)
+
   def handle_call(:connected, _from, %State{} = state) do
-    with {:ok, new_state} <- do_connected(state),
-         :ok <- check_subscribers(new_state) do
+    new_state = do_connected(state)
+
+    if has_subscribers?(new_state) do
       {:reply, :ok, new_state}
     else
-      :stop ->
-        {:stop, :normal, :ok, state}
+      {:stop, :normal, :ok, new_state}
     end
   end
 
   def handle_call(:disconnected, _from, %State{} = state) do
-    with {:ok, new_state} <- do_disconnected(state),
-         :ok <- check_subscribers(new_state) do
+    new_state = do_disconnected(state)
+
+    if has_subscribers?(new_state) do
       {:reply, :ok, new_state}
     else
-      :stop ->
-        {:stop, :normal, :ok, state}
+      {:stop, :normal, :ok, new_state}
     end
   end
 
   def handle_call({:add, pid}, _from, %State{} = state) do
-    with :ok <- join([pid], state),
-         :ok <- check_subscribers(state) do
+    do_join(pid, state)
+
+    if has_subscribers?(state) do
       {:reply, :ok, state}
     else
-      :stop ->
-        {:stop, :normal, :ok, state}
+      {:stop, :normal, :ok, state}
     end
   end
 
   def handle_call({:remove, pid}, _from, %State{} = state) do
-    with :ok <- leave([pid], state),
-         :ok <- check_subscribers(state) do
+    do_leave(pid, state)
+
+    if has_subscribers?(state) do
       {:reply, :ok, state}
     else
-      :stop ->
-        {:stop, :normal, :ok, state}
+      {:stop, :normal, :ok, state}
     end
   end
 
@@ -195,14 +228,16 @@ defmodule Yggdrasil.Subscriber.Manager do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
+  def handle_info(message, state)
+
   def handle_info({:DOWN, _, _, pid, _}, %State{} = state) do
-    with :ok <- leave([pid], state),
-         :ok <- check_subscribers(state) do
+    do_leave(pid, state)
+
+    if has_subscribers?(state) do
       {:noreply, state}
     else
-      :stop ->
-        {:stop, :normal, state}
+      {:stop, :normal, state}
     end
   end
 
@@ -210,7 +245,9 @@ defmodule Yggdrasil.Subscriber.Manager do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
+  def terminate(reason, state)
+
   def terminate(:normal, %State{channel: channel}) do
     Generator.stop_distributor(channel)
 
@@ -225,99 +262,112 @@ defmodule Yggdrasil.Subscriber.Manager do
     end)
   end
 
-  #################
-  # General helpers
+  ########################
+  # Subscription functions
 
-  @doc false
-  def subscribed?(type, %Channel{} = channel, pid) do
-    name = {type, channel}
-    pid in :pg.get_members(__MODULE__, name)
-  end
+  @spec has_subscribers?(State.t()) :: boolean()
+  defp has_subscribers?(state)
 
-  @doc false
-  def check_subscribers(%State{status: status, channel: channel}) do
-    name = {status, channel}
-
-    case :pg.get_members(__MODULE__, name) do
-      [_ | _] ->
-        :ok
-
-      [] ->
-        :stop
-    end
+  defp has_subscribers?(%State{status: status, channel: channel}) do
+    [] != :pg.get_members(__MODULE__, {status, channel})
   end
 
   ######################
   # Connection functions
 
-  @doc false
-  def do_connected(%State{channel: channel} = state) do
+  @spec do_connected(State.t()) :: State.t()
+  defp do_connected(state)
+
+  defp do_connected(%State{channel: channel} = state) do
     name = {:disconnected, channel}
     members = :pg.get_members(__MODULE__, name)
-    leave(members, state)
+
+    do_leave(members, state)
+
     new_state = %State{state | status: :connected}
-    join(members, new_state)
-    {:ok, new_state}
+    do_join(members, new_state)
+
+    new_state
   end
 
-  @doc false
-  def do_disconnected(%State{channel: channel} = state) do
+  @spec do_disconnected(State.t()) :: State.t()
+  defp do_disconnected(state)
+
+  defp do_disconnected(%State{channel: channel} = state) do
     name = {:connected, channel}
     members = :pg.get_members(__MODULE__, name)
-    leave(members, state)
+
+    do_leave(members, state)
+
     new_state = %State{state | status: :disconnected}
-    join(members, new_state)
-    {:ok, new_state}
+    do_join(members, new_state)
+
+    new_state
   end
 
-  ################
-  # Join functions
+  ##############
+  # PG functions
 
-  @doc false
-  @spec join([pid()], State.t()) :: :ok
-  def join(pids, state)
+  @spec do_join(pid() | [pid()], State.t()) :: :ok
+  defp do_join(pid, state)
 
-  def join([], _) do
+  defp do_join([], %State{} = _state) do
     :ok
   end
 
-  def join([pid | pids], %State{} = state) do
-    do_join(pid, state)
-    join(pids, state)
+  defp do_join([_ | _] = pids, %State{} = state) do
+    Enum.each(pids, fn pid -> do_join(pid, state) end)
   end
 
-  @doc false
-  @spec do_join(pid(), State.t()) :: :ok
-  def do_join(pid, %State{status: :connected, channel: channel} = state) do
-    name = {:connected, channel}
+  defp do_join(pid, %State{status: status, channel: channel} = state)
+       when is_pid(pid) do
+    name = {status, channel}
     members = :pg.get_members(__MODULE__, name)
+
     monitor(pid, state)
 
     if pid not in members do
       :pg.join(__MODULE__, name, pid)
-      Backend.connected(channel, pid)
-    end
-
-    :ok
-  end
-
-  def do_join(pid, %State{status: :disconnected, channel: channel} = state) do
-    name = {:disconnected, channel}
-    members = :pg.get_members(__MODULE__, name)
-    monitor(pid, state)
-
-    if pid not in members do
-      :pg.join(__MODULE__, name, pid)
+      if status == :connected, do: Backend.connected(channel, pid)
     end
 
     :ok
   end
 
   @doc false
+  @spec do_leave(pid() | [pid()], State.t()) :: :ok
+  defp do_leave(pid, state)
+
+  defp do_leave([], %State{} = _state) do
+    :ok
+  end
+
+  defp do_leave([_ | _] = pids, %State{} = state) do
+    Enum.each(pids, fn pid -> do_leave(pid, state) end)
+  end
+
+  defp do_leave(pid, %State{status: status, channel: channel} = state)
+       when is_pid(pid) do
+    name = {status, channel}
+    members = :pg.get_members(__MODULE__, name)
+
+    demonitor(pid, state)
+
+    if pid in members do
+      :pg.leave(__MODULE__, name, pid)
+      if status == :connected, do: Backend.disconnected(channel, pid)
+    end
+
+    :ok
+  end
+
+  ######################
+  # Monitoring functions
+
   @spec monitor(pid(), State.t()) :: :ok
-  def monitor(pid, state)
+  defp monitor(pid, state)
 
-  def monitor(pid, %State{cache: cache}) do
+  defp monitor(pid, %State{cache: cache}) do
     with [] <- :ets.lookup(cache, pid) do
       ref = Process.monitor(pid)
       :ets.insert(cache, {pid, ref})
@@ -326,56 +376,10 @@ defmodule Yggdrasil.Subscriber.Manager do
     :ok
   end
 
-  #################
-  # Leave functions
-
-  @doc false
-  @spec leave([pid()], State.t()) :: :ok
-  def leave(pids, state)
-
-  def leave([], _) do
-    :ok
-  end
-
-  def leave([pid | pids], %State{} = state) do
-    do_leave(pid, state)
-    leave(pids, state)
-  end
-
-  @doc false
-  @spec do_leave(pid(), State.t()) :: :ok
-  def do_leave(pid, state)
-
-  def do_leave(pid, %State{status: :connected, channel: channel} = state) do
-    name = {:connected, channel}
-    members = :pg.get_members(__MODULE__, name)
-    demonitor(pid, state)
-
-    if pid in members do
-      :pg.leave(__MODULE__, name, pid)
-      Backend.disconnected(channel, pid)
-    end
-
-    :ok
-  end
-
-  def do_leave(pid, %State{status: :disconnected, channel: channel} = state) do
-    name = {:disconnected, channel}
-    members = :pg.get_members(__MODULE__, name)
-    demonitor(pid, state)
-
-    if pid in members do
-      :pg.leave(__MODULE__, name, pid)
-    end
-
-    :ok
-  end
-
-  @doc false
   @spec demonitor(pid(), State.t()) :: :ok
-  def demonitor(pid, state)
+  defp demonitor(pid, state)
 
-  def demonitor(pid, %State{cache: cache}) do
+  defp demonitor(pid, %State{cache: cache}) do
     with [{^pid, ref} | _] <- :ets.lookup(cache, pid) do
       :ets.delete(cache, pid)
       Process.demonitor(ref)
