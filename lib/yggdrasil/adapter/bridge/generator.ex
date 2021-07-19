@@ -14,7 +14,9 @@ defmodule Yggdrasil.Adapter.Bridge.Generator do
   Starts a bridge subscriber generator with `Supervisor` `options`.
   """
   @spec start_link() :: Supervisor.on_start()
-  @spec start_link([DynamicSupervisor.option() | DynamicSupervisor.init_option()]) ::
+  @spec start_link([
+          DynamicSupervisor.option() | DynamicSupervisor.init_option()
+        ]) ::
           Supervisor.on_start()
   def start_link(options \\ []) do
     DynamicSupervisor.start_link(__MODULE__, nil, options)

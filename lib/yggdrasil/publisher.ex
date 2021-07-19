@@ -5,8 +5,8 @@ defmodule Yggdrasil.Publisher do
   use Supervisor
 
   alias Yggdrasil.Channel
+  alias Yggdrasil.Config
   alias Yggdrasil.Publisher.Adapter
-  alias Yggdrasil.Settings
 
   ############
   # Client API
@@ -66,7 +66,7 @@ defmodule Yggdrasil.Publisher do
 
     poolargs =
       namespace
-      |> Settings.publisher_options!()
+      |> Config.publisher_options!()
       |> Keyword.put(:name, via_tuple)
       |> Keyword.put(:worker_module, Adapter)
 

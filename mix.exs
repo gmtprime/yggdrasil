@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "5.0.2"
+  @version "6.0.0"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
@@ -9,9 +9,10 @@ defmodule Yggdrasil.Mixfile do
       name: "Yggdrasil",
       app: :yggdrasil,
       version: @version,
-      elixir: "~> 1.8",
+      elixir: "~> 1.12",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
+      dialyzer: dialyzer(),
       package: package(),
       deps: deps(),
       docs: docs()
@@ -30,14 +31,20 @@ defmodule Yggdrasil.Mixfile do
 
   defp deps do
     [
-      {:exreg, "~> 0.1"},
-      {:phoenix_pubsub, "~> 1.1"},
+      {:exreg, "~> 1.0"},
+      {:phoenix_pubsub, "~> 2.0"},
       {:poolboy, "~> 1.5"},
-      {:jason, "~> 1.1"},
-      {:skogsra, "~> 2.2"},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:credo, "~> 1.2", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false}
+      {:jason, "~> 1.2"},
+      {:skogsra, "~> 2.3"},
+      {:ex_doc, "~> 0.24", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  def dialyzer do
+    [
+      plt_file: {:no_warn, "priv/plts/yggdrasil.plt"}
     ]
   end
 
@@ -80,7 +87,7 @@ defmodule Yggdrasil.Mixfile do
         Yggdrasil
       ],
       Application: [
-        Yggdrasil.Settings
+        Yggdrasil.Config
       ],
       Channels: [
         Yggdrasil.Channel,

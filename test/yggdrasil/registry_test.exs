@@ -3,72 +3,68 @@ defmodule Yggdrasil.RegistryTest do
 
   alias Yggdrasil.Registry
 
-  setup do
-    opts = [:set, :public]
-    {:ok, registry} = Registry.start_link(:test, opts, [])
-    table = Registry.get(registry)
+  describe "register_transformer/2" do
+    setup do
+      assert :ok = Registry.register_transformer(:foo, Transformer)
 
-    {:ok, table: table}
-  end
+      {:ok, name: :foo, module: Transformer}
+    end
 
-  describe "Registry.get/1" do
-    test "creates the table" do
-      opts = [:set, :public]
-      assert {:ok, registry} = Registry.start_link(:test, opts, [])
-      assert is_reference(Registry.get(registry))
-      assert :ok = Registry.stop(registry)
+    test "registers transformer by name", %{name: name, module: module} do
+      assert {:ok, ^module} = Registry.get_transformer_module(name)
+    end
+
+    test "registers transformer by module", %{module: module} do
+      assert {:ok, ^module} = Registry.get_transformer_module(module)
     end
   end
 
-  describe "Registry.register/4" do
-    test "registers keys", %{table: table} do
-      assert :ok = Registry.register(table, :key, :name, MyModule)
-      assert {:ok, MyModule} = Registry.get_module(table, :key, :name)
-      assert {:ok, MyModule} = Registry.get_module(table, :key, MyModule)
+  describe "register_backend/2" do
+    setup do
+      assert :ok = Registry.register_backend(:foo, Backend)
+
+      {:ok, name: :foo, module: Backend}
     end
 
-    test "registers a key if the value is already set", %{table: table} do
-      assert :ok = Registry.register(table, :key, :name, MyModule)
-      assert :ok = Registry.register(table, :key, :name, MyModule)
-    end
-  end
-
-  describe "Registry.get_module/3" do
-    setup context do
-      :ok = Registry.register(context[:table], :key, :name, MyModule)
-      :ok
+    test "registers backend by name", %{name: name, module: module} do
+      assert {:ok, ^module} = Registry.get_backend_module(name)
     end
 
-    test "gets a stored key by name", %{table: table} do
-      assert {:ok, MyModule} = Registry.get_module(table, :key, :name)
-    end
-
-    test "gets a stored key by module", %{table: table} do
-      assert {:ok, MyModule} = Registry.get_module(table, :key, MyModule)
-    end
-
-    test "errors when the key does not exist", %{table: table} do
-      assert {:error, _} = Registry.get_module(table, :other_key, MyModule)
+    test "registers backend by module", %{module: module} do
+      assert {:ok, ^module} = Registry.get_backend_module(module)
     end
   end
 
-  describe "Registry.register_transformer/3" do
-    test "registers a transformer", %{table: table} do
-      assert :ok = Registry.register_transformer(table, :name, MyTransformer)
-
-      assert {:ok, MyTransformer} =
-               Registry.get_transformer_module(table, :name)
-
-      assert {:ok, MyTransformer} =
-               Registry.get_transformer_module(table, MyTransformer)
+  describe "register_adapter/2" do
+    defmodule Adapter do
+      def get_subscriber_module, do: {:ok, Subscriber}
+      def get_publisher_module, do: {:ok, Publisher}
     end
-  end
 
-  describe "Registry.register_backend/3" do
-    test "registers a backend", %{table: table} do
-      assert :ok = Registry.register_backend(table, :name, MyBackend)
-      assert {:ok, MyBackend} = Registry.get_backend_module(table, :name)
-      assert {:ok, MyBackend} = Registry.get_backend_module(table, MyBackend)
+    setup do
+      assert :ok = Registry.register_adapter(:foo, Adapter)
+
+      {:ok, name: :foo, module: Adapter}
+    end
+
+    test "registers adapter by name", %{name: name, module: module} do
+      assert {:ok, ^module} = Registry.get_adapter_module(name)
+    end
+
+    test "registers adapter by module", %{module: module} do
+      assert {:ok, ^module} = Registry.get_adapter_module(module)
+    end
+
+    test "registers adapter's subscriber", %{name: name, module: module} do
+      {:ok, subscriber} = module.get_subscriber_module()
+
+      assert {:ok, ^subscriber} = Registry.get_subscriber_module(name)
+    end
+
+    test "registers adapter's publisher", %{name: name, module: module} do
+      {:ok, publisher} = module.get_publisher_module()
+
+      assert {:ok, ^publisher} = Registry.get_publisher_module(name)
     end
   end
 end

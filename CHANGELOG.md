@@ -1,5 +1,15 @@
 # Changelog
 
+## v6.0.0
+
+### Enhancements
+
+  * Updated the dependencies including `Phoenix.PubSub`.
+  * Upgraded `Yggdrasil.Registry`:
+    - Using `:pg` instead of `:pg2`.
+    - Using `:persistent_term` instead of `:ets`.
+  * Upgraded `Yggdrasil.Subscriber.Manager` to use `:pg` instead of `:pg2`.
+
 ## v5.0.2
 
 ### Enhancements

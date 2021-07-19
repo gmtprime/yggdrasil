@@ -95,7 +95,8 @@ defmodule Yggdrasil.Transformer do
   - `:name` - Name of the transformer. Must be an atom.
   """
   defmacro __using__(options) do
-    transformer_alias = options[:name] || raise ArgumentError, message: "transformer not found"
+    transformer_alias =
+      options[:name] || raise ArgumentError, message: "transformer not found"
 
     quote do
       @behaviour Yggdrasil.Transformer

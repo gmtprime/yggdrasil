@@ -187,18 +187,14 @@ iex(2)> Yggdrasil.publish(channel, "bar")
 ## Configuration
 
 `Yggdrasil` works out of the box with no special configuration at all. However,
-it is possible to tune the publisher. The default `Yggdrasil` backend uses
-`Phoenix.PubSub` and the following are the available options:
+it is possible to tune the publisher pool:
 
 Option              | Default                      | Description
 :------------------ | :--------------------------- | :----------
-`pubsub_adapter`    | `Phoenix.PubSub.PG2`         | `Phoenix.PubSub` adapter.
-`pubsub_name`       | `Yggdrasil.PubSub`           | Name of the `Phoenix.PubSub` adapter.
-`pubsub_options`    | `[pool_size: 1]`             | Options of the `Phoenix.PubSub` adapter.
 `publisher_options` | `[size: 1, max_overflow: 5]` | `Poolboy` options for publishing. Controls the amount of connections established with the adapter service.
 
 > For more information about configuration using OS environment variables check
-> the module `Yggdrasil.Settings`.
+> the module `Yggdrasil.Config`.
 
 ## Installation
 
@@ -213,11 +209,19 @@ dependencies in your `mix.exs` file:
   end
   ```
 
-- For Elixir ≥ 1.8 and Erlang ≥ 21
+- For Elixir ≥ 1.8 and Elixir < 1.12 and Erlang ≥ 21 and Erlang < 23
 
   ```elixir
   def deps do
     [{:yggdrasil, "~> 5.0"}]
+  end
+  ```
+
+- For Elixir Elixir ≥ 1.12 and Erlang ≥ 23
+
+  ```elixir
+  def deps do
+    [{:yggdrasil, "~> 6.0"}]
   end
   ```
 
