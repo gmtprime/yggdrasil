@@ -1,7 +1,7 @@
 defmodule Yggdrasil.Mixfile do
   use Mix.Project
 
-  @version "6.0.1"
+  @version "6.0.2"
   @root "https://github.com/gmtprime/yggdrasil"
 
   def project do
@@ -34,10 +34,10 @@ defmodule Yggdrasil.Mixfile do
       {:exreg, "~> 1.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:poolboy, "~> 1.5"},
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.3"},
       {:skogsra, "~> 2.3"},
-      {:ex_doc, "~> 0.24", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.28", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
     ]
   end

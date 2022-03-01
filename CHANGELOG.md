@@ -1,5 +1,12 @@
 # Changelog
 
+## v6.0.2
+
+### Enhancements
+
+  * Updated dependencies.
+  * Improved how supervisors stop their children.
+
 ## v6.0.1
 
 ### Enhancements
