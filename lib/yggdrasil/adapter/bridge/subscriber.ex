@@ -34,6 +34,7 @@ defmodule Yggdrasil.Adapter.Bridge.Subscriber do
 
   @impl GenServer
   def init(%State{pid: pid, channel: channel} = state) do
+    Process.flag(:trap_exit, true)
     Process.monitor(pid)
 
     case Yggdrasil.subscribe(channel) do

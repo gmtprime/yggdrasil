@@ -27,17 +27,12 @@ defmodule Yggdrasil.Adapter.Bridge.Generator do
   """
   @spec stop(Supervisor.supervisor()) :: :ok
   def stop(generator) do
-    for {_, pid, _, _} <- Supervisor.which_children(generator) do
-      try do
-        Subscriber.stop(pid)
-      catch
-        _, _ -> :ok
-      end
+    generator
+    |> Supervisor.which_children()
+    |> Stream.map(&elem(&1, 0))
+    |> Enum.each(&Supervisor.terminate_child(generator, &1))
 
-      Supervisor.stop(generator)
-    end
-
-    :ok
+    Supervisor.stop(generator)
   end
 
   @doc """

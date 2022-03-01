@@ -58,6 +58,8 @@ defmodule Yggdrasil.Subscriber.Adapter.Bridge do
 
   @impl GenServer
   def init(%{channel: %Channel{} = bridge}) do
+    Process.flag(:trap_exit, true)
+
     with {:ok, {local, remote}} <- Bridge.split_channels(bridge),
          {:ok, node} <- get_channel_node(remote) do
       state = %State{

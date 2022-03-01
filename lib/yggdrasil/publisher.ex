@@ -30,13 +30,10 @@ defmodule Yggdrasil.Publisher do
   """
   @spec stop(Supervisor.supervisor()) :: :ok
   def stop(supervisor) do
-    for {module, child, _, _} <- Supervisor.which_children(supervisor) do
-      try do
-        apply(module, :stop, [child])
-      catch
-        _, _ -> :ok
-      end
-    end
+    supervisor
+    |> Supervisor.which_children()
+    |> Stream.map(&elem(&1, 0))
+    |> Enum.each(&Supervisor.terminate_child(supervisor, &1))
 
     Supervisor.stop(supervisor)
   end
@@ -62,6 +59,7 @@ defmodule Yggdrasil.Publisher do
 
   @impl true
   def init(%Channel{namespace: namespace} = channel) do
+    Process.flag(:trap_exit, true)
     via_tuple = ExReg.local({Poolboy, channel})
 
     poolargs =

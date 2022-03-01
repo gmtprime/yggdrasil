@@ -55,6 +55,7 @@ defmodule Yggdrasil.Subscriber.Adapter.Elixir do
 
   @impl GenServer
   def init(%{channel: %Channel{name: name} = external}) do
+    Process.flag(:trap_exit, true)
     internal = %Channel{external | name: {:"$yggdrasil_elixir", name}}
     state = %State{external: external, internal: internal}
 
