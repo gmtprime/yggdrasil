@@ -110,6 +110,9 @@ defmodule Yggdrasil.Subscriber.Manager do
       manager ->
         GenServer.call(manager, :connected)
     end
+  catch
+    :exit, _ ->
+      {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """
@@ -128,6 +131,9 @@ defmodule Yggdrasil.Subscriber.Manager do
       manager ->
         GenServer.call(manager, :disconnected)
     end
+  catch
+    :exit, _ ->
+      {:error, "Manager is not available for subscriptions"}
   end
 
   @doc """

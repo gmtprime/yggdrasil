@@ -1,5 +1,12 @@
 # Changelog
 
+## v6.0.3
+
+### Enhancements
+
+  * Updated dependencies.
+  * Improved how adapters disconnect from an unexistent manager.
+
 ## v6.0.2
 
 ### Enhancements
